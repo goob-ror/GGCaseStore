@@ -1,0 +1,10 @@
+# Setup basic gitignore for webpacks
+node_modules/
+dist/
+
+
+.env
+
+database_schema.sql
+
+api/test.js
