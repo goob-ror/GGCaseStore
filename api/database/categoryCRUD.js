@@ -1,4 +1,7 @@
 const db = require('../db');
+const sharp = require('sharp');
+const fs = require('fs').promises;
+const path = require('path');
 
 /**
  * Category CRUD Operations
@@ -95,10 +98,84 @@ const deleteCategory = async (req, res) => {
   }
 };
 
+// Upload category image with WebP conversion
+const uploadCategoryImage = async (req, res) => {
+  try {
+    const categoryId = req.params.id;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ success: false, error: 'No file uploaded' });
+    }
+
+    // Check if category exists
+    const [categoryCheck] = await db.execute('SELECT id FROM categories WHERE id = ?', [categoryId]);
+    if (categoryCheck.length === 0) {
+      return res.status(404).json({ success: false, error: 'Category not found' });
+    }
+
+    // Validate file
+    if (!file.mimetype.startsWith('image/')) {
+      return res.status(400).json({ success: false, error: 'File must be an image' });
+    }
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      return res.status(400).json({ success: false, error: 'File too large (max 10MB)' });
+    }
+
+    // Ensure uploads directory exists
+    const uploadsDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'categories');
+    try {
+      await fs.access(uploadsDir);
+    } catch {
+      await fs.mkdir(uploadsDir, { recursive: true });
+    }
+
+    // Generate unique filename
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 15);
+    const filename = `category_${categoryId}_${timestamp}_${randomString}.webp`;
+    const filePath = path.join(uploadsDir, filename);
+    const publicUrl = `/uploads/categories/${filename}`;
+
+    // Process and convert to WebP with 1:1 aspect ratio
+    await sharp(file.buffer)
+      .resize(400, 400, {
+        fit: 'cover',
+        position: 'center'
+      })
+      .webp({ quality: 85 })
+      .toFile(filePath);
+
+    // Update database
+    const [result] = await db.execute(
+      'UPDATE categories SET category_photo = ? WHERE id = ?',
+      [publicUrl, categoryId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        category_photo: publicUrl
+      },
+      message: 'Category image uploaded successfully'
+    });
+
+  } catch (error) {
+    console.error('Error uploading category image:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 module.exports = {
   getAllCategories,
   getCategoryById,
   createCategory,
   updateCategory,
-  deleteCategory
+  deleteCategory,
+  uploadCategoryImage
 };

@@ -1,0 +1,265 @@
+/* Image Cropper Component Styles */
+.image-cropper-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cropper-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.cropper-content {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.cropper-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+  text-align: center;
+}
+
+.cropper-header h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #212529;
+}
+
+.cropper-header p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.cropper-body {
+  padding: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.cropper-canvas-container {
+  position: relative;
+  display: inline-block;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cropper-canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.crop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.crop-area {
+  position: absolute;
+  border: 2px solid #007bff;
+  background: rgba(0, 123, 255, 0.1);
+  cursor: move;
+  pointer-events: all;
+  min-width: 50px;
+  min-height: 50px;
+}
+
+.crop-area::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 123, 255, 0.3);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.crop-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #007bff;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.crop-handle:hover {
+  background: #0056b3;
+  transform: scale(1.2);
+}
+
+.crop-handle-nw {
+  top: -6px;
+  left: -6px;
+  cursor: nw-resize;
+}
+
+.crop-handle-ne {
+  top: -6px;
+  right: -6px;
+  cursor: ne-resize;
+}
+
+.crop-handle-sw {
+  bottom: -6px;
+  left: -6px;
+  cursor: sw-resize;
+}
+
+.crop-handle-se {
+  bottom: -6px;
+  right: -6px;
+  cursor: se-resize;
+}
+
+.cropper-footer {
+  padding: 1.5rem;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  background: #f8f9fa;
+}
+
+.cropper-footer .btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cropper-footer .btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.cropper-footer .btn-secondary:hover {
+  background: #5a6268;
+}
+
+.cropper-footer .btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.cropper-footer .btn-primary:hover {
+  background: #0056b3;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .cropper-content {
+    margin: 1rem;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 2rem);
+  }
+  
+  .cropper-header,
+  .cropper-body,
+  .cropper-footer {
+    padding: 1rem;
+  }
+  
+  .cropper-canvas-container {
+    max-width: 100%;
+  }
+  
+  .cropper-footer {
+    flex-direction: column;
+  }
+  
+  .cropper-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Dark overlay effect outside crop area */
+.crop-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.crop-area::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: transparent;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+/* Animation for modal appearance */
+.image-cropper-modal {
+  animation: cropperFadeIn 0.3s ease-out;
+}
+
+@keyframes cropperFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.cropper-content {
+  animation: cropperSlideIn 0.3s ease-out;
+}
+
+@keyframes cropperSlideIn {
+  from {
+    transform: scale(0.9) translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}

@@ -81,7 +81,8 @@ class Router {
       return;
     }
 
-    if (!route.requiresAuth && isAuthenticated && path === '/login') {
+    // Redirect authenticated users away from login/root pages
+    if (!route.requiresAuth && isAuthenticated && (path === '/login' || path === '/')) {
       this.navigate('/admin/dashboard', true);
       return;
     }

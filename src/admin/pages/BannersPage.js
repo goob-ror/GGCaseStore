@@ -1,5 +1,6 @@
 import { ApiService } from '../../lib/ApiService.js';
 import { NotificationService } from '../../components/NotificationService.js';
+import { ImageUpload } from '../../components/ImageUpload.js';
 
 class BannersPage {
   constructor() {
@@ -8,6 +9,9 @@ class BannersPage {
     this.banners = [];
     this.showForm = false;
     this.editingBanner = null;
+
+    // Initialize components
+    this.imageUpload = null;
   }
 
   async render(container) {
@@ -40,7 +44,7 @@ class BannersPage {
 
           <div class="banner-form-modal" id="bannerFormModal" style="display: none;">
             <div class="modal-backdrop"></div>
-            <div class="modal-content">
+            <div class="modal-content modal-large">
               <div class="modal-header">
                 <h3 id="formTitle">Add New Banner</h3>
                 <button class="modal-close" id="closeFormBtn">
@@ -48,30 +52,47 @@ class BannersPage {
                 </button>
               </div>
               <form class="banner-form" id="bannerForm">
-                <div class="form-group">
-                  <label for="bannerTitle" class="form-label">Banner Title *</label>
-                  <input type="text" id="bannerTitle" name="title" class="form-control" required>
+                <div class="form-layout">
+                  <!-- Banner Image Section -->
+                  <div class="form-section">
+                    <div class="section-header">
+                      <h4><i class="fas fa-image"></i> Banner Image</h4>
+                    </div>
+                    <div class="image-upload-container">
+                      <div id="bannerImageUpload1"></div>
+                      <small class="form-text text-muted">Recommended size: 1200x400px for optimal display</small>
+                    </div>
+                  </div>
+
+                  <!-- Banner Details Section -->
+                  <div class="form-section">
+                    <div class="section-header">
+                      <h4><i class="fas fa-info-circle"></i> Banner Information</h4>
+                    </div>
+                    <div class="form-fields">
+                      <div class="form-group">
+                        <label for="bannerTitle" class="form-label">Banner Title *</label>
+                        <input type="text" id="bannerTitle" name="title" class="form-control" required>
+                      </div>
+
+                      <div class="form-group">
+                        <label for="bannerRedirect" class="form-label">Redirect URL</label>
+                        <input type="url" id="bannerRedirect" name="redirect_url" class="form-control" placeholder="https://example.com/page">
+                        <small class="form-text text-muted">URL to redirect when banner is clicked (optional)</small>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label checkbox-label">
+                          <input type="checkbox" id="bannerActive" name="active" checked>
+                          <span class="checkmark"></span>
+                          Active Banner
+                        </label>
+                        <small class="form-text text-muted">Only active banners will be displayed on the website</small>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                
-                <div class="form-group">
-                  <label for="bannerImage" class="form-label">Banner Image URL *</label>
-                  <input type="url" id="bannerImage" name="banner_image_url" class="form-control" required placeholder="https://example.com/banner.jpg">
-                  <small class="form-text">Enter a URL for the banner image</small>
-                </div>
-                
-                <div class="form-group">
-                  <label for="bannerRedirect" class="form-label">Redirect URL</label>
-                  <input type="url" id="bannerRedirect" name="redirect_url" class="form-control" placeholder="https://example.com/page">
-                  <small class="form-text">URL to redirect when banner is clicked (optional)</small>
-                </div>
-                
-                <div class="form-group">
-                  <label class="form-label">
-                    <input type="checkbox" id="bannerActive" name="active" checked>
-                    Active Banner
-                  </label>
-                  <small class="form-text">Only active banners will be displayed on the website</small>
-                </div>
+
 
                 <div class="form-actions">
                   <button type="button" class="btn btn-secondary" id="cancelFormBtn">Cancel</button>
@@ -214,6 +235,7 @@ class BannersPage {
         .banner-actions {
           display: flex;
           gap: 0.5rem;
+          min-width: 90px;
         }
 
         .btn-icon {
@@ -225,6 +247,7 @@ class BannersPage {
           display: flex;
           align-items: center;
           gap: 0.5rem;
+          min-width: 90px;
           font-size: 0.875rem;
         }
 
@@ -282,11 +305,16 @@ class BannersPage {
           border-radius: 0.75rem;
           box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
           width: 100%;
-          max-width: 600px;
+          max-width: 500px;
           max-height: 90vh;
           overflow-y: auto;
           position: relative;
           z-index: 1;
+        }
+
+        .modal-large {
+          max-width: 1400px;
+          width: 95%;
         }
 
         .modal-header {
@@ -350,6 +378,125 @@ class BannersPage {
           color: #d1d5db;
         }
 
+        /* Simplified Form Layout */
+        .form-layout {
+          display: flex;
+          flex-direction: column;
+          gap: 2rem;
+          padding: 1.5rem;
+        }
+
+        .form-section {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .section-header {
+          margin-bottom: 1rem;
+          padding-bottom: 0.75rem;
+          border-bottom: 2px solid #e5e7eb;
+        }
+
+        .section-header h4 {
+          margin: 0;
+          font-size: 1rem;
+          font-weight: 600;
+          color: #374151;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .section-header i {
+          color: #6366f1;
+        }
+
+        .image-upload-container {
+          max-width: 100%;
+          margin: 0 auto;
+        }
+
+        .preview-image {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 3 / 1;
+          overflow: hidden;
+        }
+
+        .preview-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .image-upload-container.single-image .image-previews {
+          grid-template-columns: 1fr;
+          max-width: 900px;
+          margin: 0 auto;
+        }
+
+        #bannerImageUpload1 .dz-preview, 
+        #bannerImageUpload1 .preview-image, 
+        #bannerImageUpload1 .dz-image {
+          width: 100% !important;
+          aspect-ratio: 3 / 1 !important;
+          min-height: 250px;
+          max-height: 350px;
+          border-radius: 10px;
+          overflow: hidden;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        /* Make the preview image stretch properly */
+        #bannerImageUpload1 .dz-image img,
+        #bannerImageUpload1 .preview-image img {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          border-radius: 8px;
+        }
+
+        .form-fields {
+          max-width: 500px;
+        }
+
+        .checkbox-label {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          cursor: pointer;
+          font-weight: 500;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+          width: 18px;
+          height: 18px;
+          accent-color: #3b82f6;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+          .form-layout {
+            padding: 1rem;
+            gap: 1.5rem;
+          }
+
+          .image-upload-container {
+            max-width: 100%;
+          }
+
+          .form-fields {
+            max-width: 100%;
+          }
+
+          .modal-large {
+            width: 98%;
+            max-width: none;
+          }
+        }
+
         @media (max-width: 768px) {
           .page-header {
             flex-direction: column;
@@ -387,6 +534,40 @@ class BannersPage {
     cancelFormBtn?.addEventListener('click', () => this.hideBannerForm());
     modalBackdrop?.addEventListener('click', () => this.hideBannerForm());
     bannerForm?.addEventListener('submit', (e) => this.handleFormSubmit(e));
+
+    // Initialize form components
+    this.initializeFormComponents();
+  }
+
+  initializeFormComponents() {
+    // Initialize Banner Image Upload
+    this.imageUpload = new ImageUpload({
+      multiple: false,
+      maxFiles: 1,
+      enableCropping: true,
+      cropAspectRatio: 3, // 3:1 aspect ratio for banners (1200x400)
+      maxWidth: 1200,     // Banner width
+      maxHeight: 400,     // Banner height
+      onFilesChange: (files) => {
+        console.log('Banner image changed:', files);
+      },
+      onError: (error) => {
+        this.notificationService.error('Image Upload Error', error);
+      }
+    });
+
+    // Insert HTML and initialize components
+    this.insertComponentHTML();
+  }
+
+  insertComponentHTML() {
+    // Insert Banner Image Upload HTML
+    const imageUploadContainer = document.getElementById('bannerImageUpload1');
+    if (imageUploadContainer) {
+      imageUploadContainer.innerHTML = this.imageUpload.createHTML('bannerImageUpload1');
+      this.imageUpload.initialize('bannerImageUpload1');
+      imageUploadContainer.classList.add('single-image');
+    }
   }
 
   async loadBanners() {
@@ -419,8 +600,8 @@ class BannersPage {
     const cardsHTML = this.banners.map(banner => `
       <div class="banner-card">
         <div class="banner-preview">
-          ${banner.banner_image_url ? 
-            `<img src="${banner.banner_image_url}" alt="${this.escapeHtml(banner.title)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          ${banner.banner_image_url ?
+            `<img src="${this.apiService.getStaticURL(banner.banner_image_url)}" alt="${this.escapeHtml(banner.title)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
              <div class="placeholder" style="display: none;"><i class="fas fa-image"></i></div>` :
             `<div class="placeholder"><i class="fas fa-image"></i></div>`
           }
@@ -438,15 +619,15 @@ class BannersPage {
             ''
           }
           <div class="banner-actions">
-            <button class="btn-icon btn-edit" onclick="window.bannersPage.editBanner(${banner.id})">
+            <button class="btn-icon btn-edit" data-action="edit" data-banner-id="${banner.id}" title="Edit banner">
               <i class="fas fa-edit"></i>
               Edit
             </button>
-            <button class="btn-icon btn-toggle" onclick="window.bannersPage.toggleBanner(${banner.id})">
+            <button class="btn-icon btn-toggle" data-action="toggle" data-banner-id="${banner.id}" title="${banner.active ? 'Deactivate' : 'Activate'} banner">
               <i class="fas fa-${banner.active ? 'eye-slash' : 'eye'}"></i>
               ${banner.active ? 'Deactivate' : 'Activate'}
             </button>
-            <button class="btn-icon btn-delete" onclick="window.bannersPage.deleteBanner(${banner.id})">
+            <button class="btn-icon btn-delete" data-action="delete" data-banner-id="${banner.id}" title="Delete banner">
               <i class="fas fa-trash"></i>
               Delete
             </button>
@@ -456,9 +637,36 @@ class BannersPage {
     `).join('');
 
     container.innerHTML = cardsHTML;
-    
-    // Make this instance globally accessible for onclick handlers
+
+    // Add event delegation for banner action buttons
+    this.bindBannerActions(container);
+
+    // Make this instance globally accessible for onclick handlers (fallback)
     window.bannersPage = this;
+  }
+
+  bindBannerActions(container) {
+    container.addEventListener('click', (e) => {
+      const button = e.target.closest('[data-action]');
+      if (!button) return;
+
+      const action = button.dataset.action;
+      const bannerId = parseInt(button.dataset.bannerId);
+
+      if (!bannerId) return;
+
+      switch (action) {
+        case 'edit':
+          this.editBanner(bannerId);
+          break;
+        case 'toggle':
+          this.toggleBanner(bannerId);
+          break;
+        case 'delete':
+          this.deleteBanner(bannerId);
+          break;
+      }
+    });
   }
 
   renderError() {
@@ -481,6 +689,11 @@ class BannersPage {
     const form = document.getElementById('bannerForm');
     const title = document.getElementById('formTitle');
 
+    // Clear image upload component first to prevent image persistence
+    if (this.imageUpload) {
+      this.imageUpload.clear();
+    }
+
     if (banner) {
       title.textContent = 'Edit Banner';
       this.populateForm(banner);
@@ -498,27 +711,51 @@ class BannersPage {
     const modal = document.getElementById('bannerFormModal');
     modal.style.display = 'none';
     document.body.style.overflow = '';
+
+    // Clear image upload component to prevent persistence
+    if (this.imageUpload) {
+      this.imageUpload.clear();
+    }
+
+    // Reset form
+    const form = document.getElementById('bannerForm');
+    if (form) {
+      form.reset();
+    }
+
     this.editingBanner = null;
   }
 
   populateForm(banner) {
+    // Populate basic form fields
     document.getElementById('bannerTitle').value = banner.title || '';
-    document.getElementById('bannerImage').value = banner.banner_image_url || '';
     document.getElementById('bannerRedirect').value = banner.redirect_url || '';
     document.getElementById('bannerActive').checked = banner.active;
+
+    // Populate legacy image field if it exists
+    const imageField = document.getElementById('bannerImage');
+    if (imageField) {
+      imageField.value = banner.banner_image_url || '';
+    }
+
+    // Load existing banner image
+    if (banner.banner_image_url) {
+      if (this.imageUpload) {
+        this.imageUpload.setExistingFiles([banner.banner_image_url]);
+      }
+    }
   }
 
   async handleFormSubmit(e) {
     e.preventDefault();
-    
+
     const saveBtn = document.getElementById('saveBannerBtn');
     const btnText = saveBtn.querySelector('.btn-text');
     const btnLoading = saveBtn.querySelector('.btn-loading');
-    
+
     const formData = new FormData(e.target);
     const bannerData = {
       title: formData.get('title'),
-      banner_image_url: formData.get('banner_image_url'),
       redirect_url: formData.get('redirect_url') || null,
       active: formData.has('active')
     };
@@ -528,12 +765,23 @@ class BannersPage {
     btnLoading.classList.remove('d-none');
 
     try {
+      let bannerId;
+
       if (this.editingBanner) {
         await this.apiService.put(`/banners/${this.editingBanner.id}`, bannerData);
+        bannerId = this.editingBanner.id;
         this.notificationService.success('Success', 'Banner updated successfully');
       } else {
-        await this.apiService.post('/banners', bannerData);
+        const response = await this.apiService.post('/banners', bannerData);
+        bannerId = response.id;
         this.notificationService.success('Success', 'Banner created successfully');
+      }
+
+      // Upload image if any
+      const images = this.imageUpload?.getFiles();
+
+      if (images && images.length > 0 && bannerId) {
+        await this.uploadBannerImages(bannerId, images);
       }
 
       this.hideBannerForm();
@@ -549,6 +797,22 @@ class BannersPage {
     }
   }
 
+  async uploadBannerImages(bannerId, images) {
+    try {
+      const formData = new FormData();
+      images.forEach((image, index) => {
+        formData.append('images', image, `banner_${bannerId}_${index + 1}.webp`);
+      });
+
+      await this.apiService.uploadFile(`/banners/${bannerId}/upload-images`, formData);
+
+      this.notificationService.success('Success', 'Banner images uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading banner images:', error);
+      this.notificationService.error('Warning', 'Banner saved but failed to upload some images');
+    }
+  }
+
   editBanner(id) {
     const banner = this.banners.find(b => b.id === id);
     if (banner) {
@@ -561,12 +825,14 @@ class BannersPage {
     if (!banner) return;
 
     try {
-      await this.apiService.put(`/banners/${id}`, {
-        ...banner,
-        active: !banner.active
-      });
-      
-      this.notificationService.success('Success', `Banner ${banner.active ? 'deactivated' : 'activated'} successfully`);
+      // Use dedicated activate/deactivate endpoints based on current state
+      const endpoint = banner.active ? `/banners/${id}/deactivate` : `/banners/${id}/activate`;
+      const action = banner.active ? 'deactivated' : 'activated';
+
+      // Use PATCH method for the new endpoints
+      await this.apiService.request(endpoint, { method: 'PATCH' });
+
+      this.notificationService.success('Success', `Banner ${action} successfully`);
       await this.loadBanners();
     } catch (error) {
       console.error('Error toggling banner:', error);

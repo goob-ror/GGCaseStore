@@ -19,6 +19,13 @@ module.exports = merge(common, {
         changeOrigin: true,
         secure: false,
         logLevel: 'debug'
+      },
+      {
+        context: ['/uploads'],
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+        logLevel: 'debug'
       }
     ],
     client: {

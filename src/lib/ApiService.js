@@ -1,9 +1,20 @@
 class ApiService {
   constructor() {
-    this.baseURL = '/api';
+    this.baseURL = 'http://localhost:3000/api';
+    // Use current origin for static files (proxied through webpack dev server)
+    this.staticURL = window.location.origin;
     this.defaultHeaders = {
       'Content-Type': 'application/json',
     };
+  }
+
+  /**
+   * Get full URL for static files (images, etc.)
+   */
+  getStaticURL(path) {
+    if (!path) return '';
+    if (path.startsWith('http')) return path; // Already full URL
+    return `${this.staticURL}${path.startsWith('/') ? path : '/' + path}`;
   }
 
   async request(endpoint, options = {}) {
@@ -29,9 +40,9 @@ class ApiService {
       }
 
       if (!response.ok) {
-        // If it's JSON error response, use the message from the response
-        if (typeof data === 'object' && data.message) {
-          throw new Error(data.message);
+        // If it's JSON error response, use the error message from the response
+        if (typeof data === 'object' && (data.message || data.error)) {
+          throw new Error(data.message || data.error);
         } else {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }

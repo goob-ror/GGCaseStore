@@ -28,7 +28,7 @@ const {
   validateRating,
   validateBanner
 } = require('./middleware/validation');
-const { requireAdmin, optionalAdmin } = require('./middleware/auth');
+const { requireAdmin, optionalAdmin, requireAdminStrict, requireAdminSafe } = require('./middleware/auth');
 
 // Import CRUD modules
 const adminCRUD = require('./database/adminCRUD');
@@ -45,6 +45,9 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Trust proxy for IP address detection (disabled for development)
+// app.set('trust proxy', true);
 
 // Create HTTP server and Socket.IO
 const server = createServer(app);
@@ -153,6 +156,12 @@ app.get('/api/admins', adminLimiter, requireAdmin, adminCRUD.getAllAdmins);
 // Create new admin (admin only)
 app.post('/api/admins', adminLimiter, requireAdmin, validateAdmin, handleValidationErrors, adminCRUD.createAdmin);
 
+// Update admin (admin only)
+app.put('/api/admins/:id', adminLimiter, requireAdmin, validateAdmin, handleValidationErrors, adminCRUD.updateAdmin);
+
+// Delete admin (admin only)
+app.delete('/api/admins/:id', adminLimiter, requireAdmin, adminCRUD.deleteAdmin);
+
 // ===== BRAND ROUTES =====
 
 // Get all brands (public)
@@ -169,6 +178,9 @@ app.put('/api/brands/:id', strictLimiter, requireAdmin, validateId, validateBran
 
 // Delete brand (admin only)
 app.delete('/api/brands/:id', strictLimiter, requireAdmin, validateId, handleValidationErrors, brandCRUD.deleteBrand);
+
+// Upload brand image (admin only)
+app.post('/api/brands/:id/upload-image', strictLimiter, requireAdmin, upload.single('image'), brandCRUD.uploadBrandImage);
 
 // ===== CATEGORY ROUTES =====
 
@@ -187,6 +199,9 @@ app.put('/api/categories/:id', strictLimiter, requireAdmin, validateId, validate
 // Delete category (admin only)
 app.delete('/api/categories/:id', strictLimiter, requireAdmin, validateId, handleValidationErrors, categoryCRUD.deleteCategory);
 
+// Upload category image (admin only)
+app.post('/api/categories/:id/upload-image', strictLimiter, requireAdmin, upload.single('image'), categoryCRUD.uploadCategoryImage);
+
 // ===== PRODUCT ROUTES =====
 
 // Get all products with brand and category info (public)
@@ -195,14 +210,14 @@ app.get('/api/products', productCRUD.getAllProducts);
 // Get product by ID with variants and photos (public)
 app.get('/api/products/:id', productCRUD.getProductById);
 
-// Create new product (admin only)
-app.post('/api/products', strictLimiter, requireAdmin, productCRUD.createProduct);
+// Create new product (admin only - strict security)
+app.post('/api/products', strictLimiter, requireAdminStrict, productCRUD.createProduct);
 
-// Update product (admin only)
-app.put('/api/products/:id', strictLimiter, requireAdmin, productCRUD.updateProduct);
+// Update product (admin only - strict security)
+app.put('/api/products/:id', strictLimiter, requireAdminStrict, productCRUD.updateProduct);
 
-// Delete product (admin only)
-app.delete('/api/products/:id', strictLimiter, requireAdmin, productCRUD.deleteProduct);
+// Delete product (admin only - strict security)
+app.delete('/api/products/:id', strictLimiter, requireAdminStrict, productCRUD.deleteProduct);
 
 // ===== PRODUCT VARIANT ROUTES =====
 
@@ -211,6 +226,9 @@ app.get('/api/products/:productId/variants', variantCRUD.getVariantsByProductId)
 
 // Add variant to product (admin only)
 app.post('/api/products/:productId/variants', strictLimiter, requireAdmin, variantCRUD.createVariant);
+
+// Bulk update variants for a product (admin only)
+app.put('/api/products/:productId/variants', strictLimiter, requireAdmin, variantCRUD.updateProductVariants);
 
 // Update variant (admin only)
 app.put('/api/variants/:id', strictLimiter, requireAdmin, variantCRUD.updateVariant);
@@ -254,8 +272,17 @@ app.post('/api/banners', strictLimiter, requireAdmin, validateBanner, handleVali
 // Update banner (admin only)
 app.put('/api/banners/:id', strictLimiter, requireAdmin, validateId, validateBanner, handleValidationErrors, bannerCRUD.updateBanner);
 
+// Activate banner (admin only)
+app.patch('/api/banners/:id/activate', strictLimiter, requireAdmin, validateId, handleValidationErrors, bannerCRUD.activateBanner);
+
+// Deactivate banner (admin only)
+app.patch('/api/banners/:id/deactivate', strictLimiter, requireAdmin, validateId, handleValidationErrors, bannerCRUD.deactivateBanner);
+
 // Delete banner (admin only)
 app.delete('/api/banners/:id', strictLimiter, requireAdmin, validateId, handleValidationErrors, bannerCRUD.deleteBanner);
+
+// Upload banner images (admin only)
+app.post('/api/banners/:id/upload-images', strictLimiter, requireAdmin, upload.array('images', 2), bannerCRUD.uploadBannerImages);
 
 // Start server
 server.listen(PORT, () => {

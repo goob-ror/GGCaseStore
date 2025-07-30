@@ -24,7 +24,28 @@ const adminLogin = async (req, res) => {
     }
 
     req.session.cookie.maxAge = 1000 * 60 * 60 * 24;
-    req.session.admin = { id: admin.id, username: admin.username };
+
+    // Get client IP address
+    const clientIP = req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for'] || '127.0.0.1';
+
+    req.session.admin = {
+      id: admin.id,
+      username: admin.username,
+      loginTime: Date.now(),
+      userAgent: req.get('User-Agent'),
+      ipAddress: clientIP
+    };
+    req.session.loginTime = new Date().toISOString();
+
+    // Update admin's last login info in database
+    try {
+      await db.execute(
+        'UPDATE admins SET last_login_ip = ?, last_login_at = NOW() WHERE id = ?',
+        [clientIP, admin.id]
+      );
+    } catch (error) {
+      console.error('Error updating admin login info:', error);
+    }
 
     res.json({ success: true, message: 'Admin logged in successfully' });
   } catch (error) {
@@ -49,11 +70,22 @@ const adminLogout = async (req, res, next) => {
 const checkSession = async (req, res) => {
   try {
     if (req.session && req.session.admin) {
+      // Get client IP address
+      const clientIP = req.ip ||
+                      req.connection?.remoteAddress ||
+                      req.socket?.remoteAddress ||
+                      (req.connection?.socket ? req.connection.socket.remoteAddress : null) ||
+                      req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                      req.headers['x-real-ip'] ||
+                      '127.0.0.1';
+
       res.json({
         success: true,
         data: {
           id: req.session.admin.id,
-          username: req.session.admin.username
+          username: req.session.admin.username,
+          currentIP: clientIP,
+          loginTime: req.session.loginTime || new Date().toISOString()
         }
       });
     } else {
