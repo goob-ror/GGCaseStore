@@ -40,9 +40,9 @@ class ApiService {
       }
 
       if (!response.ok) {
-        // If it's JSON error response, use the message from the response
-        if (typeof data === 'object' && data.message) {
-          throw new Error(data.message);
+        // If it's JSON error response, use the error message from the response
+        if (typeof data === 'object' && (data.message || data.error)) {
+          throw new Error(data.message || data.error);
         } else {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }

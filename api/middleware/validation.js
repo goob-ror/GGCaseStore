@@ -132,11 +132,11 @@ const validateBanner = [
     .isLength({ max: 255 })
     .withMessage('Title must not exceed 255 characters'),
   body('banner_image_url')
-    .optional()
+    .optional({ checkFalsy: true })
     .isURL()
     .withMessage('Banner image URL must be a valid URL'),
   body('redirect_url')
-    .optional()
+    .optional({ checkFalsy: true })
     .isURL()
     .withMessage('Redirect URL must be a valid URL'),
   body('active')

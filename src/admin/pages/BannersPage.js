@@ -546,6 +546,8 @@ class BannersPage {
       maxFiles: 1,
       enableCropping: true,
       cropAspectRatio: 3, // 3:1 aspect ratio for banners (1200x400)
+      maxWidth: 1200,     // Banner width
+      maxHeight: 400,     // Banner height
       onFilesChange: (files) => {
         console.log('Banner image changed:', files);
       },
@@ -823,11 +825,16 @@ class BannersPage {
     if (!banner) return;
 
     try {
-      await this.apiService.put(`/banners/${id}`, {
-        ...banner,
+      // Only send the fields that are expected by the API
+      const updateData = {
+        title: banner.title,
+        banner_image_url: banner.banner_image_url || null,
+        redirect_url: banner.redirect_url || null,
         active: !banner.active
-      });
-      
+      };
+
+      await this.apiService.put(`/banners/${id}`, updateData);
+
       this.notificationService.success('Success', `Banner ${banner.active ? 'deactivated' : 'activated'} successfully`);
       await this.loadBanners();
     } catch (error) {

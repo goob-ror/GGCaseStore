@@ -46,8 +46,8 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Trust proxy for IP address detection
-app.set('trust proxy', true);
+// Trust proxy for IP address detection (disabled for development)
+// app.set('trust proxy', true);
 
 // Create HTTP server and Socket.IO
 const server = createServer(app);

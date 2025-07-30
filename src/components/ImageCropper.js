@@ -34,13 +34,17 @@ export class ImageCropper {
    * Create the HTML structure for the image cropper
    */
   createHTML(containerId) {
+    const aspectRatioText = this.options.aspectRatio === 1 ? '1:1 square ratio' :
+                           this.options.aspectRatio === 3 ? '3:1 banner ratio' :
+                           `${this.options.aspectRatio}:1 ratio`;
+
     return `
       <div class="image-cropper-modal" id="${containerId}" style="display: none;">
         <div class="cropper-backdrop"></div>
         <div class="cropper-content">
           <div class="cropper-header">
             <h3>Crop Image</h3>
-            <p>Drag to adjust the crop area. Images will be cropped to a 1:1 square ratio.</p>
+            <p>Drag to adjust the crop area. Images will be cropped to a ${aspectRatioText}.</p>
           </div>
           <div class="cropper-body">
             <div class="cropper-canvas-container">
@@ -181,13 +185,34 @@ export class ImageCropper {
     // Draw image
     this.ctx.drawImage(this.image, 0, 0, displayWidth, displayHeight);
 
-    // Setup initial crop area (square in center)
-    const cropSize = Math.min(displayWidth, displayHeight) * 0.8;
+    // Setup initial crop area based on aspect ratio
+    let cropWidth, cropHeight;
+
+    if (this.options.aspectRatio === 1) {
+      // Square crop (1:1)
+      const cropSize = Math.min(displayWidth, displayHeight) * 0.8;
+      cropWidth = cropSize;
+      cropHeight = cropSize;
+    } else {
+      // Rectangular crop (e.g., 3:1 for banners)
+      const maxWidth = displayWidth * 0.9;
+      const maxHeight = displayHeight * 0.8;
+
+      // Calculate dimensions maintaining aspect ratio
+      if (maxWidth / this.options.aspectRatio <= maxHeight) {
+        cropWidth = maxWidth;
+        cropHeight = maxWidth / this.options.aspectRatio;
+      } else {
+        cropHeight = maxHeight;
+        cropWidth = maxHeight * this.options.aspectRatio;
+      }
+    }
+
     this.cropArea = {
-      x: (displayWidth - cropSize) / 2,
-      y: (displayHeight - cropSize) / 2,
-      width: cropSize,
-      height: cropSize
+      x: (displayWidth - cropWidth) / 2,
+      y: (displayHeight - cropHeight) / 2,
+      width: cropWidth,
+      height: cropHeight
     };
 
     this.updateCropAreaDisplay();
@@ -298,16 +323,44 @@ export class ImageCropper {
         break;
     }
 
-    // Maintain 1:1 aspect ratio
-    const size = Math.min(newWidth, newHeight);
-    newWidth = size;
-    newHeight = size;
+    // Maintain aspect ratio
+    if (this.options.aspectRatio === 1) {
+      // Square aspect ratio (1:1)
+      const size = Math.min(newWidth, newHeight);
+      newWidth = size;
+      newHeight = size;
+    } else {
+      // Rectangular aspect ratio (e.g., 3:1)
+      // Determine which dimension to use as the base
+      const widthBasedHeight = newWidth / this.options.aspectRatio;
+      const heightBasedWidth = newHeight * this.options.aspectRatio;
+
+      // Use the smaller result to ensure it fits
+      if (widthBasedHeight <= newHeight) {
+        newHeight = widthBasedHeight;
+      } else {
+        newWidth = heightBasedWidth;
+      }
+    }
 
     // Ensure minimum size
-    const minSize = 50;
-    if (newWidth < minSize || newHeight < minSize) {
-      newWidth = minSize;
-      newHeight = minSize;
+    const minWidth = this.options.aspectRatio === 1 ? 50 : 150; // Larger minimum for banners
+    const minHeight = this.options.aspectRatio === 1 ? 50 : 50;
+
+    if (newWidth < minWidth || newHeight < minHeight) {
+      if (this.options.aspectRatio === 1) {
+        newWidth = minWidth;
+        newHeight = minHeight;
+      } else {
+        // Maintain aspect ratio for minimum size
+        if (minWidth / this.options.aspectRatio >= minHeight) {
+          newWidth = minWidth;
+          newHeight = minWidth / this.options.aspectRatio;
+        } else {
+          newHeight = minHeight;
+          newWidth = minHeight * this.options.aspectRatio;
+        }
+      }
     }
 
     // Constrain to canvas bounds
@@ -342,17 +395,38 @@ export class ImageCropper {
     // Create output canvas
     const outputCanvas = document.createElement('canvas');
     const outputCtx = outputCanvas.getContext('2d');
-    
-    // Set output size (square)
-    const outputSize = Math.min(this.options.maxWidth, this.options.maxHeight);
-    outputCanvas.width = outputSize;
-    outputCanvas.height = outputSize;
+
+    // Set output size based on aspect ratio
+    let outputWidth, outputHeight;
+
+    if (this.options.aspectRatio === 1) {
+      // Square output
+      const outputSize = Math.min(this.options.maxWidth, this.options.maxHeight);
+      outputWidth = outputSize;
+      outputHeight = outputSize;
+    } else {
+      // Rectangular output (e.g., 3:1 for banners)
+      const maxWidth = this.options.maxWidth;
+      const maxHeight = this.options.maxHeight;
+
+      // Calculate output dimensions maintaining aspect ratio
+      if (maxWidth / this.options.aspectRatio <= maxHeight) {
+        outputWidth = maxWidth;
+        outputHeight = maxWidth / this.options.aspectRatio;
+      } else {
+        outputHeight = maxHeight;
+        outputWidth = maxHeight * this.options.aspectRatio;
+      }
+    }
+
+    outputCanvas.width = outputWidth;
+    outputCanvas.height = outputHeight;
 
     // Draw cropped image
     outputCtx.drawImage(
       this.image,
       actualCrop.x, actualCrop.y, actualCrop.width, actualCrop.height,
-      0, 0, outputSize, outputSize
+      0, 0, outputWidth, outputHeight
     );
 
     // Convert to blob
