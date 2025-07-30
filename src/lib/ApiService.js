@@ -1,9 +1,20 @@
 class ApiService {
   constructor() {
-    this.baseURL = '/api';
+    this.baseURL = 'http://localhost:3000/api';
+    // Use current origin for static files (proxied through webpack dev server)
+    this.staticURL = window.location.origin;
     this.defaultHeaders = {
       'Content-Type': 'application/json',
     };
+  }
+
+  /**
+   * Get full URL for static files (images, etc.)
+   */
+  getStaticURL(path) {
+    if (!path) return '';
+    if (path.startsWith('http')) return path; // Already full URL
+    return `${this.staticURL}${path.startsWith('/') ? path : '/' + path}`;
   }
 
   async request(endpoint, options = {}) {

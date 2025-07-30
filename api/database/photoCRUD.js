@@ -33,14 +33,22 @@ const createPhoto = async (req, res) => {
   }
 };
 
-// Delete photo
+// Soft delete photo (remove from product but keep file)
 const deletePhoto = async (req, res) => {
   try {
-    const [result] = await db.execute('DELETE FROM product_photos WHERE id = ?', [req.params.id]);
-    if (result.affectedRows === 0) {
+    // Get photo info first for webhook
+    const [photoRows] = await db.execute('SELECT * FROM product_photos WHERE id = ?', [req.params.id]);
+    if (photoRows.length === 0) {
       return res.status(404).json({ success: false, message: 'Photo not found' });
     }
-    res.json({ success: true, message: 'Photo deleted successfully' });
+
+    // Remove from database (soft delete - file remains on disk)
+    const [result] = await db.execute('DELETE FROM product_photos WHERE id = ?', [req.params.id]);
+
+    // Emit webhook event
+    emitPhotoDeleted(req, parseInt(req.params.id));
+
+    res.json({ success: true, message: 'Photo removed from product successfully' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -93,7 +101,7 @@ const uploadProductPhotos = async (req, res) => {
         const filePath = path.join(uploadsDir, filename);
         const publicUrl = `/uploads/products/${filename}`;
 
-        // Process and convert to WebP
+        // Process and convert to WebP with 1:1 aspect ratio
         await sharp(file.buffer)
           .resize(800, 800, {
             fit: 'cover',

@@ -1,5 +1,6 @@
 import { ApiService } from '../../lib/ApiService.js';
 import { NotificationService } from '../../components/NotificationService.js';
+import { ImageUpload } from '../../components/ImageUpload.js';
 
 class BrandsPage {
   constructor() {
@@ -8,6 +9,9 @@ class BrandsPage {
     this.brands = [];
     this.showForm = false;
     this.editingBrand = null;
+
+    // Initialize components
+    this.imageUpload = null;
   }
 
   async render(container) {
@@ -40,7 +44,7 @@ class BrandsPage {
 
           <div class="brand-form-modal" id="brandFormModal" style="display: none;">
             <div class="modal-backdrop"></div>
-            <div class="modal-content">
+            <div class="modal-content modal-medium">
               <div class="modal-header">
                 <h3 id="formTitle">Add New Brand</h3>
                 <button class="modal-close" id="closeFormBtn">
@@ -48,15 +52,35 @@ class BrandsPage {
                 </button>
               </div>
               <form class="brand-form" id="brandForm">
-                <div class="form-group">
-                  <label for="brandName" class="form-label">Brand Name *</label>
-                  <input type="text" id="brandName" name="name" class="form-control" required>
-                </div>
-                
-                <div class="form-group">
-                  <label for="brandPhoto" class="form-label">Brand Photo URL</label>
-                  <input type="url" id="brandPhoto" name="brand_photo" class="form-control" placeholder="https://example.com/logo.jpg">
-                  <small class="form-text">Enter a URL for the brand logo/photo</small>
+                <div class="form-columns-2">
+                  <!-- Column 1: Image Upload -->
+                  <div class="form-column column-image">
+                    <div class="column-header">
+                      <h4><i class="fas fa-image"></i> Brand Logo</h4>
+                    </div>
+                    <div class="column-content">
+                      <div id="brandImageUpload"></div>
+                    </div>
+                  </div>
+
+                  <!-- Column 2: Brand Details -->
+                  <div class="form-column column-details">
+                    <div class="column-header">
+                      <h4><i class="fas fa-info-circle"></i> Brand Information</h4>
+                    </div>
+                    <div class="column-content">
+                      <div class="form-group">
+                        <label for="brandName" class="form-label">Brand Name *</label>
+                        <input type="text" id="brandName" name="name" class="form-control" required>
+                      </div>
+
+                      <div class="form-group">
+                        <label for="brandDescription" class="form-label">Description</label>
+                        <textarea id="brandDescription" name="description" class="form-control" rows="4" placeholder="Brief description of the brand..."></textarea>
+                        <small class="form-text text-muted">Optional brand description for internal reference</small>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div class="form-actions">
@@ -235,6 +259,11 @@ class BrandsPage {
           z-index: 1;
         }
 
+        .modal-medium {
+          max-width: 800px;
+          width: 90%;
+        }
+
         .modal-header {
           display: flex;
           justify-content: space-between;
@@ -297,6 +326,67 @@ class BrandsPage {
           color: #d1d5db;
         }
 
+        /* 2-Column Form Layout */
+        .form-columns-2 {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 2rem;
+          padding: 1.5rem;
+        }
+
+        .form-column {
+          display: flex;
+          flex-direction: column;
+          min-height: 300px;
+        }
+
+        .column-header {
+          margin-bottom: 1rem;
+          padding-bottom: 0.75rem;
+          border-bottom: 2px solid #e5e7eb;
+        }
+
+        .column-header h4 {
+          margin: 0;
+          font-size: 1rem;
+          font-weight: 600;
+          color: #374151;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .column-header i {
+          color: #6366f1;
+        }
+
+        .column-content {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .column-image .column-content {
+          min-height: 250px;
+        }
+
+        @media (max-width: 768px) {
+          .form-columns-2 {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            padding: 1rem;
+          }
+
+          .form-column {
+            min-height: auto;
+          }
+
+          .modal-medium {
+            width: 98%;
+            max-width: none;
+          }
+        }
+
         @media (max-width: 768px) {
           .page-header {
             flex-direction: column;
@@ -329,6 +419,39 @@ class BrandsPage {
     cancelFormBtn?.addEventListener('click', () => this.hideBrandForm());
     modalBackdrop?.addEventListener('click', () => this.hideBrandForm());
     brandForm?.addEventListener('submit', (e) => this.handleFormSubmit(e));
+
+    // Initialize form components
+    this.initializeFormComponents();
+  }
+
+  initializeFormComponents() {
+    // Initialize Image Upload
+    this.imageUpload = new ImageUpload({
+      multiple: false,
+      maxFiles: 1,
+      enableCropping: false, // Temporarily disabled for debugging
+      cropAspectRatio: 1, // 1:1 square ratio
+      onFilesChange: (files) => {
+        console.log('Brand image changed:', files);
+      },
+      onError: (error) => {
+        this.notificationService.error('Image Upload Error', error);
+      }
+    });
+
+    // Insert HTML and initialize components
+    this.insertComponentHTML();
+  }
+
+  insertComponentHTML() {
+    // Insert Image Upload HTML
+    const imageUploadContainer = document.getElementById('brandImageUpload');
+    if (imageUploadContainer) {
+      imageUploadContainer.innerHTML = this.imageUpload.createHTML('brandImageUpload');
+      this.imageUpload.initialize('brandImageUpload');
+      // Add single image class
+      imageUploadContainer.classList.add('single-image');
+    }
   }
 
   async loadBrands() {
@@ -361,8 +484,8 @@ class BrandsPage {
     const cardsHTML = this.brands.map(brand => `
       <div class="brand-card">
         <div class="brand-image">
-          ${brand.brand_photo ? 
-            `<img src="${brand.brand_photo}" alt="${this.escapeHtml(brand.name)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          ${brand.brand_photo ?
+            `<img src="${this.apiService.getStaticURL(brand.brand_photo)}" alt="${this.escapeHtml(brand.name)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
              <div class="placeholder" style="display: none;"><i class="fas fa-image"></i></div>` :
             `<div class="placeholder"><i class="fas fa-image"></i></div>`
           }
@@ -432,21 +555,37 @@ class BrandsPage {
   }
 
   populateForm(brand) {
+    // Populate basic form fields
     document.getElementById('brandName').value = brand.name || '';
-    document.getElementById('brandPhoto').value = brand.brand_photo || '';
+
+    const descriptionField = document.getElementById('brandDescription');
+    if (descriptionField) {
+      descriptionField.value = brand.description || '';
+    }
+
+    // Populate legacy photo field if it exists
+    const photoField = document.getElementById('brandPhoto');
+    if (photoField) {
+      photoField.value = brand.brand_photo || '';
+    }
+
+    // Load existing brand image
+    if (this.imageUpload && brand.brand_photo) {
+      this.imageUpload.setExistingFiles([this.apiService.getStaticURL(brand.brand_photo)]);
+    }
   }
 
   async handleFormSubmit(e) {
     e.preventDefault();
-    
+
     const saveBtn = document.getElementById('saveBrandBtn');
     const btnText = saveBtn.querySelector('.btn-text');
     const btnLoading = saveBtn.querySelector('.btn-loading');
-    
+
     const formData = new FormData(e.target);
     const brandData = {
       name: formData.get('name'),
-      brand_photo: formData.get('brand_photo') || null
+      description: formData.get('description') || null
     };
 
     saveBtn.disabled = true;
@@ -454,12 +593,22 @@ class BrandsPage {
     btnLoading.classList.remove('d-none');
 
     try {
+      let brandId;
+
       if (this.editingBrand) {
         await this.apiService.put(`/brands/${this.editingBrand.id}`, brandData);
+        brandId = this.editingBrand.id;
         this.notificationService.success('Success', 'Brand updated successfully');
       } else {
-        await this.apiService.post('/brands', brandData);
+        const response = await this.apiService.post('/brands', brandData);
+        brandId = response.id;
         this.notificationService.success('Success', 'Brand created successfully');
+      }
+
+      // Upload image if any
+      const images = this.imageUpload?.getFiles();
+      if (images && images.length > 0 && brandId) {
+        await this.uploadBrandImage(brandId, images[0]);
       }
 
       this.hideBrandForm();
@@ -472,6 +621,31 @@ class BrandsPage {
       saveBtn.disabled = false;
       btnText.classList.remove('d-none');
       btnLoading.classList.add('d-none');
+    }
+  }
+
+  async uploadBrandImage(brandId, image) {
+    try {
+      const formData = new FormData();
+      formData.append('image', image, `brand_${brandId}.webp`);
+
+      const response = await this.apiService.uploadFile(`/brands/${brandId}/upload-image`, formData);
+
+      this.notificationService.success('Success', 'Brand image uploaded successfully');
+
+      // Refresh the brand data to get the updated image URL
+      if (this.editingBrand && this.editingBrand.id === brandId) {
+        const brandResponse = await this.apiService.get(`/brands/${brandId}`);
+        if (brandResponse.data && this.imageUpload) {
+          this.imageUpload.setExistingFiles([this.apiService.getStaticURL(brandResponse.data.brand_photo)]);
+        }
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Error uploading brand image:', error);
+      this.notificationService.error('Warning', 'Brand saved but failed to upload image');
+      throw error;
     }
   }
 

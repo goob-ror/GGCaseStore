@@ -46,6 +46,9 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy for IP address detection
+app.set('trust proxy', true);
+
 // Create HTTP server and Socket.IO
 const server = createServer(app);
 const io = new Server(server, {
@@ -170,6 +173,9 @@ app.put('/api/brands/:id', strictLimiter, requireAdmin, validateId, validateBran
 // Delete brand (admin only)
 app.delete('/api/brands/:id', strictLimiter, requireAdmin, validateId, handleValidationErrors, brandCRUD.deleteBrand);
 
+// Upload brand image (admin only)
+app.post('/api/brands/:id/upload-image', strictLimiter, requireAdmin, upload.single('image'), brandCRUD.uploadBrandImage);
+
 // ===== CATEGORY ROUTES =====
 
 // Get all categories (public)
@@ -186,6 +192,9 @@ app.put('/api/categories/:id', strictLimiter, requireAdmin, validateId, validate
 
 // Delete category (admin only)
 app.delete('/api/categories/:id', strictLimiter, requireAdmin, validateId, handleValidationErrors, categoryCRUD.deleteCategory);
+
+// Upload category image (admin only)
+app.post('/api/categories/:id/upload-image', strictLimiter, requireAdmin, upload.single('image'), categoryCRUD.uploadCategoryImage);
 
 // ===== PRODUCT ROUTES =====
 
@@ -256,6 +265,9 @@ app.put('/api/banners/:id', strictLimiter, requireAdmin, validateId, validateBan
 
 // Delete banner (admin only)
 app.delete('/api/banners/:id', strictLimiter, requireAdmin, validateId, handleValidationErrors, bannerCRUD.deleteBanner);
+
+// Upload banner images (admin only)
+app.post('/api/banners/:id/upload-images', strictLimiter, requireAdmin, upload.array('images', 2), bannerCRUD.uploadBannerImages);
 
 // Start server
 server.listen(PORT, () => {

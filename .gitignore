@@ -2,6 +2,11 @@
 node_modules/
 dist/
 
+# Ignore uploaded files
+uploads/banners/
+uploads/brands/
+uploads/categories/
+uploads/products/
 
 .env
 

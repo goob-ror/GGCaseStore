@@ -1,0 +1,271 @@
+/**
+ * Image Cropper Component
+ * Provides 1:1 aspect ratio cropping functionality for images
+ */
+export class ImageCropper {
+  constructor(options = {}) {
+    this.options = {
+      aspectRatio: 1, // 1:1 for square images
+      quality: 0.85,
+      outputFormat: 'webp',
+      maxWidth: 800,
+      maxHeight: 800,
+      ...options
+    };
+    
+    this.canvas = null;
+    this.ctx = null;
+    this.image = null;
+    this.cropArea = {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0
+    };
+    this.isDragging = false;
+    this.dragStart = { x: 0, y: 0 };
+    this.onCropComplete = options.onCropComplete || (() => {});
+    this.onCancel = options.onCancel || (() => {});
+  }
+
+  /**
+   * Create the HTML structure for the image cropper
+   */
+  createHTML(containerId) {
+    return `
+      <div class="image-cropper-modal" id="${containerId}" style="display: none;">
+        <div class="cropper-backdrop"></div>
+        <div class="cropper-content">
+          <div class="cropper-header">
+            <h3>Crop Image</h3>
+            <p>Drag to adjust the crop area. Images will be cropped to a 1:1 square ratio.</p>
+          </div>
+          <div class="cropper-body">
+            <div class="cropper-canvas-container">
+              <canvas id="${containerId}-canvas" class="cropper-canvas"></canvas>
+              <div class="crop-overlay" id="${containerId}-overlay">
+                <div class="crop-area" id="${containerId}-crop-area">
+                  <div class="crop-handle crop-handle-nw"></div>
+                  <div class="crop-handle crop-handle-ne"></div>
+                  <div class="crop-handle crop-handle-sw"></div>
+                  <div class="crop-handle crop-handle-se"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="cropper-footer">
+            <button type="button" class="btn btn-secondary" id="${containerId}-cancel">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+            <button type="button" class="btn btn-primary" id="${containerId}-crop">
+              <i class="fas fa-crop"></i> Crop Image
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Initialize the cropper after HTML is inserted
+   */
+  initialize(containerId) {
+    this.containerId = containerId;
+    this.modal = document.getElementById(containerId);
+    this.canvas = document.getElementById(`${containerId}-canvas`);
+    this.ctx = this.canvas.getContext('2d');
+    this.overlay = document.getElementById(`${containerId}-overlay`);
+    this.cropAreaEl = document.getElementById(`${containerId}-crop-area`);
+    this.cancelBtn = document.getElementById(`${containerId}-cancel`);
+    this.cropBtn = document.getElementById(`${containerId}-crop`);
+
+    this.bindEvents();
+  }
+
+  /**
+   * Bind event listeners
+   */
+  bindEvents() {
+    // Cancel button
+    this.cancelBtn.addEventListener('click', () => {
+      this.hide();
+      this.onCancel();
+    });
+
+    // Crop button
+    this.cropBtn.addEventListener('click', () => {
+      this.performCrop();
+    });
+
+    // Backdrop click to cancel
+    this.modal.querySelector('.cropper-backdrop').addEventListener('click', () => {
+      this.hide();
+      this.onCancel();
+    });
+
+    // Crop area dragging
+    this.cropAreaEl.addEventListener('mousedown', this.startDrag.bind(this));
+    document.addEventListener('mousemove', this.drag.bind(this));
+    document.addEventListener('mouseup', this.endDrag.bind(this));
+
+    // Prevent context menu on canvas
+    this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+
+  /**
+   * Show the cropper with an image
+   */
+  show(imageFile) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          this.image = img;
+          this.setupCanvas();
+          this.modal.style.display = 'block';
+          document.body.style.overflow = 'hidden';
+          
+          // Set up promise resolution
+          this.onCropComplete = resolve;
+          this.onCancel = () => resolve(null);
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(imageFile);
+    });
+  }
+
+  /**
+   * Hide the cropper
+   */
+  hide() {
+    this.modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  /**
+   * Setup canvas and initial crop area
+   */
+  setupCanvas() {
+    const containerWidth = 600;
+    const containerHeight = 400;
+    
+    // Calculate display size maintaining aspect ratio
+    const imgAspect = this.image.width / this.image.height;
+    let displayWidth, displayHeight;
+    
+    if (imgAspect > containerWidth / containerHeight) {
+      displayWidth = containerWidth;
+      displayHeight = containerWidth / imgAspect;
+    } else {
+      displayHeight = containerHeight;
+      displayWidth = containerHeight * imgAspect;
+    }
+
+    this.canvas.width = displayWidth;
+    this.canvas.height = displayHeight;
+    this.canvas.style.width = displayWidth + 'px';
+    this.canvas.style.height = displayHeight + 'px';
+
+    // Draw image
+    this.ctx.drawImage(this.image, 0, 0, displayWidth, displayHeight);
+
+    // Setup initial crop area (square in center)
+    const cropSize = Math.min(displayWidth, displayHeight) * 0.8;
+    this.cropArea = {
+      x: (displayWidth - cropSize) / 2,
+      y: (displayHeight - cropSize) / 2,
+      width: cropSize,
+      height: cropSize
+    };
+
+    this.updateCropAreaDisplay();
+  }
+
+  /**
+   * Update crop area display
+   */
+  updateCropAreaDisplay() {
+    this.cropAreaEl.style.left = this.cropArea.x + 'px';
+    this.cropAreaEl.style.top = this.cropArea.y + 'px';
+    this.cropAreaEl.style.width = this.cropArea.width + 'px';
+    this.cropAreaEl.style.height = this.cropArea.height + 'px';
+  }
+
+  /**
+   * Start dragging crop area
+   */
+  startDrag(e) {
+    this.isDragging = true;
+    this.dragStart = {
+      x: e.clientX - this.cropArea.x,
+      y: e.clientY - this.cropArea.y
+    };
+    e.preventDefault();
+  }
+
+  /**
+   * Drag crop area
+   */
+  drag(e) {
+    if (!this.isDragging) return;
+
+    const newX = e.clientX - this.dragStart.x;
+    const newY = e.clientY - this.dragStart.y;
+
+    // Constrain to canvas bounds
+    this.cropArea.x = Math.max(0, Math.min(newX, this.canvas.width - this.cropArea.width));
+    this.cropArea.y = Math.max(0, Math.min(newY, this.canvas.height - this.cropArea.height));
+
+    this.updateCropAreaDisplay();
+  }
+
+  /**
+   * End dragging
+   */
+  endDrag() {
+    this.isDragging = false;
+  }
+
+  /**
+   * Perform the actual crop operation
+   */
+  performCrop() {
+    // Calculate scale factor between display and actual image
+    const scaleX = this.image.width / this.canvas.width;
+    const scaleY = this.image.height / this.canvas.height;
+
+    // Calculate actual crop coordinates
+    const actualCrop = {
+      x: this.cropArea.x * scaleX,
+      y: this.cropArea.y * scaleY,
+      width: this.cropArea.width * scaleX,
+      height: this.cropArea.height * scaleY
+    };
+
+    // Create output canvas
+    const outputCanvas = document.createElement('canvas');
+    const outputCtx = outputCanvas.getContext('2d');
+    
+    // Set output size (square)
+    const outputSize = Math.min(this.options.maxWidth, this.options.maxHeight);
+    outputCanvas.width = outputSize;
+    outputCanvas.height = outputSize;
+
+    // Draw cropped image
+    outputCtx.drawImage(
+      this.image,
+      actualCrop.x, actualCrop.y, actualCrop.width, actualCrop.height,
+      0, 0, outputSize, outputSize
+    );
+
+    // Convert to blob
+    outputCanvas.toBlob((blob) => {
+      this.hide();
+      this.onCropComplete(blob);
+    }, `image/${this.options.outputFormat}`, this.options.quality);
+  }
+}

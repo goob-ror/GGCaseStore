@@ -360,6 +360,46 @@ class AdminManagementPage {
             margin-bottom: 0.5rem;
           }
         }
+
+        /* Session Information Styles */
+        .session-info {
+          font-size: 0.875rem;
+        }
+
+        .session-ip, .session-time {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 0.25rem;
+        }
+
+        .session-ip i {
+          color: #10b981;
+          width: 14px;
+        }
+
+        .session-time i {
+          color: #6b7280;
+          width: 14px;
+        }
+
+        .session-info.offline {
+          display: flex;
+          align-items: center;
+        }
+
+        .offline-status {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #6b7280;
+          font-style: italic;
+        }
+
+        .offline-status i {
+          color: #9ca3af;
+          font-size: 0.5rem;
+        }
       </style>
     `;
   }
@@ -422,6 +462,7 @@ class AdminManagementPage {
         <thead>
           <tr>
             <th>Admin User</th>
+            <th>Current Session</th>
             <th>Created</th>
             <th>Last Updated</th>
             <th>Actions</th>
@@ -441,12 +482,33 @@ class AdminManagementPage {
                   </div>
                 </div>
               </td>
+              <td>
+                ${currentUser && currentUser.username === admin.username ? `
+                  <div class="session-info">
+                    <div class="session-ip">
+                      <i class="fas fa-globe"></i>
+                      <span>${currentUser.currentIP || 'Unknown'}</span>
+                    </div>
+                    <div class="session-time">
+                      <i class="fas fa-clock"></i>
+                      <span>Since ${currentUser.loginTime ? new Date(currentUser.loginTime).toLocaleString() : 'Unknown'}</span>
+                    </div>
+                  </div>
+                ` : `
+                  <div class="session-info offline">
+                    <span class="offline-status">
+                      <i class="fas fa-circle"></i>
+                      Offline
+                    </span>
+                  </div>
+                `}
+              </td>
               <td>${new Date(admin.created_at).toLocaleDateString()}</td>
               <td>${new Date(admin.updated_at).toLocaleDateString()}</td>
               <td>
                 <div class="admin-actions">
-                  <button 
-                    class="btn-icon btn-delete" 
+                  <button
+                    class="btn-icon btn-delete"
                     onclick="window.adminManagementPage.deleteAdmin(${admin.id})"
                     ${currentUser && currentUser.username === admin.username ? 'disabled title="Cannot delete current user"' : 'title="Delete Admin"'}
                   >

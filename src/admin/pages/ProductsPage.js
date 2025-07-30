@@ -1,5 +1,9 @@
 import { ApiService } from '../../lib/ApiService.js';
 import { NotificationService } from '../../components/NotificationService.js';
+import { ImageUpload } from '../../components/ImageUpload.js';
+import { SearchableDropdown } from '../../components/SearchableDropdown.js';
+import { PriceFormatter } from '../../components/PriceFormatter.js';
+import { QRCodeGenerator } from '../../components/QRCodeGenerator.js';
 
 class ProductsPage {
   constructor() {
@@ -10,6 +14,13 @@ class ProductsPage {
     this.categories = [];
     this.showForm = false;
     this.editingProduct = null;
+
+    // Initialize components
+    this.imageUpload = null;
+    this.brandDropdown = null;
+    this.categoryDropdown = null;
+    this.priceFormatter = null;
+    this.qrGenerator = null;
   }
 
   async render(container) {
@@ -42,7 +53,7 @@ class ProductsPage {
 
           <div class="product-form-modal" id="productFormModal" style="display: none;">
             <div class="modal-backdrop"></div>
-            <div class="modal-content">
+            <div class="modal-content modal-large">
               <div class="modal-header">
                 <h3 id="formTitle">Add New Product</h3>
                 <button class="modal-close" id="closeFormBtn">
@@ -50,30 +61,59 @@ class ProductsPage {
                 </button>
               </div>
               <form class="product-form" id="productForm">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label for="productName" class="form-label">Product Name *</label>
-                    <input type="text" id="productName" name="name" class="form-control" required>
+                <div class="form-columns">
+                  <!-- Column 1: Image Upload -->
+                  <div class="form-column column-images">
+                    <div class="column-header">
+                      <h4><i class="fas fa-images"></i> Product Images</h4>
+                    </div>
+                    <div class="column-content">
+                      <div id="productImageUpload"></div>
+                    </div>
                   </div>
-                </div>
-                
-                <div class="form-group">
-                  <label for="productDescription" class="form-label">Description</label>
-                  <textarea id="productDescription" name="description" class="form-control" rows="4"></textarea>
-                </div>
-                
-                <div class="form-row">
-                  <div class="form-group">
-                    <label for="productBrand" class="form-label">Brand</label>
-                    <select id="productBrand" name="brand_id" class="form-control">
-                      <option value="">Select Brand</option>
-                    </select>
+
+                  <!-- Column 2: Product Details -->
+                  <div class="form-column column-details">
+                    <div class="column-header">
+                      <h4><i class="fas fa-info-circle"></i> Product Details</h4>
+                    </div>
+                    <div class="column-content">
+                      <div class="form-group">
+                        <label for="productName" class="form-label">Product Name *</label>
+                        <input type="text" id="productName" name="name" class="form-control" required>
+                      </div>
+
+                      <div class="form-group">
+                        <label for="productDescription" class="form-label">Description</label>
+                        <textarea id="productDescription" name="description" class="form-control" rows="3"></textarea>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">Brand</label>
+                        <div id="productBrandDropdown"></div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <div id="productCategoryDropdown"></div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">Base Price</label>
+                        <div id="productPriceFormatter"></div>
+                        <small class="form-text text-muted">This is the base price. You can add variants with different prices later.</small>
+                      </div>
+                    </div>
                   </div>
-                  <div class="form-group">
-                    <label for="productCategory" class="form-label">Category</label>
-                    <select id="productCategory" name="category_id" class="form-control">
-                      <option value="">Select Category</option>
-                    </select>
+
+                  <!-- Column 3: QR Code -->
+                  <div class="form-column column-qr">
+                    <div class="column-header">
+                      <h4><i class="fas fa-qrcode"></i> QR Code</h4>
+                    </div>
+                    <div class="column-content">
+                      <div id="productQRGenerator"></div>
+                    </div>
                   </div>
                 </div>
 
@@ -218,6 +258,11 @@ class ProductsPage {
           z-index: 1;
         }
 
+        .modal-large {
+          max-width: 1200px;
+          width: 95%;
+        }
+
         .modal-header {
           display: flex;
           justify-content: space-between;
@@ -303,6 +348,83 @@ class ProductsPage {
             padding: 0.75rem 0.5rem;
           }
         }
+
+        /* 3-Column Form Layout */
+        .form-columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 2rem;
+          padding: 1.5rem;
+        }
+
+        .form-column {
+          display: flex;
+          flex-direction: column;
+          min-height: 500px;
+        }
+
+        .column-header {
+          margin-bottom: 1rem;
+          padding-bottom: 0.75rem;
+          border-bottom: 2px solid #e5e7eb;
+        }
+
+        .column-header h4 {
+          margin: 0;
+          font-size: 1rem;
+          font-weight: 600;
+          color: #374151;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .column-header i {
+          color: #6366f1;
+        }
+
+        .column-content {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .column-images .column-content {
+          min-height: 400px;
+        }
+
+        .column-qr .column-content {
+          min-height: 350px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+          .form-columns {
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+          }
+
+          .column-qr {
+            grid-column: 1 / -1;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .form-columns {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            padding: 1rem;
+          }
+
+          .form-column {
+            min-height: auto;
+          }
+
+          .modal-large {
+            width: 98%;
+            max-width: none;
+          }
+        }
       </style>
     `;
   }
@@ -320,6 +442,117 @@ class ProductsPage {
     cancelFormBtn?.addEventListener('click', () => this.hideProductForm());
     modalBackdrop?.addEventListener('click', () => this.hideProductForm());
     productForm?.addEventListener('submit', (e) => this.handleFormSubmit(e));
+
+    // Initialize form components
+    this.initializeFormComponents();
+  }
+
+  initializeFormComponents() {
+    // Initialize QR code update debounce timer
+    this.qrUpdateTimeout = null;
+
+    // Initialize Image Upload
+    this.imageUpload = new ImageUpload({
+      multiple: true,
+      maxFiles: 10,
+      enableCropping: false, // Temporarily disabled for debugging
+      cropAspectRatio: 1, // 1:1 square ratio
+      onFilesChange: (files) => {
+        console.log('Images changed:', files);
+      },
+      onError: (error) => {
+        this.notificationService.error('Image Upload Error', error);
+      },
+      onExistingFileRemove: async (photoId) => {
+        await this.removeProductPhoto(photoId);
+      }
+    });
+
+    // Initialize Brand Dropdown
+    this.brandDropdown = new SearchableDropdown({
+      placeholder: 'Select a brand...',
+      onSelect: (brand) => {
+        console.log('Brand selected:', brand);
+        this.updateQRCode();
+      }
+    });
+
+    // Initialize Category Dropdown
+    this.categoryDropdown = new SearchableDropdown({
+      placeholder: 'Select a category...',
+      onSelect: (category) => {
+        console.log('Category selected:', category);
+        this.updateQRCode();
+      }
+    });
+
+    // Initialize Price Formatter
+    this.priceFormatter = new PriceFormatter({
+      onValueChange: (value) => {
+        console.log('Price changed:', value);
+      }
+    });
+
+    // Initialize QR Generator
+    this.qrGenerator = new QRCodeGenerator({
+      size: 200,
+      onGenerated: (data) => {
+        console.log('QR Code generated:', data);
+      }
+    });
+
+    // Insert HTML and initialize components
+    this.insertComponentHTML();
+
+    // Add event listeners for QR code updates
+    this.bindQRUpdateEvents();
+  }
+
+  bindQRUpdateEvents() {
+    // Update QR code when product name changes
+    const productNameInput = document.getElementById('productName');
+    if (productNameInput) {
+      productNameInput.addEventListener('input', () => {
+        this.updateQRCode();
+      });
+    }
+  }
+
+  insertComponentHTML() {
+    // Insert Image Upload HTML
+    const imageUploadContainer = document.getElementById('productImageUpload');
+    if (imageUploadContainer) {
+      imageUploadContainer.innerHTML = this.imageUpload.createHTML('productImageUpload');
+      this.imageUpload.initialize('productImageUpload');
+    }
+
+    // Insert Brand Dropdown HTML
+    const brandDropdownContainer = document.getElementById('productBrandDropdown');
+    if (brandDropdownContainer) {
+      brandDropdownContainer.innerHTML = this.brandDropdown.createHTML('productBrandDropdown');
+      this.brandDropdown.initialize('productBrandDropdown');
+    }
+
+    // Insert Category Dropdown HTML
+    const categoryDropdownContainer = document.getElementById('productCategoryDropdown');
+    if (categoryDropdownContainer) {
+      categoryDropdownContainer.innerHTML = this.categoryDropdown.createHTML('productCategoryDropdown');
+      this.categoryDropdown.initialize('productCategoryDropdown');
+    }
+
+    // Insert Price Formatter HTML
+    const priceFormatterContainer = document.getElementById('productPriceFormatter');
+    if (priceFormatterContainer) {
+      priceFormatterContainer.innerHTML = this.priceFormatter.createHTML('productPriceFormatter', 'base_price');
+      this.priceFormatter.initialize('productPriceFormatter');
+    }
+
+    // Insert QR Generator HTML
+    const qrGeneratorContainer = document.getElementById('productQRGenerator');
+    if (qrGeneratorContainer) {
+      qrGeneratorContainer.innerHTML = this.qrGenerator.createHTML('productQRGenerator');
+      this.qrGenerator.initialize('productQRGenerator');
+    }
   }
 
   async loadData() {
@@ -336,6 +569,7 @@ class ProductsPage {
 
       this.renderProductsList();
       this.populateFormSelects();
+      this.populateDropdowns();
 
     } catch (error) {
       console.error('Error loading products data:', error);
@@ -433,6 +667,48 @@ class ProductsPage {
     }
   }
 
+  populateDropdowns() {
+    // Populate brand dropdown
+    if (this.brandDropdown) {
+      this.brandDropdown.setItems(this.brands);
+    }
+
+    // Populate category dropdown
+    if (this.categoryDropdown) {
+      this.categoryDropdown.setItems(this.categories);
+    }
+  }
+
+  updateQRCode() {
+    if (!this.qrGenerator) return;
+
+    // Clear any existing timeout to debounce rapid calls
+    if (this.qrUpdateTimeout) {
+      clearTimeout(this.qrUpdateTimeout);
+    }
+
+    // Debounce QR code generation to prevent multiple rapid calls
+    this.qrUpdateTimeout = setTimeout(() => {
+      const productName = document.getElementById('productName')?.value;
+      const brandId = this.brandDropdown?.getValue();
+      const categoryId = this.categoryDropdown?.getValue();
+
+      if (productName) {
+        const productData = {
+          id: this.editingProduct?.id || 'new',
+          name: productName,
+          brand_name: brandId ? this.brands.find(b => b.id === brandId)?.name : '',
+          category_name: categoryId ? this.categories.find(c => c.id === categoryId)?.name : ''
+        };
+
+        this.qrGenerator.generateFromProduct(productData);
+      } else {
+        // Clear QR code if no product name
+        this.qrGenerator.clear();
+      }
+    }, 300); // 300ms debounce delay
+  }
+
   showProductForm(product = null) {
     this.editingProduct = product;
     const modal = document.getElementById('productFormModal');
@@ -459,25 +735,74 @@ class ProductsPage {
   }
 
   populateForm(product) {
+    // Populate basic form fields
     document.getElementById('productName').value = product.name || '';
     document.getElementById('productDescription').value = product.description || '';
-    document.getElementById('productBrand').value = product.brand_id || '';
-    document.getElementById('productCategory').value = product.category_id || '';
+
+    // Populate legacy selects (if they exist)
+    const brandSelect = document.getElementById('productBrand');
+    const categorySelect = document.getElementById('productCategory');
+    if (brandSelect) brandSelect.value = product.brand_id || '';
+    if (categorySelect) categorySelect.value = product.category_id || '';
+
+    // Populate new components
+    if (this.brandDropdown && product.brand_id) {
+      this.brandDropdown.setValue(product.brand_id);
+    }
+
+    if (this.categoryDropdown && product.category_id) {
+      this.categoryDropdown.setValue(product.category_id);
+    }
+
+    if (this.priceFormatter && product.base_price) {
+      this.priceFormatter.setValue(product.base_price);
+    }
+
+    // Load existing product images
+    if (this.imageUpload && product.id) {
+      this.loadProductImages(product.id);
+    }
+
+    // Generate QR code for existing product
+    if (this.qrGenerator) {
+      this.qrGenerator.generateFromProduct(product);
+    }
+  }
+
+  async loadProductImages(productId) {
+    try {
+      const response = await this.apiService.get(`/products/${productId}/photos`);
+      const photos = response.data || [];
+
+      if (photos.length > 0 && this.imageUpload) {
+        // Store photo IDs for deletion purposes
+        const imageData = photos.map(photo => ({
+          id: photo.id,
+          url: this.apiService.getStaticURL(photo.photo_url),
+          isExisting: true
+        }));
+        this.imageUpload.setExistingFiles(imageData);
+      }
+    } catch (error) {
+      console.error('Error loading product images:', error);
+    }
   }
 
   async handleFormSubmit(e) {
     e.preventDefault();
-    
+
     const saveBtn = document.getElementById('saveProductBtn');
     const btnText = saveBtn.querySelector('.btn-text');
     const btnLoading = saveBtn.querySelector('.btn-loading');
-    
+
+    // Get data from form components
     const formData = new FormData(e.target);
     const productData = {
       name: formData.get('name'),
       description: formData.get('description'),
-      brand_id: formData.get('brand_id') || null,
-      category_id: formData.get('category_id') || null
+      brand_id: this.brandDropdown?.getValue() || null,
+      category_id: this.categoryDropdown?.getValue() || null,
+      base_price: this.priceFormatter?.getValue() || 0
     };
 
     saveBtn.disabled = true;
@@ -485,12 +810,22 @@ class ProductsPage {
     btnLoading.classList.remove('d-none');
 
     try {
+      let productId;
+
       if (this.editingProduct) {
         await this.apiService.put(`/products/${this.editingProduct.id}`, productData);
+        productId = this.editingProduct.id;
         this.notificationService.success('Success', 'Product updated successfully');
       } else {
-        await this.apiService.post('/products', productData);
+        const response = await this.apiService.post('/products', productData);
+        productId = response.id;
         this.notificationService.success('Success', 'Product created successfully');
+      }
+
+      // Upload images if any
+      const images = this.imageUpload?.getFiles();
+      if (images && images.length > 0 && productId) {
+        await this.uploadProductImages(productId, images);
       }
 
       this.hideProductForm();
@@ -503,6 +838,47 @@ class ProductsPage {
       saveBtn.disabled = false;
       btnText.classList.remove('d-none');
       btnLoading.classList.add('d-none');
+    }
+  }
+
+  async uploadProductImages(productId, images) {
+    try {
+      const formData = new FormData();
+      images.forEach((image, index) => {
+        formData.append('photos', image, `product_${productId}_${index}.webp`);
+      });
+
+      const response = await this.apiService.uploadFile(`/products/${productId}/upload-photos`, formData);
+
+      this.notificationService.success('Success', 'Product images uploaded successfully');
+
+      // Refresh the uploaded images in the form if still editing
+      if (this.editingProduct && this.editingProduct.id === productId) {
+        await this.loadProductImages(productId);
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      this.notificationService.error('Warning', 'Product saved but failed to upload some images');
+      throw error;
+    }
+  }
+
+  async removeProductPhoto(photoId) {
+    try {
+      // Soft delete - just remove the association, don't delete the physical file
+      await this.apiService.delete(`/photos/${photoId}`);
+      this.notificationService.success('Success', 'Photo removed from product');
+
+      // Refresh the images if currently editing
+      if (this.editingProduct && this.editingProduct.id) {
+        await this.loadProductImages(this.editingProduct.id);
+      }
+    } catch (error) {
+      console.error('Error removing photo:', error);
+      this.notificationService.error('Error', 'Failed to remove photo');
+      throw error;
     }
   }
 
