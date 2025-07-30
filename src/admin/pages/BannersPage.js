@@ -11,8 +11,7 @@ class BannersPage {
     this.editingBanner = null;
 
     // Initialize components
-    this.imageUpload1 = null;
-    this.imageUpload2 = null;
+    this.imageUpload = null;
   }
 
   async render(container) {
@@ -53,50 +52,24 @@ class BannersPage {
                 </button>
               </div>
               <form class="banner-form" id="bannerForm">
-                <div class="form-columns-4">
-                  <!-- Column 1: Primary Banner Image -->
-                  <div class="form-column column-image">
-                    <div class="column-header">
-                      <h4><i class="fas fa-image"></i> Primary Banner</h4>
+                <div class="form-layout">
+                  <!-- Banner Image Section -->
+                  <div class="form-section">
+                    <div class="section-header">
+                      <h4><i class="fas fa-image"></i> Banner Image</h4>
                     </div>
-                    <div class="column-content">
+                    <div class="image-upload-container">
                       <div id="bannerImageUpload1"></div>
-                      <small class="form-text text-muted">Main banner image (1200x400px recommended)</small>
+                      <small class="form-text text-muted">Recommended size: 1200x400px for optimal display</small>
                     </div>
                   </div>
 
-                  <!-- Column 2: Spacing/Empty -->
-                  <div class="form-column column-spacer">
-                    <div class="column-header">
-                      <h4><i class="fas fa-arrows-alt-h"></i> Layout</h4>
-                    </div>
-                    <div class="column-content">
-                      <div class="layout-preview">
-                        <div class="preview-box primary">Primary</div>
-                        <div class="preview-arrow">→</div>
-                        <div class="preview-box secondary">Secondary</div>
-                      </div>
-                      <small class="form-text text-muted">Banner layout preview</small>
-                    </div>
-                  </div>
-
-                  <!-- Column 3: Secondary Banner Image -->
-                  <div class="form-column column-image">
-                    <div class="column-header">
-                      <h4><i class="fas fa-image"></i> Secondary Banner</h4>
-                    </div>
-                    <div class="column-content">
-                      <div id="bannerImageUpload2"></div>
-                      <small class="form-text text-muted">Optional secondary banner image</small>
-                    </div>
-                  </div>
-
-                  <!-- Column 4: Banner Details -->
-                  <div class="form-column column-details">
-                    <div class="column-header">
+                  <!-- Banner Details Section -->
+                  <div class="form-section">
+                    <div class="section-header">
                       <h4><i class="fas fa-info-circle"></i> Banner Information</h4>
                     </div>
-                    <div class="column-content">
+                    <div class="form-fields">
                       <div class="form-group">
                         <label for="bannerTitle" class="form-label">Banner Title *</label>
                         <input type="text" id="bannerTitle" name="title" class="form-control" required>
@@ -119,6 +92,7 @@ class BannersPage {
                     </div>
                   </div>
                 </div>
+
 
                 <div class="form-actions">
                   <button type="button" class="btn btn-secondary" id="cancelFormBtn">Cancel</button>
@@ -331,7 +305,7 @@ class BannersPage {
           border-radius: 0.75rem;
           box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
           width: 100%;
-          max-width: 600px;
+          max-width: 500px;
           max-height: 90vh;
           overflow-y: auto;
           position: relative;
@@ -404,29 +378,28 @@ class BannersPage {
           color: #d1d5db;
         }
 
-        /* 4-Column Form Layout */
-        .form-columns-4 {
-          display: grid;
-          grid-template-columns: 1fr 0.5fr 1fr 1fr;
-          gap: 1.5rem;
+        /* Simplified Form Layout */
+        .form-layout {
+          display: flex;
+          flex-direction: column;
+          gap: 2rem;
           padding: 1.5rem;
         }
 
-        .form-column {
+        .form-section {
           display: flex;
           flex-direction: column;
-          min-height: 350px;
         }
 
-        .column-header {
+        .section-header {
           margin-bottom: 1rem;
           padding-bottom: 0.75rem;
           border-bottom: 2px solid #e5e7eb;
         }
 
-        .column-header h4 {
+        .section-header h4 {
           margin: 0;
-          font-size: 0.95rem;
+          font-size: 1rem;
           font-weight: 600;
           color: #374151;
           display: flex;
@@ -434,60 +407,59 @@ class BannersPage {
           gap: 0.5rem;
         }
 
-        .column-header i {
+        .section-header i {
           color: #6366f1;
         }
 
-        .column-content {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
+        .image-upload-container {
+          max-width: 100%;
+          margin: 0 auto;
         }
 
-        .column-image .column-content {
-          min-height: 280px;
+        .preview-image {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 3 / 1;
+          overflow: hidden;
         }
 
-        .column-spacer {
+        .preview-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .image-upload-container.single-image .image-previews {
+          grid-template-columns: 1fr;
+          max-width: 900px;
+          margin: 0 auto;
+        }
+
+        #bannerImageUpload1 .dz-preview, 
+        #bannerImageUpload1 .preview-image, 
+        #bannerImageUpload1 .dz-image {
+          width: 100% !important;
+          aspect-ratio: 3 / 1 !important;
+          min-height: 250px;
+          max-height: 350px;
+          border-radius: 10px;
+          overflow: hidden;
           display: flex;
-          align-items: center;
           justify-content: center;
+          align-items: center;
         }
 
-        .layout-preview {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 1rem;
-          padding: 2rem 1rem;
-          background: #f8f9fa;
+        /* Make the preview image stretch properly */
+        #bannerImageUpload1 .dz-image img,
+        #bannerImageUpload1 .preview-image img {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
           border-radius: 8px;
-          border: 2px dashed #e5e7eb;
         }
 
-        .preview-box {
-          width: 80px;
-          height: 40px;
-          border-radius: 4px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 0.75rem;
-          font-weight: 500;
-          color: white;
-        }
-
-        .preview-box.primary {
-          background: #3b82f6;
-        }
-
-        .preview-box.secondary {
-          background: #6b7280;
-        }
-
-        .preview-arrow {
-          font-size: 1.5rem;
-          color: #6b7280;
+        .form-fields {
+          max-width: 500px;
         }
 
         .checkbox-label {
@@ -505,30 +477,18 @@ class BannersPage {
         }
 
         /* Responsive Design */
-        @media (max-width: 1200px) {
-          .form-columns-4 {
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-          }
-
-          .column-spacer {
-            display: none;
-          }
-
-          .column-details {
-            grid-column: 1 / -1;
-          }
-        }
-
         @media (max-width: 768px) {
-          .form-columns-4 {
-            grid-template-columns: 1fr;
-            gap: 1rem;
+          .form-layout {
             padding: 1rem;
+            gap: 1.5rem;
           }
 
-          .form-column {
-            min-height: auto;
+          .image-upload-container {
+            max-width: 100%;
+          }
+
+          .form-fields {
+            max-width: 100%;
           }
 
           .modal-large {
@@ -580,24 +540,14 @@ class BannersPage {
   }
 
   initializeFormComponents() {
-    // Initialize Primary Image Upload
-    this.imageUpload1 = new ImageUpload({
+    // Initialize Banner Image Upload
+    this.imageUpload = new ImageUpload({
       multiple: false,
       maxFiles: 1,
+      enableCropping: true,
+      cropAspectRatio: 3, // 3:1 aspect ratio for banners (1200x400)
       onFilesChange: (files) => {
-        console.log('Primary banner image changed:', files);
-      },
-      onError: (error) => {
-        this.notificationService.error('Image Upload Error', error);
-      }
-    });
-
-    // Initialize Secondary Image Upload
-    this.imageUpload2 = new ImageUpload({
-      multiple: false,
-      maxFiles: 1,
-      onFilesChange: (files) => {
-        console.log('Secondary banner image changed:', files);
+        console.log('Banner image changed:', files);
       },
       onError: (error) => {
         this.notificationService.error('Image Upload Error', error);
@@ -609,20 +559,12 @@ class BannersPage {
   }
 
   insertComponentHTML() {
-    // Insert Primary Image Upload HTML
-    const imageUpload1Container = document.getElementById('bannerImageUpload1');
-    if (imageUpload1Container) {
-      imageUpload1Container.innerHTML = this.imageUpload1.createHTML('bannerImageUpload1');
-      this.imageUpload1.initialize('bannerImageUpload1');
-      imageUpload1Container.classList.add('single-image');
-    }
-
-    // Insert Secondary Image Upload HTML
-    const imageUpload2Container = document.getElementById('bannerImageUpload2');
-    if (imageUpload2Container) {
-      imageUpload2Container.innerHTML = this.imageUpload2.createHTML('bannerImageUpload2');
-      this.imageUpload2.initialize('bannerImageUpload2');
-      imageUpload2Container.classList.add('single-image');
+    // Insert Banner Image Upload HTML
+    const imageUploadContainer = document.getElementById('bannerImageUpload1');
+    if (imageUploadContainer) {
+      imageUploadContainer.innerHTML = this.imageUpload.createHTML('bannerImageUpload1');
+      this.imageUpload.initialize('bannerImageUpload1');
+      imageUploadContainer.classList.add('single-image');
     }
   }
 
@@ -745,6 +687,11 @@ class BannersPage {
     const form = document.getElementById('bannerForm');
     const title = document.getElementById('formTitle');
 
+    // Clear image upload component first to prevent image persistence
+    if (this.imageUpload) {
+      this.imageUpload.clear();
+    }
+
     if (banner) {
       title.textContent = 'Edit Banner';
       this.populateForm(banner);
@@ -762,6 +709,18 @@ class BannersPage {
     const modal = document.getElementById('bannerFormModal');
     modal.style.display = 'none';
     document.body.style.overflow = '';
+
+    // Clear image upload component to prevent persistence
+    if (this.imageUpload) {
+      this.imageUpload.clear();
+    }
+
+    // Reset form
+    const form = document.getElementById('bannerForm');
+    if (form) {
+      form.reset();
+    }
+
     this.editingBanner = null;
   }
 
@@ -777,15 +736,11 @@ class BannersPage {
       imageField.value = banner.banner_image_url || '';
     }
 
-    // Load existing banner images
+    // Load existing banner image
     if (banner.banner_image_url) {
-      if (this.imageUpload1) {
-        this.imageUpload1.setExistingFiles([banner.banner_image_url]);
+      if (this.imageUpload) {
+        this.imageUpload.setExistingFiles([banner.banner_image_url]);
       }
-
-      // If there are multiple images, load the second one too
-      // This would need to be extended based on your banner data structure
-      // For now, we'll just load the primary image
     }
   }
 
@@ -820,15 +775,10 @@ class BannersPage {
         this.notificationService.success('Success', 'Banner created successfully');
       }
 
-      // Upload images if any
-      const images = [];
-      const image1 = this.imageUpload1?.getFiles();
-      const image2 = this.imageUpload2?.getFiles();
+      // Upload image if any
+      const images = this.imageUpload?.getFiles();
 
-      if (image1 && image1.length > 0) images.push(image1[0]);
-      if (image2 && image2.length > 0) images.push(image2[0]);
-
-      if (images.length > 0 && bannerId) {
+      if (images && images.length > 0 && bannerId) {
         await this.uploadBannerImages(bannerId, images);
       }
 
