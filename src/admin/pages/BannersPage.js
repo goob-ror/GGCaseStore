@@ -825,17 +825,14 @@ class BannersPage {
     if (!banner) return;
 
     try {
-      // Only send the fields that are expected by the API
-      const updateData = {
-        title: banner.title,
-        banner_image_url: banner.banner_image_url || null,
-        redirect_url: banner.redirect_url || null,
-        active: !banner.active
-      };
+      // Use dedicated activate/deactivate endpoints based on current state
+      const endpoint = banner.active ? `/banners/${id}/deactivate` : `/banners/${id}/activate`;
+      const action = banner.active ? 'deactivated' : 'activated';
 
-      await this.apiService.put(`/banners/${id}`, updateData);
+      // Use PATCH method for the new endpoints
+      await this.apiService.request(endpoint, { method: 'PATCH' });
 
-      this.notificationService.success('Success', `Banner ${banner.active ? 'deactivated' : 'activated'} successfully`);
+      this.notificationService.success('Success', `Banner ${action} successfully`);
       await this.loadBanners();
     } catch (error) {
       console.error('Error toggling banner:', error);

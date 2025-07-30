@@ -59,6 +59,38 @@ const updateBanner = async (req, res) => {
   }
 };
 
+// Activate banner
+const activateBanner = async (req, res) => {
+  try {
+    const [result] = await db.execute(
+      'UPDATE web_banners SET active = TRUE, updated_at = NOW() WHERE id = ?',
+      [req.params.id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Banner not found' });
+    }
+    res.json({ success: true, message: 'Banner activated successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// Deactivate banner
+const deactivateBanner = async (req, res) => {
+  try {
+    const [result] = await db.execute(
+      'UPDATE web_banners SET active = FALSE, updated_at = NOW() WHERE id = ?',
+      [req.params.id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Banner not found' });
+    }
+    res.json({ success: true, message: 'Banner deactivated successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 // Delete banner
 const deleteBanner = async (req, res) => {
   try {
@@ -174,6 +206,8 @@ module.exports = {
   getActiveBanners,
   createBanner,
   updateBanner,
+  activateBanner,
+  deactivateBanner,
   deleteBanner,
   uploadBannerImages
 };

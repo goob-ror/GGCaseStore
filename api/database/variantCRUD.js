@@ -18,12 +18,58 @@ const getVariantsByProductId = async (req, res) => {
 // Add variant to product
 const createVariant = async (req, res) => {
   try {
-    const { variant_name, price } = req.body;
+    const { variant_name } = req.body;
     const [result] = await db.execute(
-      'INSERT INTO product_variants (product_id, variant_name, price) VALUES (?, ?, ?)',
-      [req.params.productId, variant_name, price]
+      'INSERT INTO product_variants (product_id, variant_name) VALUES (?, ?)',
+      [req.params.productId, variant_name]
     );
     res.status(201).json({ success: true, id: result.insertId, message: 'Variant added successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// Bulk update variants for a product
+const updateProductVariants = async (req, res) => {
+  try {
+    const productId = req.params.productId;
+    const { variants } = req.body; // Array of variant objects
+
+    if (!Array.isArray(variants)) {
+      return res.status(400).json({ success: false, error: 'Variants must be an array' });
+    }
+
+    // Start transaction
+    await db.execute('START TRANSACTION');
+
+    try {
+      // Delete existing variants for this product
+      await db.execute('DELETE FROM product_variants WHERE product_id = ?', [productId]);
+
+      // Insert new variants
+      if (variants.length > 0) {
+        const values = variants.map(variant => [productId, variant.variant_name]).filter(v => v[1] && v[1].trim());
+
+        if (values.length > 0) {
+          const placeholders = values.map(() => '(?, ?)').join(', ');
+          const flatValues = values.flat();
+
+          await db.execute(
+            `INSERT INTO product_variants (product_id, variant_name) VALUES ${placeholders}`,
+            flatValues
+          );
+        }
+      }
+
+      // Commit transaction
+      await db.execute('COMMIT');
+
+      res.json({ success: true, message: 'Product variants updated successfully' });
+    } catch (error) {
+      // Rollback transaction on error
+      await db.execute('ROLLBACK');
+      throw error;
+    }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -32,10 +78,10 @@ const createVariant = async (req, res) => {
 // Update variant
 const updateVariant = async (req, res) => {
   try {
-    const { variant_name, price } = req.body;
+    const { variant_name } = req.body;
     const [result] = await db.execute(
-      'UPDATE product_variants SET variant_name = ?, price = ? WHERE id = ?',
-      [variant_name, price, req.params.id]
+      'UPDATE product_variants SET variant_name = ? WHERE id = ?',
+      [variant_name, req.params.id]
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'Variant not found' });
@@ -62,6 +108,7 @@ const deleteVariant = async (req, res) => {
 module.exports = {
   getVariantsByProductId,
   createVariant,
+  updateProductVariants,
   updateVariant,
   deleteVariant
 };

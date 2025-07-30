@@ -1,6 +1,7 @@
 import { ApiService } from '../../lib/ApiService.js';
 import { NotificationService } from '../../components/NotificationService.js';
 import { ImageUpload } from '../../components/ImageUpload.js';
+import { DynamicVariants } from '../../components/DynamicVariants.js';
 import { SearchableDropdown } from '../../components/SearchableDropdown.js';
 import { PriceFormatter } from '../../components/PriceFormatter.js';
 import { QRCodeGenerator } from '../../components/QRCodeGenerator.js';
@@ -149,6 +150,10 @@ class ProductsPage {
                           </div>
                           <small class="form-text text-muted">Manually set rating or let it be calculated from customer reviews</small>
                         </div>
+                      </div>
+
+                      <div class="form-group">
+                        <div id="productVariants"></div>
                       </div>
                     </div>
                   </div>
@@ -698,6 +703,15 @@ class ProductsPage {
       }
     });
 
+    // Initialize Dynamic Variants
+    this.dynamicVariants = new DynamicVariants({
+      maxVariants: 20,
+      placeholder: 'Enter variant name (e.g., Size M - Red, 128GB - Black)',
+      onVariantsChange: (variants) => {
+        console.log('Variants changed:', variants);
+      }
+    });
+
     // Insert HTML and initialize components
     this.insertComponentHTML();
 
@@ -749,6 +763,13 @@ class ProductsPage {
     if (qrGeneratorContainer) {
       qrGeneratorContainer.innerHTML = this.qrGenerator.createHTML('productQRGenerator');
       this.qrGenerator.initialize('productQRGenerator');
+    }
+
+    // Insert Dynamic Variants HTML
+    const variantsContainer = document.getElementById('productVariants');
+    if (variantsContainer) {
+      variantsContainer.innerHTML = this.dynamicVariants.createHTML('productVariants');
+      this.dynamicVariants.initialize('productVariants');
     }
   }
 
@@ -940,6 +961,11 @@ class ProductsPage {
       this.qrGenerator.clear();
     }
 
+    // Clear variants
+    if (this.dynamicVariants) {
+      this.dynamicVariants.clear();
+    }
+
     if (product) {
       title.textContent = 'Edit Product';
       this.populateForm(product);
@@ -965,6 +991,11 @@ class ProductsPage {
     // Clear QR generator
     if (this.qrGenerator) {
       this.qrGenerator.clear();
+    }
+
+    // Clear variants
+    if (this.dynamicVariants) {
+      this.dynamicVariants.clear();
     }
 
     // Reset form
@@ -1024,6 +1055,11 @@ class ProductsPage {
       this.loadProductImages(product.id);
     }
 
+    // Load existing product variants
+    if (this.dynamicVariants && product.id) {
+      this.loadProductVariants(product.id);
+    }
+
     // Generate QR code for existing product
     if (this.qrGenerator) {
       this.qrGenerator.generateFromProduct(product);
@@ -1046,6 +1082,19 @@ class ProductsPage {
       }
     } catch (error) {
       console.error('Error loading product images:', error);
+    }
+  }
+
+  async loadProductVariants(productId) {
+    try {
+      const response = await this.apiService.get(`/products/${productId}/variants`);
+      const variants = response.data || [];
+
+      if (this.dynamicVariants) {
+        this.dynamicVariants.setVariants(variants);
+      }
+    } catch (error) {
+      console.error('Error loading product variants:', error);
     }
   }
 
@@ -1092,6 +1141,12 @@ class ProductsPage {
         await this.uploadProductImages(productId, images);
       }
 
+      // Update product variants
+      const variants = this.dynamicVariants?.getVariants() || [];
+      if (productId) {
+        await this.updateProductVariants(productId, variants);
+      }
+
       this.hideProductForm();
       await this.loadData();
 
@@ -1102,6 +1157,16 @@ class ProductsPage {
       saveBtn.disabled = false;
       btnText.classList.remove('d-none');
       btnLoading.classList.add('d-none');
+    }
+  }
+
+  async updateProductVariants(productId, variants) {
+    try {
+      await this.apiService.put(`/products/${productId}/variants`, { variants });
+      console.log('Product variants updated successfully');
+    } catch (error) {
+      console.error('Error updating variants:', error);
+      this.notificationService.error('Warning', 'Product saved but failed to update variants');
     }
   }
 

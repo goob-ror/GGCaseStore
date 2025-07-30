@@ -227,6 +227,9 @@ app.get('/api/products/:productId/variants', variantCRUD.getVariantsByProductId)
 // Add variant to product (admin only)
 app.post('/api/products/:productId/variants', strictLimiter, requireAdmin, variantCRUD.createVariant);
 
+// Bulk update variants for a product (admin only)
+app.put('/api/products/:productId/variants', strictLimiter, requireAdmin, variantCRUD.updateProductVariants);
+
 // Update variant (admin only)
 app.put('/api/variants/:id', strictLimiter, requireAdmin, variantCRUD.updateVariant);
 
@@ -268,6 +271,12 @@ app.post('/api/banners', strictLimiter, requireAdmin, validateBanner, handleVali
 
 // Update banner (admin only)
 app.put('/api/banners/:id', strictLimiter, requireAdmin, validateId, validateBanner, handleValidationErrors, bannerCRUD.updateBanner);
+
+// Activate banner (admin only)
+app.patch('/api/banners/:id/activate', strictLimiter, requireAdmin, validateId, handleValidationErrors, bannerCRUD.activateBanner);
+
+// Deactivate banner (admin only)
+app.patch('/api/banners/:id/deactivate', strictLimiter, requireAdmin, validateId, handleValidationErrors, bannerCRUD.deactivateBanner);
 
 // Delete banner (admin only)
 app.delete('/api/banners/:id', strictLimiter, requireAdmin, validateId, handleValidationErrors, bannerCRUD.deleteBanner);
