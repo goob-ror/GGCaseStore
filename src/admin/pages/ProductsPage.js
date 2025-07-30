@@ -15,6 +15,12 @@ class ProductsPage {
     this.showForm = false;
     this.editingProduct = null;
 
+    // Pagination state
+    this.currentPage = 1;
+    this.itemsPerPage = 20;
+    this.totalPages = 1;
+    this.totalProducts = 0;
+
     // Initialize components
     this.imageUpload = null;
     this.brandDropdown = null;
@@ -37,10 +43,21 @@ class ProductsPage {
             <h1>Products Management</h1>
             <p>Manage your product catalog</p>
           </div>
-          <button class="btn btn-primary" id="addProductBtn">
-            <i class="fas fa-plus"></i>
-            Add Product
-          </button>
+          <div class="header-controls">
+            <div class="pagination-controls">
+              <label for="itemsPerPage">Items per page:</label>
+              <select id="itemsPerPage" class="form-control-sm">
+                <option value="10">10</option>
+                <option value="20" selected>20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="addProductBtn">
+              <i class="fas fa-plus"></i>
+              Add Product
+            </button>
+          </div>
         </div>
 
         <div class="products-content">
@@ -50,6 +67,7 @@ class ProductsPage {
               Loading products...
             </div>
           </div>
+          <div class="pagination-container" id="paginationContainer"></div>
 
           <div class="product-form-modal" id="productFormModal" style="display: none;">
             <div class="modal-backdrop"></div>
@@ -102,6 +120,35 @@ class ProductsPage {
                         <label class="form-label">Base Price</label>
                         <div id="productPriceFormatter"></div>
                         <small class="form-text text-muted">This is the base price. You can add variants with different prices later.</small>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">Total Sold</label>
+                        <input type="number" class="form-control" id="totalSold" name="total_sold" min="0" placeholder="0">
+                        <small class="form-text text-muted">Number of units sold</small>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="form-label">Customer Rating</label>
+                        <div class="rating-controls">
+                          <div class="rating-inputs">
+                            <div class="rating-input-group">
+                              <label for="avgRating" class="form-label-small">Average Rating</label>
+                              <input type="number" class="form-control" id="avgRating" name="avg_rating" min="0" max="5" step="0.1" placeholder="0.0">
+                            </div>
+                            <div class="rating-input-group">
+                              <label for="totalRaters" class="form-label-small">Total Reviews</label>
+                              <input type="number" class="form-control" id="totalRaters" name="total_raters" min="0" placeholder="0">
+                            </div>
+                          </div>
+                          <div class="rating-preview">
+                            <div class="star-rating" id="starRating">
+                              <span class="stars" id="starsDisplay">☆☆☆☆☆</span>
+                              <span class="rating-text" id="ratingText">0.0 (0 reviews)</span>
+                            </div>
+                          </div>
+                          <small class="form-text text-muted">Manually set rating or let it be calculated from customer reviews</small>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -425,6 +472,150 @@ class ProductsPage {
             max-width: none;
           }
         }
+
+        /* Rating Display Styles */
+        .rating-controls {
+          padding: 0.75rem;
+          background: #f8f9fa;
+          border-radius: 8px;
+          border: 1px solid #e9ecef;
+        }
+
+        .rating-inputs {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+          margin-bottom: 1rem;
+        }
+
+        .rating-input-group {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .form-label-small {
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #374151;
+          margin-bottom: 0.25rem;
+        }
+
+        .rating-preview {
+          padding: 0.5rem;
+          background: white;
+          border-radius: 6px;
+          border: 1px solid #e9ecef;
+          margin-bottom: 0.5rem;
+        }
+
+        .star-rating {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .stars {
+          font-size: 1.5rem;
+          color: #ffc107;
+          letter-spacing: 2px;
+        }
+
+        .rating-text {
+          font-size: 0.9rem;
+          color: #6c757d;
+          font-weight: 500;
+        }
+
+        /* Table Rating Display */
+        .rating-cell {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+
+        .stars-small {
+          font-size: 0.9rem;
+          color: #ffc107;
+          letter-spacing: 1px;
+        }
+
+        .rating-small {
+          font-size: 0.75rem;
+          color: #6c757d;
+        }
+
+        /* Pagination Styles */
+        .header-controls {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .pagination-controls {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .pagination-controls label {
+          font-size: 0.875rem;
+          color: #6c757d;
+          margin: 0;
+        }
+
+        .form-control-sm {
+          padding: 0.25rem 0.5rem;
+          font-size: 0.875rem;
+          border-radius: 4px;
+          border: 1px solid #ced4da;
+        }
+
+        .pagination-container {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 1.5rem;
+          padding: 1rem;
+          background: #f8f9fa;
+          border-radius: 8px;
+        }
+
+        .pagination-info {
+          font-size: 0.875rem;
+          color: #6c757d;
+        }
+
+        .pagination-buttons {
+          display: flex;
+          gap: 0.5rem;
+        }
+
+        .pagination-btn {
+          padding: 0.5rem 0.75rem;
+          border: 1px solid #dee2e6;
+          background: white;
+          color: #495057;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 0.875rem;
+          transition: all 0.2s ease;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+          background: #e9ecef;
+          border-color: #adb5bd;
+        }
+
+        .pagination-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .pagination-btn.active {
+          background: #007bff;
+          color: white;
+          border-color: #007bff;
+        }
       </style>
     `;
   }
@@ -445,6 +636,12 @@ class ProductsPage {
 
     // Initialize form components
     this.initializeFormComponents();
+
+    // Add rating input listeners
+    this.bindRatingInputs();
+
+    // Add pagination event listeners
+    this.bindPaginationEvents();
   }
 
   initializeFormComponents() {
@@ -455,7 +652,7 @@ class ProductsPage {
     this.imageUpload = new ImageUpload({
       multiple: true,
       maxFiles: 10,
-      enableCropping: false, // Temporarily disabled for debugging
+      enableCropping: true, // Re-enabled for 1:1 aspect ratio cropping
       cropAspectRatio: 1, // 1:1 square ratio
       onFilesChange: (files) => {
         console.log('Images changed:', files);
@@ -558,7 +755,7 @@ class ProductsPage {
   async loadData() {
     try {
       const [productsResponse, brandsResponse, categoriesResponse] = await Promise.all([
-        this.apiService.get('/products'),
+        this.apiService.get(`/products?page=${this.currentPage}&limit=${this.itemsPerPage}`),
         this.apiService.get('/brands'),
         this.apiService.get('/categories')
       ]);
@@ -567,7 +764,14 @@ class ProductsPage {
       this.brands = brandsResponse.data || [];
       this.categories = categoriesResponse.data || [];
 
+      // Update pagination info
+      if (productsResponse.pagination) {
+        this.totalPages = productsResponse.pagination.totalPages;
+        this.totalProducts = productsResponse.pagination.totalProducts;
+      }
+
       this.renderProductsList();
+      this.renderPagination();
       this.populateFormSelects();
       this.populateDropdowns();
 
@@ -600,6 +804,9 @@ class ProductsPage {
             <th>Name</th>
             <th>Brand</th>
             <th>Category</th>
+            <th>Price</th>
+            <th>Rating</th>
+            <th>Sold</th>
             <th>Created</th>
             <th>Actions</th>
           </tr>
@@ -615,6 +822,14 @@ class ProductsPage {
               </td>
               <td>${product.brand_name || '-'}</td>
               <td>${product.category_name || '-'}</td>
+              <td>Rp ${(product.base_price || 0).toLocaleString('id-ID')}</td>
+              <td>
+                <div class="rating-cell">
+                  <span class="stars-small">${this.generateStarsDisplay(product.avg_rating || 0)}</span>
+                  <span class="rating-small">${(product.avg_rating || 0).toFixed(1)} (${product.total_raters || 0})</span>
+                </div>
+              </td>
+              <td>${(product.total_sold || 0).toLocaleString()}</td>
               <td>${new Date(product.created_at).toLocaleDateString()}</td>
               <td>
                 <div class="product-actions">
@@ -715,6 +930,16 @@ class ProductsPage {
     const form = document.getElementById('productForm');
     const title = document.getElementById('formTitle');
 
+    // Clear image upload component first to prevent image persistence
+    if (this.imageUpload) {
+      this.imageUpload.clear();
+    }
+
+    // Clear QR generator
+    if (this.qrGenerator) {
+      this.qrGenerator.clear();
+    }
+
     if (product) {
       title.textContent = 'Edit Product';
       this.populateForm(product);
@@ -731,6 +956,23 @@ class ProductsPage {
     const modal = document.getElementById('productFormModal');
     modal.style.display = 'none';
     document.body.style.overflow = '';
+
+    // Clear image upload component to prevent persistence across products
+    if (this.imageUpload) {
+      this.imageUpload.clear();
+    }
+
+    // Clear QR generator
+    if (this.qrGenerator) {
+      this.qrGenerator.clear();
+    }
+
+    // Reset form
+    const form = document.getElementById('productForm');
+    if (form) {
+      form.reset();
+    }
+
     this.editingProduct = null;
   }
 
@@ -757,6 +999,25 @@ class ProductsPage {
     if (this.priceFormatter && product.base_price) {
       this.priceFormatter.setValue(product.base_price);
     }
+
+    // Populate total sold field
+    const totalSoldField = document.getElementById('totalSold');
+    if (totalSoldField) {
+      totalSoldField.value = product.total_sold || 0;
+    }
+
+    // Populate rating fields
+    const avgRatingField = document.getElementById('avgRating');
+    const totalRatersField = document.getElementById('totalRaters');
+    if (avgRatingField) {
+      avgRatingField.value = product.avg_rating || 0;
+    }
+    if (totalRatersField) {
+      totalRatersField.value = product.total_raters || 0;
+    }
+
+    // Update rating display
+    this.updateRatingDisplay(product.avg_rating || 0, product.total_raters || 0);
 
     // Load existing product images
     if (this.imageUpload && product.id) {
@@ -802,7 +1063,10 @@ class ProductsPage {
       description: formData.get('description'),
       brand_id: this.brandDropdown?.getValue() || null,
       category_id: this.categoryDropdown?.getValue() || null,
-      base_price: this.priceFormatter?.getValue() || 0
+      base_price: this.priceFormatter?.getValue() || 0,
+      total_sold: parseInt(formData.get('total_sold')) || 0,
+      avg_rating: parseFloat(formData.get('avg_rating')) || 0,
+      total_raters: parseInt(formData.get('total_raters')) || 0
     };
 
     saveBtn.disabled = true;
@@ -882,6 +1146,39 @@ class ProductsPage {
     }
   }
 
+  updateRatingDisplay(avgRating, totalRaters) {
+    const starsDisplay = document.getElementById('starsDisplay');
+    const ratingText = document.getElementById('ratingText');
+
+    if (starsDisplay && ratingText) {
+      // Generate star display (★ for filled, ☆ for empty)
+      const rating = parseFloat(avgRating) || 0;
+      const fullStars = Math.floor(rating);
+      const hasHalfStar = rating % 1 >= 0.5;
+      const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+      let starsHtml = '';
+
+      // Add full stars
+      for (let i = 0; i < fullStars; i++) {
+        starsHtml += '★';
+      }
+
+      // Add half star if needed
+      if (hasHalfStar) {
+        starsHtml += '⭐'; // Using different character for half star
+      }
+
+      // Add empty stars
+      for (let i = 0; i < emptyStars; i++) {
+        starsHtml += '☆';
+      }
+
+      starsDisplay.innerHTML = starsHtml;
+      ratingText.textContent = `${rating.toFixed(1)} (${totalRaters} review${totalRaters !== 1 ? 's' : ''})`;
+    }
+  }
+
   editProduct(id) {
     const product = this.products.find(p => p.id === id);
     if (product) {
@@ -904,6 +1201,118 @@ class ProductsPage {
     } catch (error) {
       console.error('Error deleting product:', error);
       this.notificationService.error('Error', error.message || 'Failed to delete product');
+    }
+  }
+
+  generateStarsDisplay(rating) {
+    const ratingNum = parseFloat(rating) || 0;
+    const fullStars = Math.floor(ratingNum);
+    const hasHalfStar = ratingNum % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+    let starsHtml = '';
+
+    // Add full stars
+    for (let i = 0; i < fullStars; i++) {
+      starsHtml += '★';
+    }
+
+    // Add half star if needed
+    if (hasHalfStar) {
+      starsHtml += '⭐';
+    }
+
+    // Add empty stars
+    for (let i = 0; i < emptyStars; i++) {
+      starsHtml += '☆';
+    }
+
+    return starsHtml;
+  }
+
+  bindRatingInputs() {
+    const avgRatingInput = document.getElementById('avgRating');
+    const totalRatersInput = document.getElementById('totalRaters');
+
+    if (avgRatingInput && totalRatersInput) {
+      const updatePreview = () => {
+        const avgRating = parseFloat(avgRatingInput.value) || 0;
+        const totalRaters = parseInt(totalRatersInput.value) || 0;
+        this.updateRatingDisplay(avgRating, totalRaters);
+      };
+
+      avgRatingInput.addEventListener('input', updatePreview);
+      totalRatersInput.addEventListener('input', updatePreview);
+    }
+  }
+
+  bindPaginationEvents() {
+    const itemsPerPageSelect = document.getElementById('itemsPerPage');
+    if (itemsPerPageSelect) {
+      itemsPerPageSelect.addEventListener('change', (e) => {
+        this.itemsPerPage = parseInt(e.target.value);
+        this.currentPage = 1; // Reset to first page
+        this.loadData();
+      });
+    }
+  }
+
+  renderPagination() {
+    const container = document.getElementById('paginationContainer');
+    if (!container) return;
+
+    if (this.totalPages <= 1) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const startItem = (this.currentPage - 1) * this.itemsPerPage + 1;
+    const endItem = Math.min(this.currentPage * this.itemsPerPage, this.totalProducts);
+
+    const paginationHTML = `
+      <div class="pagination-info">
+        Showing ${startItem}-${endItem} of ${this.totalProducts} products
+      </div>
+      <div class="pagination-buttons">
+        <button class="pagination-btn" ${this.currentPage === 1 ? 'disabled' : ''} onclick="window.productsPage.goToPage(${this.currentPage - 1})">
+          <i class="fas fa-chevron-left"></i> Previous
+        </button>
+        ${this.generatePageButtons()}
+        <button class="pagination-btn" ${this.currentPage === this.totalPages ? 'disabled' : ''} onclick="window.productsPage.goToPage(${this.currentPage + 1})">
+          Next <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    `;
+
+    container.innerHTML = paginationHTML;
+  }
+
+  generatePageButtons() {
+    let buttons = '';
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
+
+    // Adjust start page if we're near the end
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      buttons += `
+        <button class="pagination-btn ${i === this.currentPage ? 'active' : ''}" onclick="window.productsPage.goToPage(${i})">
+          ${i}
+        </button>
+      `;
+    }
+
+    return buttons;
+  }
+
+  goToPage(page) {
+    if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+      this.currentPage = page;
+      this.loadData();
     }
   }
 

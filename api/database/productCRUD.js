@@ -6,18 +6,54 @@ const { emitProductCreated, emitProductUpdated, emitProductDeleted } = require('
  * Handles all product-related database operations
  */
 
-// Get all products with brand and category info
+// Get all products with brand and category info (with pagination)
 const getAllProducts = async (req, res) => {
   try {
+    // Parse pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    // Validate limit to prevent abuse
+    const allowedLimits = [10, 20, 50, 100];
+    const validLimit = allowedLimits.includes(limit) ? limit : 20;
+
+    // Get total count for pagination info
+    const countQuery = 'SELECT COUNT(*) as total FROM products';
+    const [countResult] = await db.execute(countQuery);
+    const totalProducts = countResult[0].total;
+    const totalPages = Math.ceil(totalProducts / validLimit);
+
+    // Get products with pagination
     const query = `
-      SELECT p.*, b.name as brand_name, c.name as category_name
+      SELECT
+        p.*,
+        p.price as base_price,
+        b.name as brand_name,
+        c.name as category_name,
+        COALESCE(p.avg_rating, 0) as avg_rating,
+        COALESCE(p.total_raters, 0) as total_raters,
+        COALESCE(p.total_sold, 0) as total_sold
       FROM products p
       LEFT JOIN brands b ON p.brand_id = b.id
       LEFT JOIN categories c ON p.category_id = c.id
       ORDER BY p.created_at DESC
+      LIMIT ? OFFSET ?
     `;
-    const [rows] = await db.execute(query);
-    res.json({ success: true, data: rows });
+    const [rows] = await db.execute(query, [validLimit, offset]);
+
+    res.json({
+      success: true,
+      data: rows,
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalProducts: totalProducts,
+        limit: validLimit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -28,7 +64,14 @@ const getProductById = async (req, res) => {
   try {
     // Get product details
     const [productRows] = await db.execute(`
-      SELECT p.*, b.name as brand_name, c.name as category_name
+      SELECT
+        p.*,
+        p.price as base_price,
+        b.name as brand_name,
+        c.name as category_name,
+        COALESCE(p.avg_rating, 0) as avg_rating,
+        COALESCE(p.total_raters, 0) as total_raters,
+        COALESCE(p.total_sold, 0) as total_sold
       FROM products p
       LEFT JOIN brands b ON p.brand_id = b.id
       LEFT JOIN categories c ON p.category_id = c.id
@@ -66,14 +109,21 @@ const getProductById = async (req, res) => {
 // Create new product
 const createProduct = async (req, res) => {
   try {
-    const { name, description, brand_id, category_id } = req.body;
+    const { name, description, brand_id, category_id, base_price, total_sold, avg_rating, total_raters } = req.body;
+
+    // Convert base_price to price (frontend uses base_price, DB uses price)
+    const price = base_price || 0;
+    const soldCount = total_sold || 0;
+    const avgRating = avg_rating || 0;
+    const totalRatersCount = total_raters || 0;
+
     const [result] = await db.execute(
-      'INSERT INTO products (name, description, brand_id, category_id, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
-      [name, description, brand_id, category_id]
+      'INSERT INTO products (name, description, brand_id, category_id, price, total_sold, avg_rating, total_raters, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
+      [name, description, brand_id, category_id, price, soldCount, avgRating, totalRatersCount]
     );
 
     const productId = result.insertId;
-    const newProduct = { id: productId, name, description, brand_id, category_id };
+    const newProduct = { id: productId, name, description, brand_id, category_id, price, total_sold: soldCount, avg_rating: avgRating, total_raters: totalRatersCount };
 
     // Emit webhook event
     emitProductCreated(req, newProduct);
@@ -87,16 +137,23 @@ const createProduct = async (req, res) => {
 // Update product
 const updateProduct = async (req, res) => {
   try {
-    const { name, description, brand_id, category_id } = req.body;
+    const { name, description, brand_id, category_id, base_price, total_sold, avg_rating, total_raters } = req.body;
+
+    // Convert base_price to price (frontend uses base_price, DB uses price)
+    const price = base_price || 0;
+    const soldCount = total_sold || 0;
+    const avgRating = avg_rating || 0;
+    const totalRatersCount = total_raters || 0;
+
     const [result] = await db.execute(
-      'UPDATE products SET name = ?, description = ?, brand_id = ?, category_id = ?, updated_at = NOW() WHERE id = ?',
-      [name, description, brand_id, category_id, req.params.id]
+      'UPDATE products SET name = ?, description = ?, brand_id = ?, category_id = ?, price = ?, total_sold = ?, avg_rating = ?, total_raters = ?, updated_at = NOW() WHERE id = ?',
+      [name, description, brand_id, category_id, price, soldCount, avgRating, totalRatersCount, req.params.id]
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    const updatedProduct = { id: req.params.id, name, description, brand_id, category_id };
+    const updatedProduct = { id: req.params.id, name, description, brand_id, category_id, price, total_sold: soldCount, avg_rating: avgRating, total_raters: totalRatersCount };
 
     // Emit webhook event
     emitProductUpdated(req, updatedProduct);

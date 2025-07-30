@@ -510,10 +510,26 @@ export class ImageUpload {
   }
 
   /**
-   * Get processed files
+   * Get processed files (only new files, not existing ones)
    */
   getFiles() {
-    return this.files.map(fileData => fileData.file);
+    return this.files
+      .filter(fileData => !fileData.isExisting && fileData.file)
+      .map(fileData => fileData.file);
+  }
+
+  /**
+   * Get all files including existing ones (for display purposes)
+   */
+  getAllFiles() {
+    return this.files;
+  }
+
+  /**
+   * Get only new files that need to be uploaded
+   */
+  getNewFiles() {
+    return this.getFiles(); // Same as getFiles() now
   }
 
   /**

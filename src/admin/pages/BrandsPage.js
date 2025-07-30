@@ -151,7 +151,7 @@ class BrandsPage {
         }
 
         .brand-image {
-          height: 150px;
+          aspect-ratio: 1 / 1; /* Force 1:1 square aspect ratio */
           background: #f8fafc;
           display: flex;
           align-items: center;
@@ -161,9 +161,9 @@ class BrandsPage {
         }
 
         .brand-image img {
-          max-width: 100%;
-          max-height: 100%;
-          object-fit: contain;
+          width: 100%;
+          height: 100%;
+          object-fit: cover; /* Use cover to fill the square area */
         }
 
         .brand-image .placeholder {
@@ -429,7 +429,7 @@ class BrandsPage {
     this.imageUpload = new ImageUpload({
       multiple: false,
       maxFiles: 1,
-      enableCropping: false, // Temporarily disabled for debugging
+      enableCropping: true, // Re-enabled for 1:1 aspect ratio cropping
       cropAspectRatio: 1, // 1:1 square ratio
       onFilesChange: (files) => {
         console.log('Brand image changed:', files);
@@ -535,6 +535,11 @@ class BrandsPage {
     const form = document.getElementById('brandForm');
     const title = document.getElementById('formTitle');
 
+    // Clear image upload component first to prevent image persistence
+    if (this.imageUpload) {
+      this.imageUpload.clear();
+    }
+
     if (brand) {
       title.textContent = 'Edit Brand';
       this.populateForm(brand);
@@ -551,6 +556,18 @@ class BrandsPage {
     const modal = document.getElementById('brandFormModal');
     modal.style.display = 'none';
     document.body.style.overflow = '';
+
+    // Clear image upload component to prevent persistence across brands
+    if (this.imageUpload) {
+      this.imageUpload.clear();
+    }
+
+    // Reset form
+    const form = document.getElementById('brandForm');
+    if (form) {
+      form.reset();
+    }
+
     this.editingBrand = null;
   }
 

@@ -106,7 +106,7 @@
 .preview-image {
   position: relative;
   width: 100%;
-  height: 120px;
+  aspect-ratio: 1 / 1; /* Force 1:1 square aspect ratio */
   overflow: hidden;
 }
 
@@ -261,7 +261,7 @@
 }
 
 .image-upload-container.single-image .preview-image {
-  height: 200px;
+  aspect-ratio: 1 / 1; /* Maintain 1:1 aspect ratio for single images */
 }
 
 /* Responsive Design */
@@ -273,7 +273,7 @@
   }
   
   .preview-image {
-    height: 100px;
+    aspect-ratio: 1 / 1; /* Maintain 1:1 aspect ratio on mobile */
   }
   
   .upload-placeholder {

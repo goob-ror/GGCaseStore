@@ -28,7 +28,7 @@ const {
   validateRating,
   validateBanner
 } = require('./middleware/validation');
-const { requireAdmin, optionalAdmin } = require('./middleware/auth');
+const { requireAdmin, optionalAdmin, requireAdminStrict, requireAdminSafe } = require('./middleware/auth');
 
 // Import CRUD modules
 const adminCRUD = require('./database/adminCRUD');
@@ -150,11 +150,11 @@ app.post('/api/admin/logout', adminLimiter, adminSession.adminLogout);
 // Admin session check
 app.get('/api/admin/session', adminLimiter, adminSession.checkSession);
 
-// Get all admins (admin only)
-app.get('/api/admins', adminLimiter, requireAdmin, adminCRUD.getAllAdmins);
+// Get all admins (admin only - enhanced security)
+app.get('/api/admins', adminLimiter, requireAdminSafe, adminCRUD.getAllAdmins);
 
-// Create new admin (admin only)
-app.post('/api/admins', adminLimiter, requireAdmin, validateAdmin, handleValidationErrors, adminCRUD.createAdmin);
+// Create new admin (admin only - strict security)
+app.post('/api/admins', adminLimiter, requireAdminStrict, validateAdmin, handleValidationErrors, adminCRUD.createAdmin);
 
 // ===== BRAND ROUTES =====
 
@@ -204,14 +204,14 @@ app.get('/api/products', productCRUD.getAllProducts);
 // Get product by ID with variants and photos (public)
 app.get('/api/products/:id', productCRUD.getProductById);
 
-// Create new product (admin only)
-app.post('/api/products', strictLimiter, requireAdmin, productCRUD.createProduct);
+// Create new product (admin only - strict security)
+app.post('/api/products', strictLimiter, requireAdminStrict, productCRUD.createProduct);
 
-// Update product (admin only)
-app.put('/api/products/:id', strictLimiter, requireAdmin, productCRUD.updateProduct);
+// Update product (admin only - strict security)
+app.put('/api/products/:id', strictLimiter, requireAdminStrict, productCRUD.updateProduct);
 
-// Delete product (admin only)
-app.delete('/api/products/:id', strictLimiter, requireAdmin, productCRUD.deleteProduct);
+// Delete product (admin only - strict security)
+app.delete('/api/products/:id', strictLimiter, requireAdminStrict, productCRUD.deleteProduct);
 
 // ===== PRODUCT VARIANT ROUTES =====
 
