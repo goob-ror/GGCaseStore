@@ -8,6 +8,8 @@ import BannersPage from '../admin/pages/BannersPage.js';
 import AdminManagementPage from '../admin/pages/AdminManagementPage.js';
 import { AuthService } from '../lib/AuthService.js';
 
+// User
+import HomePage from '../home/index.js';
 class Router {
   constructor() {
     this.routes = new Map();
@@ -19,9 +21,9 @@ class Router {
 
   setupRoutes() {
     // Public routes
-    this.routes.set('/', { component: LoginPage, requiresAuth: false });
+    this.routes.set('/', { component: HomePage, requiresAuth: false });
     this.routes.set('/login', { component: LoginPage, requiresAuth: false });
-    
+
     // Admin routes (protected)
     this.routes.set('/admin', { component: AdminDashboard, requiresAuth: true, defaultChild: '/admin/dashboard' });
     this.routes.set('/admin/dashboard', { component: DashboardPage, requiresAuth: true, parent: '/admin' });
@@ -34,7 +36,7 @@ class Router {
 
   init(container) {
     this.container = container;
-    
+
     // Handle browser navigation
     window.addEventListener('popstate', () => {
       this.handleRoute();
@@ -56,7 +58,7 @@ class Router {
   async handleRoute() {
     const path = window.location.pathname;
     let route = this.routes.get(path);
-    
+
     // If no exact match, try to find parent route
     if (!route) {
       for (const [routePath, routeConfig] of this.routes) {
@@ -75,7 +77,7 @@ class Router {
 
     // Check authentication
     const isAuthenticated = await this.authService.checkAuth();
-    
+
     if (route.requiresAuth && !isAuthenticated) {
       this.navigate('/login', true);
       return;
@@ -103,18 +105,18 @@ class Router {
     try {
       // Clear container
       this.container.innerHTML = '';
-      
+
       // Create component instance
       const ComponentClass = route.component;
       const component = new ComponentClass();
-      
+
       // Handle parent-child relationship for admin routes
       if (route.parent) {
         const parentRoute = this.routes.get(route.parent);
         if (parentRoute) {
           const parentComponent = new parentRoute.component();
           await parentComponent.render(this.container);
-          
+
           // Find the content area in the parent component
           const contentArea = this.container.querySelector('.admin-content');
           if (contentArea) {
@@ -128,9 +130,9 @@ class Router {
       } else {
         await component.render(this.container);
       }
-      
+
       this.currentRoute = { route, path, component };
-      
+
     } catch (error) {
       console.error('Error rendering route:', error);
       this.container.innerHTML = `
