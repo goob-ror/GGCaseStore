@@ -24,14 +24,28 @@ const adminLogin = async (req, res) => {
     }
 
     req.session.cookie.maxAge = 1000 * 60 * 60 * 24;
+
+    // Get client IP address
+    const clientIP = req.ip || req.connection?.remoteAddress || req.headers['x-forwarded-for'] || '127.0.0.1';
+
     req.session.admin = {
       id: admin.id,
       username: admin.username,
       loginTime: Date.now(),
       userAgent: req.get('User-Agent'),
-      ipAddress: req.ip || req.connection?.remoteAddress || '127.0.0.1'
+      ipAddress: clientIP
     };
     req.session.loginTime = new Date().toISOString();
+
+    // Update admin's last login info in database
+    try {
+      await db.execute(
+        'UPDATE admins SET last_login_ip = ?, last_login_at = NOW() WHERE id = ?',
+        [clientIP, admin.id]
+      );
+    } catch (error) {
+      console.error('Error updating admin login info:', error);
+    }
 
     res.json({ success: true, message: 'Admin logged in successfully' });
   } catch (error) {

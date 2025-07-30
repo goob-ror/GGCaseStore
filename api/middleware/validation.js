@@ -30,9 +30,10 @@ const validateAdmin = [
     .withMessage('Username must be between 3 and 50 characters')
     .matches(/^[a-zA-Z0-9_]+$/)
     .withMessage('Username can only contain letters, numbers, and underscores'),
-  body('password_hash')
-    .isLength({ min: 1 })
-    .withMessage('Password hash is required')
+  body('password')
+    .optional({ checkFalsy: true })
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters'),
 ];
 
 // Brand validation rules

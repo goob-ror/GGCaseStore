@@ -86,18 +86,22 @@ const requireAdminSafe = (req, res, next) => {
   requireAdminStrict(req, res, (err) => {
     if (err) return next(err);
 
-    // Additional checks for GET requests
+    // Additional checks for GET requests (less strict for admin management)
     if (req.method === 'GET') {
-      // Check for valid referer (must be from admin panel)
-      const referer = req.get('Referer');
-      const host = req.get('Host');
+      // Only check referer for non-admin management routes
+      const isAdminManagement = req.path.includes('/api/admins');
 
-      if (referer && !referer.includes(host)) {
-        return res.status(403).json({
-          success: false,
-          error: 'Access denied. Invalid request origin.',
-          code: 'INVALID_ORIGIN'
-        });
+      if (!isAdminManagement) {
+        const referer = req.get('Referer');
+        const host = req.get('Host');
+
+        if (referer && !referer.includes(host)) {
+          return res.status(403).json({
+            success: false,
+            error: 'Access denied. Invalid request origin.',
+            code: 'INVALID_ORIGIN'
+          });
+        }
       }
     }
 

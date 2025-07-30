@@ -261,6 +261,7 @@ class BannersPage {
         .banner-actions {
           display: flex;
           gap: 0.5rem;
+          min-width: 90px;
         }
 
         .btn-icon {
@@ -272,6 +273,7 @@ class BannersPage {
           display: flex;
           align-items: center;
           gap: 0.5rem;
+          min-width: 90px;
           font-size: 0.875rem;
         }
 

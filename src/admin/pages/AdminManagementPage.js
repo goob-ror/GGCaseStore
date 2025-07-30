@@ -204,6 +204,84 @@ class AdminManagementPage {
           cursor: not-allowed;
         }
 
+        .btn-edit {
+          background: #3b82f6;
+          color: white;
+        }
+
+        .btn-edit:hover {
+          background: #2563eb;
+        }
+
+        /* New IP and Login Info Styles */
+        .login-info {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+
+        .login-time {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.875rem;
+        }
+
+        .login-time i {
+          color: #6b7280;
+        }
+
+        .current-session {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.75rem;
+          color: #10b981;
+          font-weight: 500;
+        }
+
+        .current-session i {
+          font-size: 0.5rem;
+        }
+
+        .no-login {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.875rem;
+          color: #6b7280;
+          font-style: italic;
+        }
+
+        .no-login i {
+          color: #ef4444;
+        }
+
+        .ip-info {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.875rem;
+          font-family: 'Courier New', monospace;
+        }
+
+        .ip-info i {
+          color: #3b82f6;
+        }
+
+        .no-ip {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #6b7280;
+          font-style: italic;
+          font-family: inherit;
+        }
+
+        .text-success {
+          color: #10b981 !important;
+        }
+
         .admin-form-modal {
           position: fixed;
           top: 0;
@@ -462,9 +540,9 @@ class AdminManagementPage {
         <thead>
           <tr>
             <th>Admin User</th>
-            <th>Current Session</th>
+            <th>Last Login</th>
+            <th>IP Address</th>
             <th>Created</th>
-            <th>Last Updated</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -483,30 +561,51 @@ class AdminManagementPage {
                 </div>
               </td>
               <td>
-                ${currentUser && currentUser.username === admin.username ? `
-                  <div class="session-info">
-                    <div class="session-ip">
-                      <i class="fas fa-globe"></i>
-                      <span>${currentUser.currentIP || 'Unknown'}</span>
-                    </div>
-                    <div class="session-time">
+                ${admin.last_login_at ? `
+                  <div class="login-info">
+                    <div class="login-time">
                       <i class="fas fa-clock"></i>
-                      <span>Since ${currentUser.loginTime ? new Date(currentUser.loginTime).toLocaleString() : 'Unknown'}</span>
+                      <span>${new Date(admin.last_login_at).toLocaleString()}</span>
                     </div>
+                    ${currentUser && currentUser.username === admin.username ? `
+                      <div class="current-session">
+                        <i class="fas fa-circle text-success"></i>
+                        <span>Currently Online</span>
+                      </div>
+                    ` : ''}
                   </div>
                 ` : `
-                  <div class="session-info offline">
-                    <span class="offline-status">
-                      <i class="fas fa-circle"></i>
-                      Offline
+                  <div class="login-info">
+                    <span class="no-login">
+                      <i class="fas fa-minus-circle"></i>
+                      Never logged in
                     </span>
                   </div>
                 `}
               </td>
+              <td>
+                <div class="ip-info">
+                  ${admin.last_login_ip ? `
+                    <i class="fas fa-globe"></i>
+                    <span>${admin.last_login_ip}</span>
+                  ` : `
+                    <span class="no-ip">
+                      <i class="fas fa-minus"></i>
+                      No IP recorded
+                    </span>
+                  `}
+                </div>
+              </td>
               <td>${new Date(admin.created_at).toLocaleDateString()}</td>
-              <td>${new Date(admin.updated_at).toLocaleDateString()}</td>
               <td>
                 <div class="admin-actions">
+                  <button
+                    class="btn-icon btn-edit"
+                    onclick="window.adminManagementPage.editAdmin(${admin.id})"
+                    title="Edit Admin"
+                  >
+                    <i class="fas fa-edit"></i>
+                  </button>
                   <button
                     class="btn-icon btn-delete"
                     onclick="window.adminManagementPage.deleteAdmin(${admin.id})"
@@ -545,7 +644,24 @@ class AdminManagementPage {
   showAdminForm() {
     const modal = document.getElementById('adminFormModal');
     const form = document.getElementById('adminForm');
-    
+
+    // Reset editing state if not already set
+    if (!this.editingAdmin) {
+      const formTitle = document.getElementById('formTitle');
+      const passwordField = document.getElementById('adminPassword');
+      const confirmPasswordField = document.getElementById('adminPasswordConfirm');
+
+      if (formTitle) formTitle.textContent = 'Add New Admin User';
+      if (passwordField) {
+        passwordField.placeholder = 'Enter password';
+        passwordField.required = true;
+      }
+      if (confirmPasswordField) {
+        confirmPasswordField.placeholder = 'Confirm password';
+        confirmPasswordField.required = true;
+      }
+    }
+
     form.reset();
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -555,6 +671,7 @@ class AdminManagementPage {
     const modal = document.getElementById('adminFormModal');
     modal.style.display = 'none';
     document.body.style.overflow = '';
+    this.editingAdmin = null; // Reset editing state
   }
 
   async handleFormSubmit(e) {
@@ -575,34 +692,89 @@ class AdminManagementPage {
       return;
     }
 
-    if (password.length < 8) {
+    // For editing, password is optional
+    if (!this.editingAdmin && password.length < 8) {
+      this.notificationService.error('Validation Error', 'Password must be at least 8 characters long');
+      return;
+    }
+
+    if (this.editingAdmin && password && password.length < 8) {
       this.notificationService.error('Validation Error', 'Password must be at least 8 characters long');
       return;
     }
 
     const adminData = {
-      username,
-      password
+      username
     };
+
+    // Only include password if provided
+    if (password) {
+      adminData.password = password;
+    }
 
     saveBtn.disabled = true;
     btnText.classList.add('d-none');
     btnLoading.classList.remove('d-none');
 
     try {
-      await this.apiService.post('/admins', adminData);
-      this.notificationService.success('Success', 'Admin user created successfully');
+      if (this.editingAdmin) {
+        // Update existing admin
+        await this.apiService.put(`/admins/${this.editingAdmin.id}`, adminData);
+        this.notificationService.success('Success', 'Admin user updated successfully');
+      } else {
+        // Create new admin
+        await this.apiService.post('/admins', adminData);
+        this.notificationService.success('Success', 'Admin user created successfully');
+      }
+
       this.hideAdminForm();
       await this.loadAdmins();
 
     } catch (error) {
       console.error('Error saving admin:', error);
-      this.notificationService.error('Error', error.message || 'Failed to create admin user');
+      const action = this.editingAdmin ? 'update' : 'create';
+      this.notificationService.error('Error', error.message || `Failed to ${action} admin user`);
     } finally {
       saveBtn.disabled = false;
       btnText.classList.remove('d-none');
       btnLoading.classList.add('d-none');
     }
+  }
+
+  editAdmin(id) {
+    const admin = this.admins.find(a => a.id === id);
+    if (!admin) return;
+
+    this.editingAdmin = admin;
+    this.showAdminForm();
+
+    // Use setTimeout to ensure DOM elements are available after modal is shown
+    setTimeout(() => {
+      // Populate form with admin data using correct field IDs
+      const usernameField = document.getElementById('adminUsername');
+      const formTitle = document.getElementById('formTitle');
+      const passwordField = document.getElementById('adminPassword');
+      const confirmPasswordField = document.getElementById('adminPasswordConfirm');
+
+      if (usernameField) {
+        usernameField.value = admin.username;
+      }
+
+      if (formTitle) {
+        formTitle.textContent = 'Edit Admin User';
+      }
+
+      // Make password optional for editing
+      if (passwordField) {
+        passwordField.placeholder = 'Leave blank to keep current password';
+        passwordField.required = false;
+      }
+
+      if (confirmPasswordField) {
+        confirmPasswordField.placeholder = 'Leave blank to keep current password';
+        confirmPasswordField.required = false;
+      }
+    }, 100);
   }
 
   async deleteAdmin(id) {

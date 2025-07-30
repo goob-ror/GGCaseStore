@@ -150,11 +150,17 @@ app.post('/api/admin/logout', adminLimiter, adminSession.adminLogout);
 // Admin session check
 app.get('/api/admin/session', adminLimiter, adminSession.checkSession);
 
-// Get all admins (admin only - enhanced security)
-app.get('/api/admins', adminLimiter, requireAdminSafe, adminCRUD.getAllAdmins);
+// Get all admins (admin only)
+app.get('/api/admins', adminLimiter, requireAdmin, adminCRUD.getAllAdmins);
 
-// Create new admin (admin only - strict security)
-app.post('/api/admins', adminLimiter, requireAdminStrict, validateAdmin, handleValidationErrors, adminCRUD.createAdmin);
+// Create new admin (admin only)
+app.post('/api/admins', adminLimiter, requireAdmin, validateAdmin, handleValidationErrors, adminCRUD.createAdmin);
+
+// Update admin (admin only)
+app.put('/api/admins/:id', adminLimiter, requireAdmin, validateAdmin, handleValidationErrors, adminCRUD.updateAdmin);
+
+// Delete admin (admin only)
+app.delete('/api/admins/:id', adminLimiter, requireAdmin, adminCRUD.deleteAdmin);
 
 // ===== BRAND ROUTES =====
 
