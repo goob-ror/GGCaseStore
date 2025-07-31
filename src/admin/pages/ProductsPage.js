@@ -951,27 +951,27 @@ class ProductsPage {
     const form = document.getElementById('productForm');
     const title = document.getElementById('formTitle');
 
-    // Clear image upload component first to prevent image persistence
-    if (this.imageUpload) {
-      this.imageUpload.clear();
-    }
-
-    // Clear QR generator
-    if (this.qrGenerator) {
-      this.qrGenerator.clear();
-    }
-
-    // Clear variants
-    if (this.dynamicVariants) {
-      this.dynamicVariants.clear();
-    }
-
     if (product) {
       title.textContent = 'Edit Product';
+      // Reset form first, then populate with product data
+      form.reset();
       this.populateForm(product);
     } else {
       title.textContent = 'Add New Product';
       form.reset();
+
+      // Clear components only for new products
+      if (this.imageUpload) {
+        this.imageUpload.clear();
+      }
+
+      if (this.qrGenerator) {
+        this.qrGenerator.clear();
+      }
+
+      if (this.dynamicVariants) {
+        this.dynamicVariants.clear();
+      }
     }
 
     modal.style.display = 'flex';
@@ -1008,28 +1008,23 @@ class ProductsPage {
   }
 
   populateForm(product) {
-    // Populate basic form fields
-    document.getElementById('productName').value = product.name || '';
-    document.getElementById('productDescription').value = product.description || '';
+    // Populate basic form fields immediately
+    const productNameField = document.getElementById('productName');
+    const productDescriptionField = document.getElementById('productDescription');
+
+    if (productNameField) {
+      productNameField.value = product.name || '';
+    }
+
+    if (productDescriptionField) {
+      productDescriptionField.value = product.description || '';
+    }
 
     // Populate legacy selects (if they exist)
     const brandSelect = document.getElementById('productBrand');
     const categorySelect = document.getElementById('productCategory');
     if (brandSelect) brandSelect.value = product.brand_id || '';
     if (categorySelect) categorySelect.value = product.category_id || '';
-
-    // Populate new components
-    if (this.brandDropdown && product.brand_id) {
-      this.brandDropdown.setValue(product.brand_id);
-    }
-
-    if (this.categoryDropdown && product.category_id) {
-      this.categoryDropdown.setValue(product.category_id);
-    }
-
-    if (this.priceFormatter && product.base_price) {
-      this.priceFormatter.setValue(product.base_price);
-    }
 
     // Populate total sold field
     const totalSoldField = document.getElementById('totalSold');
@@ -1050,20 +1045,40 @@ class ProductsPage {
     // Update rating display
     this.updateRatingDisplay(product.avg_rating || 0, product.total_raters || 0);
 
-    // Load existing product images
-    if (this.imageUpload && product.id) {
-      this.loadProductImages(product.id);
-    }
+    // Use setTimeout to ensure components are fully initialized before populating them
+    setTimeout(() => {
+      // Ensure dropdowns have their items before setting values
+      this.populateDropdowns();
 
-    // Load existing product variants
-    if (this.dynamicVariants && product.id) {
-      this.loadProductVariants(product.id);
-    }
+      // Populate new components - always set values, even if null/undefined
+      if (this.brandDropdown) {
+        this.brandDropdown.setValue(product.brand_id);
+      }
 
-    // Generate QR code for existing product
-    if (this.qrGenerator) {
-      this.qrGenerator.generateFromProduct(product);
-    }
+      if (this.categoryDropdown) {
+        this.categoryDropdown.setValue(product.category_id);
+      }
+
+      if (this.priceFormatter) {
+        // Set price even if it's 0 or null
+        this.priceFormatter.setValue(product.base_price || 0);
+      }
+
+      // Load existing product images
+      if (this.imageUpload && product.id) {
+        this.loadProductImages(product.id);
+      }
+
+      // Load existing product variants
+      if (this.dynamicVariants && product.id) {
+        this.loadProductVariants(product.id);
+      }
+
+      // Generate QR code for existing product
+      if (this.qrGenerator) {
+        this.qrGenerator.generateFromProduct(product);
+      }
+    }, 100); // Small delay to ensure components are ready
   }
 
   async loadProductImages(productId) {

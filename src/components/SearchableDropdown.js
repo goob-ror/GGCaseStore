@@ -347,7 +347,14 @@ export class SearchableDropdown {
    * Set selected value
    */
   setValue(id) {
-    const item = this.items.find(item => item.id === id);
+    if (id === null || id === undefined) {
+      this.clear();
+      return;
+    }
+
+    // Convert both to numbers for comparison to handle string/number mismatches
+    const targetId = parseInt(id);
+    const item = this.items.find(item => parseInt(item.id) === targetId);
     if (item) {
       this.selectItem(item);
     }

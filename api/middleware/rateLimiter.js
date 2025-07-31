@@ -2,8 +2,8 @@ const rateLimit = require('express-rate-limit');
 
 // General API rate limiter
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  windowMs: 5 * 60 * 1000, // 15 minutes
+  max: 10000, // Limit each IP to 100 requests per windowMs
   message: {
     success: false,
     error: 'Too many requests from this IP, please try again later.',
@@ -15,8 +15,8 @@ const generalLimiter = rateLimit({
 
 // Strict rate limiter for write operations (POST, PUT, DELETE)
 const strictLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // Limit each IP to 50 write requests per windowMs
+  windowMs: 5 * 60 * 1000, // 15 minutes
+  max: 1000, // Limit each IP to 50 write requests per windowMs
   message: {
     success: false,
     error: 'Too many write requests from this IP, please try again later.',
@@ -28,7 +28,7 @@ const strictLimiter = rateLimit({
 
 // Very strict rate limiter for admin operations
 const adminLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 5 * 60 * 1000, // 15 minutes
   max: 1000, // Limit each IP to 1000 admin requests per windowMs
   message: {
     success: false,
@@ -42,7 +42,7 @@ const adminLimiter = rateLimit({
 // Rate limiter for rating submissions to prevent spam
 const ratingLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5, // Limit each IP to 5 rating submissions per hour
+  max: 100, // Limit each IP to 5 rating submissions per hour
   message: {
     success: false,
     error: 'Too many rating submissions from this IP, please try again later.',
