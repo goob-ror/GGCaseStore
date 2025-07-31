@@ -8,12 +8,15 @@
   border-top: 1px solid #e5e5e5;
   background-color: white;
   z-index: 50;
+  width: 100%;
 }
 
 .bottom-nav {
   display: flex;
+  justify-content: space-around;
   gap: 3rem;
   padding: 0.75rem 0;
+  width: 100%;
 }
 
 .bottom-nav a {

@@ -1,60 +1,31 @@
-header {
-  display: flex;
-  justify-content: center;
+.topNavigationBar {
+  display: none;
   background-color: black;
   padding: 1rem 1.25rem;
-}
-
-.container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1.75rem;
   width: 100%;
-  max-width: 100%;
 }
 
-@media (min-width: 640px) {
-  .container {
-    max-width: 700px;
-  }
+.navigationBarContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 1.5rem 0 1.5rem;
+  gap: 20px;
+  width: 100%;
 }
 
-@media (min-width: 1280px) {
-  .container {
-    max-width: 1140px;
-  }
-}
-.logo img {
+.logoNavigationBar {
   width: 40px;
   height: 40px;
 }
 
-.topNavigationBar {
-  display: none;
+.topNavigationBar nav {
+  padding: 0 0 0 200px;
 }
 
-@media (min-width: 1280px) {
-  .topNavigationBar {
-    display: flex;
-    align-items: center;
-  }
-
-  .topNavigationBar .nav-links {
-    display: flex;
-    gap: 2.5rem;
-    align-items: center;
-  }
-
-  .topNavigationBar .nav-links a {
-    color: #838383;
-    text-decoration: none;
-    transition: color 0.3s;
-  }
-
-  .topNavigationBar .nav-links a.active {
-    color: #f8be00;
-  }
+.logo-image{
+  width: 40px;
+  height: 40px;
 }
 
 .search-bar {
@@ -87,4 +58,39 @@ header {
 .search-bar button i {
   color: black;
   font-size: 1.25rem;
+}
+
+@media (min-width: 1280px) {
+  .topNavigationBar {
+    display: flex;
+    align-items: center;
+  }
+
+  .topNavigationBar .nav-links {
+    display: flex;
+    gap: 2.5rem;
+    align-items: center;
+  }
+
+  .topNavigationBar .nav-links a {
+    color: #838383;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .topNavigationBar .nav-links a.active {
+    color: #f8be00;
+  }
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 700px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1140px;
+  }
 }
