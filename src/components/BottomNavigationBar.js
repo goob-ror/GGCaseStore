@@ -12,11 +12,11 @@ export const BottomNavigationBar = () => {
                 <i class="fas fa-box-open"></i>
                 <span>Katalog</span>
             </a>
-            <a href="/Brands" data-path="/Brands">
+            <a href="/brands" data-path="/Brands">
                 <i class="fas fa-fire"></i>
                 <span>Brands</span>
             </a>
-            <a href="/Wishlist" data-path="/Wishlist">
+            <a href="/wishlist" data-path="/Wishlist">
                 <i class="far fa-heart"></i>
                 <span>Wishlist</span>
             </a>

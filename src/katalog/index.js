@@ -81,7 +81,7 @@ class KatalogPage {
     async loadProducts() {
     const container = document.querySelector('.card-container');
     try {
-        const response = await this.UserApiService.get('/products'); // pastikan endpoint API sudah benar
+        const response = await this.UserApiService.get('/products'); 
         this.products = response.data || [];
 
         container.innerHTML = this.products.map(product => `
