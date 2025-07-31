@@ -66,7 +66,6 @@ class UserBrandsPage {
             this.renderBrands();
         } catch (error) {
             console.error('Error loading banner:', error);
-            this.renderError();
         }
     }
     showSkeleton() {

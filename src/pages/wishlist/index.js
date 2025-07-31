@@ -23,15 +23,20 @@ class WishListPage {
         document.getElementById('footer').innerHTML = Footer();
     }
     getHTML() {
+
+        const data = this.getWishlist();
+
         return `
         <div>
         <div id="top-bar"></div>
         <div class="main-layout">
             <div class="wishlist-container">
-                <div class="wishlist-title">
-                    <span><strong id="counter">0</strong> Produk Terpilih</span>
+
+            ${data.length > 0 ? `<div class="wishlist-title">
+                    <span> <strong id="counter">0</strong> Produk Terpilih</span>
                     <button class="clear-btn">Hapus</button>
-                </div>
+                </div>` : ``}
+               
 
                 <h2 class="wishlist-heading">YOUR WISHLIST</h2>
 
@@ -95,10 +100,10 @@ class WishListPage {
 
         if (data.length === 0) {
             container.innerHTML = `<p>Belum ada barang dalam wishlist.</p>`;
-            document.getElementById('counter').textContent = 0;
             return;
-        }
+        } else
 
+            document.getElementById('counter').textContent = 0;
         container.innerHTML = data.map(item => `
     <div class="wishlist-items">
       <input type="checkbox" class="wishlist-checkbox" />
@@ -136,6 +141,8 @@ class WishListPage {
                 this.showDeleteConfirmation(() => {
                     this.removeFromWishlist(id);
                     this.renderWishlist();
+                    window.location.reload();
+                    
                 });
             });
         });
