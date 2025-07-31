@@ -10,6 +10,7 @@ import { AuthService } from '../lib/AuthService.js';
 
 // User
 import HomePage from '../home/index.js';
+import KatalogPage from '../katalog/index.js';
 class Router {
   constructor() {
     this.routes = new Map();
@@ -18,10 +19,10 @@ class Router {
     this.authService = new AuthService();
     this.setupRoutes();
   }
-
   setupRoutes() {
     // Public routes
     this.routes.set('/', { component: HomePage, requiresAuth: false });
+    this.routes.set('/katalog', { component: KatalogPage, requiresAuth: false });
     this.routes.set('/login', { component: LoginPage, requiresAuth: false });
 
     // Admin routes (protected)
@@ -84,7 +85,7 @@ class Router {
     }
 
     // Redirect authenticated users away from login/root pages
-    if (!route.requiresAuth && isAuthenticated && (path === '/login' || path === '/')) {
+    if (!route.requiresAuth && isAuthenticated && (path === '/login')) {
       this.navigate('/admin/dashboard', true);
       return;
     }

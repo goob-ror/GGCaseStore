@@ -33,7 +33,7 @@ class HomePage {
         <div class="main-layout">
             <div class="swiper" id="banner">
                 <div class="swiper-wrapper"></div>
-                
+    
                 <div class="swiper-pagination"></div>
                 <div class="swiper-button-prev"></div>
                 <div class="swiper-button-next"></div>
