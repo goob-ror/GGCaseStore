@@ -28,13 +28,9 @@ class Router {
     // Public routes
     this.routes.set('/', { component: HomePage, requiresAuth: false });
     this.routes.set('/katalog', { component: KatalogPage, requiresAuth: false });
-
     this.routes.set('/wishlist', { component: WishListPage, requiresAuth: false });
     this.routes.set('/brands', { component: UserBrandsPage, requiresAuth: false });
-    this.routes.set('/katalog', { component: HomePage, requiresAuth: false });
-    
     this.routes.set('/search', { component: UserSearchResult, requiresAuth: false });
-
     this.routes.set('/login', { component: LoginPage, requiresAuth: false });
 
     // Admin routes (protected)

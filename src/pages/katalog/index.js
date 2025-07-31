@@ -1,7 +1,11 @@
 import { UserApiService } from '../../lib/UserApiService.js';
-import { TopNavigationBar } from '../../components/TopNavigationBar.js';
+import { TopNavigationBar, initializeTopNavigationSearch } from '../../components/TopNavigationBar.js';
 import { BottomNavigationBar } from '../../components/BottomNavigationBar.js';
 import { Footer } from '../../components/Footer.js';
+import Swiper from 'swiper';
+import { Navigation, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
 import '../../styles/components/katalog.css'; 
 
 class KatalogPage {
@@ -21,6 +25,9 @@ class KatalogPage {
         document.getElementById('top-bar').innerHTML = TopNavigationBar();
         document.getElementById('bottom-bar').innerHTML = BottomNavigationBar();
         document.getElementById('footer').innerHTML = Footer();
+
+        // Initialize product search functionality
+        initializeTopNavigationSearch();
     }
 
     getHTML() {
@@ -75,7 +82,21 @@ class KatalogPage {
     }
 
     bindEvents() {
-        // future: add filter interaction here
+        const navLinks = document.querySelectorAll('.nav-links a');
+        const currentPath = window.location.pathname;
+
+        navLinks.forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+            }
+        });
+
+        const links = document.querySelectorAll(".bottom-nav a");
+        links.forEach(link => {
+            if (link.getAttribute("data-path").toLowerCase() === currentPath) {
+                link.classList.add("active");
+            }
+        });
     }
 
     async loadProducts() {
