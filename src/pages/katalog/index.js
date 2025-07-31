@@ -1,8 +1,8 @@
-import { UserApiService } from '../lib/UserApiService.js';
-import { TopNavigationBar } from '../components/TopNavigationBar.js';
-import { BottomNavigationBar } from '../components/BottomNavigationBar.js';
-import { Footer } from '../components/Footer.js';
-import '../styles/components/katalog.css'; 
+import { UserApiService } from '../../lib/UserApiService.js';
+import { TopNavigationBar } from '../../components/TopNavigationBar.js';
+import { BottomNavigationBar } from '../../components/BottomNavigationBar.js';
+import { Footer } from '../../components/Footer.js';
+import '../../styles/components/katalog.css'; 
 
 class KatalogPage {
     constructor() {
