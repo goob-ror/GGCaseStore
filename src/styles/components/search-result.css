@@ -1,0 +1,135 @@
+.brands-title {
+  font-size: 12px;
+  font-weight: 400;
+  color: #313131;
+}
+.brands-image-container {
+  overflow: hidden;
+  border-radius: 8px;
+  width: 100%;
+  height: 110px;
+}
+.brands-image-skeleton {
+  width: 100%;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f3f3;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.brands-item {
+  margin-top: 12px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  gap: 12px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.items-container{
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+  text-decoration: none;
+}
+.items-image-wrapper {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100%;         /* Selalu full lebar */
+  height: 180px;       /* Default: mobile (layar kecil) */
+}
+.items-text-wrapper{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.items-title{
+  font-size: 16px;
+  font-weight: normal;
+  text-transform: capitalize;
+  margin: 0;
+  color: #313131;
+}
+.items-price{
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin: 0;
+  color: black;
+}
+.items-sold{
+  display: flex;
+  gap: 2px;
+  font-size: 12px;
+  color: #838383;
+  align-items: center;
+}
+
+@media (min-width: 640px) {
+  /* sm dan di atasnya: tinggi jadi 160px */
+  .items-image-wrapper {
+    height: 160px;
+  }
+}
+
+@media (min-width: 1280px) {
+  /* xl dan di atasnya: tetap 160px */
+  .items-image-wrapper {
+    height: 160px;
+  }
+}
+.page-title {
+  font-size: 16px;
+  font-weight: 400;
+  text-transform: capitalize;
+}
+.brands-container {
+  display: grid;
+  gap: 1.5rem;
+  justify-content: between;
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (min-width: 640px) {
+  .brands-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .brands-image-container {
+    height: 150px;
+  }
+  
+}
+
+@media (min-width: 1280px) {
+  .brands-container {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  .brands-image-container {
+    height: 250px;
+  }
+  .brands-image-skeleton {
+    height: 225px;
+  }
+}
+
+.items-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, 1fr); /* Default: 2 kolom */
+}
+
+@media (min-width: 640px) {
+  /* sm: 4 kolom */
+  .items-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  /* xl: 6 kolom */
+  .items-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}

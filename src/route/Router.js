@@ -12,6 +12,8 @@ import { AuthService } from '../lib/AuthService.js';
 import HomePage from '../pages/home/index.js';
 import WishListPage from '../pages/wishlist/index.js';
 import UserBrandsPage from '../pages/brands/index.js';
+import UserSearchResult from '../pages/searchResult/index.js';
+
 class Router {
   constructor() {
     this.routes = new Map();
@@ -27,6 +29,9 @@ class Router {
     this.routes.set('/wishlist', { component: WishListPage, requiresAuth: false });
     this.routes.set('/brands', { component: UserBrandsPage, requiresAuth: false });
     this.routes.set('/katalog', { component: HomePage, requiresAuth: false });
+    
+    this.routes.set('/search', { component: UserSearchResult, requiresAuth: false });
+
     this.routes.set('/login', { component: LoginPage, requiresAuth: false });
 
     // Admin routes (protected)

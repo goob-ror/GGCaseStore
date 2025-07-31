@@ -2,8 +2,8 @@ import { UserApiService } from '../../lib/UserApiService.js';
 import { TopNavigationBar } from '../../components/TopNavigationBar.js';
 import { BottomNavigationBar } from '../../components/BottomNavigationBar.js';
 import { Footer } from '../../components/Footer.js';
-import { NotificationService } from '../../components/NotificationService.js';
 import '../../styles/components/wishlist.css';
+import notFound from "../../../public/assets/empty.svg";
 
 class WishListPage {
     constructor() {
@@ -41,7 +41,10 @@ class WishListPage {
                 <h2 class="wishlist-heading">YOUR WISHLIST</h2>
 
                 <div class="items-container"></div>
+          
             </div>
+
+            <div class="notFound"></div>
         </div>
 
         <div id="confirm-modal" class="modal-overlay hidden">
@@ -98,8 +101,21 @@ class WishListPage {
         const container = document.querySelector('.items-container');
         const data = this.getWishlist();
 
-        if (data.length === 0) {
-            container.innerHTML = `<p>Belum ada barang dalam wishlist.</p>`;
+        if (!data || data.length === 0) {
+            const notFoundContainer = document.querySelector('.notFound');
+            notFoundContainer.innerHTML = `<div style="
+                                                        display: flex;
+                                                        justify-content: center;
+                                                        align-items: center;
+                                                        flex-direction: column;
+                                                        width: 100%;
+                                                        gap:8px;
+                                                        margin-top: 52px;
+                                                    ">
+                                                        <img src="${notFound}" alt="${notFound}" style="height: 300px; width: fit-content" />
+                                                        <p style="color: #777; white-space: nowrap;">Belum ada barang dalam wishlist.</p>
+                                                    </div>
+                                                    `;
             return;
         } else
 
@@ -142,7 +158,7 @@ class WishListPage {
                     this.removeFromWishlist(id);
                     this.renderWishlist();
                     window.location.reload();
-                    
+
                 });
             });
         });
