@@ -843,7 +843,7 @@ class ProductsPage {
               </td>
               <td>${product.brand_name || '-'}</td>
               <td>${product.category_name || '-'}</td>
-              <td>Rp ${(product.base_price || 0).toLocaleString('id-ID')}</td>
+              <td>${(Number(product.base_price || 0)).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
               <td>
                 <div class="rating-cell">
                   <span class="stars-small">${this.generateStarsDisplay(product.avg_rating || 0)}</span>

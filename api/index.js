@@ -207,14 +207,17 @@ app.post('/api/categories/:id/upload-image', strictLimiter, requireAdmin, upload
 // Get all products with brand and category info (public)
 app.get('/api/products', productCRUD.getAllProducts);
 
-// Get product by ID with variants and photos (public)
-app.get('/api/products/:id', productCRUD.getProductById);
+// Search products by name (public) - must be before :id route
+app.get('/api/products/search', productCRUD.searchProducts);
 
 // Get High Sales Product (public)
 app.get('/api/products/high-sales', productCRUD.getHighSalesProducts);
 
 // Get Product Based on User Input Price (public)
 app.get('/api/products/price', productCRUD.getProductsByPrice);
+
+// Get product by ID with variants and photos (public)
+app.get('/api/products/:id', productCRUD.getProductById);
 
 // Create new product (admin only - strict security)
 app.post('/api/products', strictLimiter, requireAdminStrict, productCRUD.createProduct);

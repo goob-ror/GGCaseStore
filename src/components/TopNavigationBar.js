@@ -1,5 +1,9 @@
 import '../styles/components/top-navigation-bar.css';
+import '../styles/components/product-search.css';
+import { ProductSearch } from './ProductSearch.js';
 import logo from '../../public/assets/logoCatalog.png';
+
+let productSearchInstance = null;
 
 export const TopNavigationBar = () => {
     return `
@@ -20,12 +24,7 @@ export const TopNavigationBar = () => {
                 </div>
             </nav>
 
-            <div class="search-bar">
-                <input type="text" placeholder="Cari Barang....">
-                <button>
-                <i class="fas fa-search"></i>
-                </button>
-            </div>
+            <div id="product-search-container"></div>
             </div>
         </header>
 
@@ -36,4 +35,29 @@ export const TopNavigationBar = () => {
         }
         </style>
     `;
-}
+};
+
+export const initializeTopNavigationSearch = () => {
+    // Clean up existing instance
+    if (productSearchInstance) {
+        productSearchInstance.destroy();
+    }
+
+    // Create new product search instance
+    productSearchInstance = new ProductSearch({
+        placeholder: 'Cari Barang....',
+        onSelect: (product) => {
+            // Navigate to product detail page
+            window.location.href = `/product/${product.id}`;
+        }
+    });
+
+    // Insert HTML and initialize
+    const container = document.getElementById('product-search-container');
+    if (container) {
+        container.innerHTML = productSearchInstance.createHTML('nav-product-search');
+        productSearchInstance.initialize('nav-product-search');
+    }
+
+    return productSearchInstance;
+};

@@ -1,5 +1,5 @@
 import { UserApiService } from '../../lib/UserApiService.js';
-import { TopNavigationBar } from '../../components/TopNavigationBar.js';
+import { TopNavigationBar, initializeTopNavigationSearch } from '../../components/TopNavigationBar.js';
 import { BottomNavigationBar } from '../../components/BottomNavigationBar.js';
 import { Footer } from '../../components/Footer.js';
 import '../../styles/components/search-result.css';
@@ -20,6 +20,9 @@ class UserSearchResult {
         document.getElementById('top-bar').innerHTML = TopNavigationBar();
         document.getElementById('bottom-bar').innerHTML = BottomNavigationBar();
         document.getElementById('footer').innerHTML = Footer();
+
+        // Initialize product search functionality
+        initializeTopNavigationSearch();
     }
 
     getParams(){
@@ -72,11 +75,21 @@ class UserSearchResult {
 
     async loadProduct() {
         try {
-            const response = await this.UserApiService.get('/brands');
-            this.product = response.data || [];
+            const searchKey = this.getParams();
+            if (searchKey) {
+                const response = await this.UserApiService.get('/products/search', {
+                    q: searchKey,
+                    limit: 50
+                });
+                this.product = response.data || [];
+            } else {
+                this.product = [];
+            }
             this.renderProduct();
         } catch (error) {
             console.error('Error loading product:', error);
+            this.product = [];
+            this.renderProduct();
         }
     }
 
@@ -108,7 +121,7 @@ class UserSearchResult {
                         </div>
                         <div class="items-text-wrapper">
                             <h3 class="items-title">${product.name}</h3>
-                            <p class="items-price">${product.price ? `Rp ${product.price.toLocaleString()}` : 'Rp -'}</p>
+                            <p class="items-price">${(product.base_price || product.price) ? `Rp ${(product.base_price || product.price).toLocaleString()}` : 'Rp -'}</p>
                             <span class="items-sold">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12px" height="12px" viewBox="0 0 32 32">
                                     <path fill="#FFCD29" d="m18.7 4.627l2.247 4.31a2.27 2.27 0 0 0 1.686 1.189l4.746.65c2.538.35 3.522 3.479 1.645 5.219l-3.25 2.999a2.23 2.23 0 0 0-.683 2.04l.793 4.398c.441 2.45-2.108 4.36-4.345 3.24l-4.536-2.25a2.28 2.28 0 0 0-2.006 0l-4.536 2.25c-2.238 1.11-4.786-.79-4.345-3.24l.793-4.399c.14-.75-.12-1.52-.682-2.04l-3.251-2.998c-1.877-1.73-.893-4.87 1.645-5.22l4.746-.65a2.23 2.23 0 0 0 1.686-1.189l2.248-4.309c1.144-2.17 4.264-2.17 5.398 0" />

@@ -264,6 +264,46 @@ const getProductsByPrice = async (req, res) => {
   }
 };
 
+// Search products by name
+const searchProducts = async (req, res) => {
+  try {
+    const { q: query, limit = 10 } = req.query;
+
+    if (!query || query.trim().length === 0) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const searchTerm = `%${query.trim()}%`;
+    const validLimit = Math.min(Math.max(parseInt(limit) || 10, 1), 50);
+
+    const searchQuery = `
+      SELECT
+        p.*,
+        p.price as base_price,
+        b.name as brand_name,
+        c.name as category_name,
+        COALESCE(p.avg_rating, 0) as avg_rating,
+        COALESCE(p.total_raters, 0) as total_raters,
+        COALESCE(p.total_sold, 0) as total_sold
+      FROM products p
+      LEFT JOIN brands b ON p.brand_id = b.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.name LIKE '${searchTerm}' OR p.description LIKE '${searchTerm}' OR b.name LIKE '${searchTerm}' OR c.name LIKE '${searchTerm}'
+      ORDER BY p.avg_rating DESC, p.total_sold DESC
+      LIMIT ${validLimit}
+    `;
+
+    console.log('🔍 Executing search query:', searchQuery);
+
+    const [rows] = await db.query(searchQuery);
+
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 module.exports = {
   getAllProducts,
   getProductById,
@@ -272,5 +312,6 @@ module.exports = {
   deleteProduct,
   getHighRatingProducts,
   getHighSalesProducts,
-  getProductsByPrice
+  getProductsByPrice,
+  searchProducts
 };

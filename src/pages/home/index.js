@@ -1,5 +1,5 @@
 import { UserApiService } from '../../lib/UserApiService.js';
-import { TopNavigationBar } from '../../components/TopNavigationBar.js';
+import { TopNavigationBar, initializeTopNavigationSearch } from '../../components/TopNavigationBar.js';
 import { BottomNavigationBar } from '../../components/BottomNavigationBar.js';
 import { Footer } from '../../components/Footer.js';
 import Swiper from 'swiper';
@@ -26,6 +26,9 @@ class HomePage {
         document.getElementById('top-bar').innerHTML = TopNavigationBar();
         document.getElementById('bottom-bar').innerHTML = BottomNavigationBar();
         document.getElementById('footer').innerHTML = Footer();
+
+        // Initialize product search functionality
+        initializeTopNavigationSearch();
     }
     getHTML() {
         return `
