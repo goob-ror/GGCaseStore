@@ -1,5 +1,5 @@
 .topNavigationBar {
-  display: none;
+  display: flex;
   background-color: black;
   padding: 1rem 1.25rem;
   width: 100%;
@@ -21,6 +21,7 @@
 
 .topNavigationBar nav {
   padding: 0 0 0 200px;
+  display: none;
 }
 
 .logo-image{
@@ -64,6 +65,11 @@
   .topNavigationBar {
     display: flex;
     align-items: center;
+  }
+
+  .topNavigationBar nav {
+    padding: 0 0 0 200px;
+    display: block;
   }
 
   .topNavigationBar .nav-links {
