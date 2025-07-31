@@ -38,8 +38,6 @@ class HomePage {
                 <div class="swiper-button-prev"></div>
                 <div class="swiper-button-next"></div>
             </div>
-
-            
             
             <h2 className="uppercase mt-6 text-base font-semibold text-[#313131]">Kategori</h2>
              <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 mt-3 gap-5 kategori"></div>
