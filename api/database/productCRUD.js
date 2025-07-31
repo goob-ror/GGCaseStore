@@ -181,10 +181,92 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+// Get High Rating Products
+const getHighRatingProducts = async (req, res) => {
+  try {
+    const [rows] = await db.execute(`
+      SELECT
+        p.*,
+        p.price as base_price,
+        b.name as brand_name,
+        c.name as category_name,
+        COALESCE(p.avg_rating, 0) as avg_rating,
+        COALESCE(p.total_raters, 0) as total_raters,
+        COALESCE(p.total_sold, 0) as total_sold
+      FROM products p
+      LEFT JOIN brands b ON p.brand_id = b.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.avg_rating > 0
+      ORDER BY p.avg_rating DESC
+      LIMIT 10
+    `);
+
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// Get High Sales Product
+const getHighSalesProducts = async (req, res) => {
+  try {
+    const [rows] = await db.execute(`
+      SELECT
+        p.*,
+        p.price as base_price,
+        b.name as brand_name,
+        c.name as category_name,
+        COALESCE(p.avg_rating, 0) as avg_rating,
+        COALESCE(p.total_raters, 0) as total_raters,
+        COALESCE(p.total_sold, 0) as total_sold
+      FROM products p
+      LEFT JOIN brands b ON p.brand_id = b.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.total_sold > 0
+      ORDER BY p.total_sold DESC
+      LIMIT 10
+    `);
+
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// Get Product Based on User Input Price
+const getProductsByPrice = async (req, res) => {
+  try {
+    const { min_price, max_price } = req.query;
+
+    const [rows] = await db.execute(`
+      SELECT
+        p.*,
+        p.price as base_price,
+        b.name as brand_name,
+        c.name as category_name,
+        COALESCE(p.avg_rating, 0) as avg_rating,
+        COALESCE(p.total_raters, 0) as total_raters,
+        COALESCE(p.total_sold, 0) as total_sold
+      FROM products p
+      LEFT JOIN brands b ON p.brand_id = b.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.price BETWEEN ? AND ?
+      ORDER BY p.price ASC
+    `, [min_price, max_price]);
+
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 module.exports = {
   getAllProducts,
   getProductById,
   createProduct,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  getHighRatingProducts,
+  getHighSalesProducts,
+  getProductsByPrice
 };
