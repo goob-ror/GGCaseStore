@@ -1,0 +1,91 @@
+.brands-title {
+  font-size: 12px;
+  font-weight: semibold;
+  color: #313131;
+}
+.brands-image-container {
+  overflow: hidden;
+  border-radius: 8px;
+  width: 100%;
+  height: 110px;
+}
+.brands-image-skeleton {
+  width: 100%;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f3f3;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.brands-item {
+  margin-top: 12px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  gap: 12px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-title {
+  font-size: 20px;
+}
+.brands-container {
+  display: grid;
+  gap: 1.5rem;
+  justify-content: between;
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (min-width: 640px) {
+  .brands-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .brands-image-container {
+    height: 150px;
+  }
+  .brands-image-skeleton {
+    height: 150px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .brands-container {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  .brands-image-container {
+    height: 250px;
+  }
+  .brands-image-skeleton {
+    height: 225px;
+  }
+}
+
+.error-message {
+  text-align: center;
+  color: white;
+  padding: 20px;
+}
+.error-message h3 {
+  text-align: center;
+  color: #313131;
+  font-weight: 400;
+}
+
+.refresh-button {
+  margin-top: 12px;
+  padding: 10px 20px;
+  background-color: #f8be00;
+  border: none;
+  color: white;
+  font-weight: bold;
+  font-weight: 400;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.refresh-button:hover {
+  background-color: #e0ab00;
+}
