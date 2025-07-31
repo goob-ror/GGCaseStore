@@ -16,7 +16,7 @@ const generalLimiter = rateLimit({
 // Strict rate limiter for write operations (POST, PUT, DELETE)
 const strictLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 15 minutes
-  max: 5000, // Limit each IP to 50 write requests per windowMs
+  max: 1000, // Limit each IP to 50 write requests per windowMs
   message: {
     success: false,
     error: 'Too many write requests from this IP, please try again later.',
@@ -42,7 +42,7 @@ const adminLimiter = rateLimit({
 // Rate limiter for rating submissions to prevent spam
 const ratingLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 50, // Limit each IP to 5 rating submissions per hour
+  max: 100, // Limit each IP to 5 rating submissions per hour
   message: {
     success: false,
     error: 'Too many rating submissions from this IP, please try again later.',

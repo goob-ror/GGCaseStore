@@ -9,7 +9,9 @@ import AdminManagementPage from '../admin/pages/AdminManagementPage.js';
 import { AuthService } from '../lib/AuthService.js';
 
 // User
+
 import HomePage from '../pages/home/index.js';
+import KatalogPage from '../pages/katalog/index.js';
 import WishListPage from '../pages/wishlist/index.js';
 import UserBrandsPage from '../pages/brands/index.js';
 import UserSearchResult from '../pages/searchResult/index.js';
@@ -22,10 +24,11 @@ class Router {
     this.authService = new AuthService();
     this.setupRoutes();
   }
-
   setupRoutes() {
     // Public routes
     this.routes.set('/', { component: HomePage, requiresAuth: false });
+    this.routes.set('/katalog', { component: KatalogPage, requiresAuth: false });
+
     this.routes.set('/wishlist', { component: WishListPage, requiresAuth: false });
     this.routes.set('/brands', { component: UserBrandsPage, requiresAuth: false });
     this.routes.set('/katalog', { component: HomePage, requiresAuth: false });
