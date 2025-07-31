@@ -1,13 +1,13 @@
-import { UserApiService } from '../lib/UserApiService.js';
-import { TopNavigationBar } from '../components/TopNavigationBar.js';
-import { BottomNavigationBar } from '../components/BottomNavigationBar.js';
-import { Footer } from '../components/Footer.js';
+import { UserApiService } from '../../lib/UserApiService.js';
+import { TopNavigationBar } from '../../components/TopNavigationBar.js';
+import { BottomNavigationBar } from '../../components/BottomNavigationBar.js';
+import { Footer } from '../../components/Footer.js';
 import Swiper from 'swiper';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 // import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import '../styles/components/home.css';
+import '../../styles/components/home.css';
 
 
 class HomePage {
@@ -148,7 +148,7 @@ class HomePage {
     async loadBanner() {
         this.showBannerSkeleton();
         try {
-            const response = await this.UserApiService.get('/banners');
+            const response = await this.UserApiService.get('/banners/active');
             this.banners = response.data || [];
             this.renderBanner();
         } catch (error) {

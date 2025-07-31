@@ -6,17 +6,16 @@ const { emitProductCreated, emitProductUpdated, emitProductDeleted } = require('
  * Handles all product-related database operations
  */
 
-// Get all products with brand and category info (with pagination)
 const getAllProducts = async (req, res) => {
+  console.log('🔍 getAllProducts route hit');
+
   try {
     // Parse pagination parameters
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
-    const offset = (page - 1) * limit;
-
-    // Validate limit to prevent abuse
     const allowedLimits = [10, 20, 50, 100];
     const validLimit = allowedLimits.includes(limit) ? limit : 20;
+    const offset = (page - 1) * validLimit;
 
     // Get total count for pagination info
     const countQuery = 'SELECT COUNT(*) as total FROM products';
@@ -24,40 +23,44 @@ const getAllProducts = async (req, res) => {
     const totalProducts = countResult[0].total;
     const totalPages = Math.ceil(totalProducts / validLimit);
 
-    // Get products with pagination
     const query = `
       SELECT
         p.*,
-        p.price as base_price,
-        b.name as brand_name,
-        c.name as category_name,
-        COALESCE(p.avg_rating, 0) as avg_rating,
-        COALESCE(p.total_raters, 0) as total_raters,
-        COALESCE(p.total_sold, 0) as total_sold
+        p.price AS base_price,
+        b.name AS brand_name,
+        c.name AS category_name,
+        COALESCE(p.avg_rating, 0) AS avg_rating,
+        COALESCE(p.total_raters, 0) AS total_raters,
+        COALESCE(p.total_sold, 0) AS total_sold
       FROM products p
       LEFT JOIN brands b ON p.brand_id = b.id
       LEFT JOIN categories c ON p.category_id = c.id
       ORDER BY p.created_at DESC
-      LIMIT ? OFFSET ?
+      LIMIT ${validLimit} OFFSET ${offset}
     `;
-    const [rows] = await db.execute(query, [validLimit, offset]);
+
+    console.log('🛠 Executing SQL:', query);
+
+    const [rows] = await db.query(query);
 
     res.json({
       success: true,
       data: rows,
       pagination: {
         currentPage: page,
-        totalPages: totalPages,
-        totalProducts: totalProducts,
+        totalPages,
+        totalProducts,
         limit: validLimit,
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1
       }
     });
   } catch (error) {
+    console.error('❌ Error in getAllProducts:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
 
 // Get product by ID with variants and photos
 const getProductById = async (req, res) => {
@@ -181,10 +184,93 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+// Get High Rating Products
+const getHighRatingProducts = async (req, res) => {
+  try {
+    const [rows] = await db.execute(`
+      SELECT
+        p.*,
+        p.price as base_price,
+        b.name as brand_name,
+        c.name as category_name,
+        COALESCE(p.avg_rating, 0) as avg_rating,
+        COALESCE(p.total_raters, 0) as total_raters,
+        COALESCE(p.total_sold, 0) as total_sold
+      FROM products p
+      LEFT JOIN brands b ON p.brand_id = b.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.avg_rating > 0
+      ORDER BY p.avg_rating DESC
+      LIMIT 10
+    `);
+
+
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// Get High Sales Product
+const getHighSalesProducts = async (req, res) => {
+  try {
+    const [rows] = await db.execute(`
+      SELECT
+        p.*,
+        p.price as base_price,
+        b.name as brand_name,
+        c.name as category_name,
+        COALESCE(p.avg_rating, 0) as avg_rating,
+        COALESCE(p.total_raters, 0) as total_raters,
+        COALESCE(p.total_sold, 0) as total_sold
+      FROM products p
+      LEFT JOIN brands b ON p.brand_id = b.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.total_sold > 0
+      ORDER BY p.total_sold DESC
+      LIMIT 10
+    `);
+
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// Get Product Based on User Input Price
+const getProductsByPrice = async (req, res) => {
+  try {
+    const { min_price, max_price } = req.query;
+
+    const [rows] = await db.execute(`
+      SELECT
+        p.*,
+        p.price as base_price,
+        b.name as brand_name,
+        c.name as category_name,
+        COALESCE(p.avg_rating, 0) as avg_rating,
+        COALESCE(p.total_raters, 0) as total_raters,
+        COALESCE(p.total_sold, 0) as total_sold
+      FROM products p
+      LEFT JOIN brands b ON p.brand_id = b.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.price BETWEEN ? AND ?
+      ORDER BY p.price ASC
+    `, [min_price, max_price]);
+
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 module.exports = {
   getAllProducts,
   getProductById,
   createProduct,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  getHighRatingProducts,
+  getHighSalesProducts,
+  getProductsByPrice
 };
