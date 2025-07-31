@@ -30,29 +30,29 @@ header {
   height: 40px;
 }
 
-nav {
+.topNavigationBar {
   display: none;
 }
 
 @media (min-width: 1280px) {
-  nav {
+  .topNavigationBar {
     display: flex;
     align-items: center;
   }
 
-  nav .nav-links {
+  .topNavigationBar .nav-links {
     display: flex;
     gap: 2.5rem;
     align-items: center;
   }
 
-  nav .nav-links a {
+  .topNavigationBar .nav-links a {
     color: #838383;
     text-decoration: none;
     transition: color 0.3s;
   }
 
-  nav .nav-links a.active {
+  .topNavigationBar .nav-links a.active {
     color: #f8be00;
   }
 }

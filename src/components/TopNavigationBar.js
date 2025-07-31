@@ -11,7 +11,7 @@ export const TopNavigationBar = () => {
                 </a>
             </h1>
 
-            <nav>
+            <nav class="topNavigationBar">
                 <div class="nav-links">
                 <a href="/" class="">Home</a>
                 <a href="/katalog" class="">Katalog</a>

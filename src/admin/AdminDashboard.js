@@ -103,6 +103,25 @@ class AdminDashboard {
             <!-- Page content will be loaded here -->
           </main>
         </div>
+
+        <nav class="mobile-bottom-nav">
+          <a href="/admin/dashboard" class="bottom-nav-link" data-route="/admin/dashboard">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+          </a>
+          <a href="/admin/products" class="bottom-nav-link" data-route="/admin/products">
+            <i class="fas fa-box"></i>
+            <span>Products</span>
+          </a>
+          <a href="/admin/brands" class="bottom-nav-link" data-route="/admin/brands">
+            <i class="fas fa-tags"></i>
+            <span>Brands</span>
+          </a>
+          <a href="/admin/categories" class="bottom-nav-link" data-route="/admin/categories">
+            <i class="fas fa-list"></i>
+            <span>Categories</span>
+          </a>
+        </nav>
       </div>
       
       <style>
@@ -110,6 +129,10 @@ class AdminDashboard {
           display: flex;
           height: 100vh;
           background-color: #FFFFFF;
+        }
+
+        .mobile-bottom-nav {
+          display: none;
         }
 
         .admin-sidebar {
@@ -126,7 +149,7 @@ class AdminDashboard {
         }
         
         .sidebar-header {
-          padding: 1rem;
+          padding: 1rem 1rem 1.37rem 1rem;
           border-bottom: 1px solid #E6B120;
           display: flex;
           align-items: center;
@@ -208,6 +231,36 @@ class AdminDashboard {
         .admin-sidebar.collapsed .nav-text {
           display: none;
         }
+
+        .admin-sidebar.collapsed .nav-list {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .admin-sidebar.collapsed .nav-item {
+          width: 100%;
+          display: flex;
+          justify-content: center;
+        }
+
+        .admin-sidebar.collapsed .nav-link {
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .admin-sidebar.collapsed .nav-link i {
+          font-size: 1.25rem;
+        }
+
+        .admin-sidebar.collapsed .nav-link:hover {
+          background-color: #E6B120;
+          color: #000000;
+          border-left: none;
+          border-radius: 0.5rem;
+        }
+
         
         .admin-main {
           flex: 1;
@@ -324,9 +377,17 @@ class AdminDashboard {
           overflow-y: auto;
           padding: 1.5rem;
         }
+
+        @media (min-width: 1280px) {
+          nav {
+            
+          }
+        }
         
         @media (max-width: 768px) {
           .admin-sidebar {
+            display: none;
+            transition: none;
             position: fixed;
             left: -260px;
             height: 100vh;
@@ -342,11 +403,48 @@ class AdminDashboard {
           }
           
           .mobile-menu-toggle {
-            display: block;
+            display: none;
           }
           
           .admin-content {
             padding: 1rem;
+          }
+
+          .mobile-bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #000000;
+            border-top: 1px solid #E6B120;
+            padding: 0.5rem 0;
+            z-index: 1002;
+          }
+
+          .bottom-nav-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #FFFFFF;
+            font-size: 0.75rem;
+          }
+
+          .bottom-nav-link i {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+          }
+
+          .bottom-nav-link.active {
+            color: #FFCD29;
+          }
+
+          /* Adjust page content padding so it doesn't get hidden */
+          .admin-content {
+            padding-bottom: 3.5rem;
           }
         }
       </style>
