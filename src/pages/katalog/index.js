@@ -26,10 +26,12 @@ class KatalogPage {
     getHTML() {
         return `
             <div id="top-bar"></div>
-                <div class="filter-container">
-                    <div class="filter-row-2col">
+                <div class="container">
+                    <!-- Filter Sidebar -->
+                    <div class="filter">
+                        <h3>Filter</h3>
                         <div class="filter-group">
-                            <label class="filter-label">Harga</label>
+                            <div for="min-price" class="label-input">Harga</div>
                             <div class="filter-row">
                                 <label class="filter-sub">Min</label>
                                 <input type="number" class="filter-input" placeholder="Rp 20.000">
@@ -39,34 +41,36 @@ class KatalogPage {
                                 <input type="number" class="filter-input" placeholder="Rp 500.000">
                             </div>
                         </div>
-
-                        <div class="filter-group">
-                            <label class="filter-label">Status</label>
-                            <div class="filter-row">
-                                <select class="filter-input-status">
-                                <option>Terbaik</option>
-                                </select>
-                            </div>
-                            <div class="filter-row">
-                                <select class="filter-input-status">
-                                <option>Default</option>
-                                </select>
+                        <div class="filter-group-select">
+                            <div for="status" class="label-input-b">Status</div>
+                                <div class="select-status">
+                                    <select id="status" class="filter-select">
+                                        <option>Tersedia</option>
+                                        <option>Habis</option>
+                                    </select>
+                                    <select id="status" class="filter-select">
+                                        <option>Default</option>
+                                        <option>Habis</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="filter-group">
-                        <label class="filter-label">Berdasarkan Produk</label>
-                        <select class="filter-input-status">
-                            <option>Semua</option>
-                        </select>
-                    </div>
-                    </div>
-                    <div class="divider"></div>
-                    <div class="card-container">
-                        //    tempat looping cardnya
-                    </div>
-                
-            </div>
+                            <!-- Main Content -->
+                            <div class="main-content">
+                                <div class="header-bar">
+                                    <p>Berdasarkan Produk</p>
+                                    <select class="select-bar">
+                                        <option>Urutkan</option>
+                                    </select>
+                                </div>
+        
+                                <div class="product-grid">
+                                    <!-- Produk diulang -->
+                                    <!-- Salin dan ubah untuk produk lainnya -->
+                                    <!-- ... -->
+                                </div>
+                            </div>
+                </div>
 
 
             <div id="footer"></div>
@@ -79,19 +83,19 @@ class KatalogPage {
     }
 
     async loadProducts() {
-    const container = document.querySelector('.card-container');
+    const container = document.querySelector('.product-grid');
     try {
         const response = await this.UserApiService.get('/products'); 
         this.products = response.data || [];
 
         container.innerHTML = this.products.map(product => `
-            <div class="card">
-                <img src="${product.photo_url}" alt="${product.name}" class="card-img"/>
+            <div class="product-card">
+                <img src="${product.photo_url}" alt="${product.name}"/>
                 <div class="card-content">
-                    <h3 class="product-name">${product.name}</h3>
+                    <div class="product-name">${product.name}</div>
                     <p class="product-price">${this.formatRupiah(product.price)}</p>
                     <div class="card-rating">    
-                        <span>⭐ ${product.ratings ? product.ratings.toFixed(1) : 'Belum ada rating'}</span>
+                        <span>⭐ ${product.ratings ? product.ratings.toFixed(1) : '0'}</span>
                         <span>|</span>
                         <span>${product.total_sold ?? 0}+ Terjual</span>
                     </div>
