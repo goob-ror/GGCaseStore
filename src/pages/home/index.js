@@ -5,10 +5,8 @@ import { Footer } from '../../components/Footer.js';
 import Swiper from 'swiper';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
-// import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import '../../styles/components/home.css';
-
 
 class HomePage {
     constructor() {
@@ -20,6 +18,7 @@ class HomePage {
         this.setUpNavigation();
         this.bindEvents();
         await this.loadBanner();
+        await this.loadCategories();
     }
 
     setUpNavigation() {
@@ -27,49 +26,60 @@ class HomePage {
         document.getElementById('bottom-bar').innerHTML = BottomNavigationBar();
         document.getElementById('footer').innerHTML = Footer();
     }
+
     getHTML() {
         return `
         <div id="top-bar"></div>
-        <div class="main-layout">
-            <div class="swiper" id="banner">
+        <div class="home-main-layout">
+            <!-- Banner Section -->
+            <div class="home-banner-container swiper" id="banner">
                 <div class="swiper-wrapper"></div>
-                
-                <div class="swiper-pagination"></div>
-                <div class="swiper-button-prev"></div>
-                <div class="swiper-button-next"></div>
+                <div class="swiper-pagination home-swiper-pagination"></div>
+                <div class="swiper-button-prev home-swiper-prev"></div>
+                <div class="swiper-button-next home-swiper-next"></div>
             </div>
-            
-            <h2 className="uppercase mt-6 text-base font-semibold text-[#313131]">Kategori</h2>
-             <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 mt-3 gap-5 kategori"></div>
 
-            <div className="flex justify-between text-[#313131] items-center mt-6 ">
-                <h2 className="uppercase text-base font-semibold ">Produk Terlaris</h2>
+            <!-- Categories Section -->
+            <div class="home-section-wrapper">
+                <h2 class="home-section-title">Kategori</h2>
+                <div class="home-categories-grid kategori"></div>
+            </div>
 
-                <div className="flex items-center">
-                <p className="capitalize text-[12px]">lihat semua</p>
+            <!-- Best Selling Products Section -->
+            <div class="home-section-wrapper">
+                <div class="home-section-header">
+                    <h2 class="home-section-title">Produk Terlaris</h2>
+                    <div class="home-view-all">
+                        <span class="home-view-all-text">lihat semua</span>
+                        <span class="home-view-all-arrow">&rsaquo;</span>
+                    </div>
                 </div>
+                <div class="home-products-grid produk-terlaris"></div>
             </div>
 
-            <div class="grid produk-terlaris"></div>
-
-            <div class="section-header">
-                <h2 class="section-title">Produk dengan Rating Tertinggi</h2>
-                <div class="lihat-semua">
-                    <p>Lihat Semua</p>
-                    <span>&rsaquo;</span>
+            <!-- Highest Rated Products Section -->
+            <div class="home-section-wrapper">
+                <div class="home-section-header">
+                    <h2 class="home-section-title">Produk dengan Rating Tertinggi</h2>
+                    <div class="home-view-all">
+                        <span class="home-view-all-text">Lihat Semua</span>
+                        <span class="home-view-all-arrow">&rsaquo;</span>
+                    </div>
                 </div>
+                <div class="home-products-grid produk-rating"></div>
             </div>
-            <div class="grid produk-rating"></div>
 
-
-            <div class="section-header">
-                <h2 class="section-title">Produk Terbaik</h2>
-                <div class="lihat-semua">
-                    <p>Lihat Semua</p>
-                    <span>&rsaquo;</span>
+            <!-- Best Products Section -->
+            <div class="home-section-wrapper">
+                <div class="home-section-header">
+                    <h2 class="home-section-title">Produk Terbaik</h2>
+                    <div class="home-view-all">
+                        <span class="home-view-all-text">Lihat Semua</span>
+                        <span class="home-view-all-arrow">&rsaquo;</span>
+                    </div>
                 </div>
+                <div class="home-products-grid produk-terbaik"></div>
             </div>
-            <div class="grid produk-terbaik"></div>
         </div>
 
         <div id="footer"></div>
@@ -93,54 +103,6 @@ class HomePage {
                 link.classList.add("active");
             }
         });
-
-        // function formatRupiah(number) {
-        //     return new Intl.NumberFormat("id-ID", {
-        //         style: "currency",
-        //         currency: "IDR",
-        //         minimumFractionDigits: 0,
-        //     }).format(number);
-        // }
-
-        // function renderKategori() {
-        //     const container = document.querySelector(".kategori");
-        //     kategori.forEach(item => {
-        //         const div = document.createElement("div");
-        //         div.className = "card";
-        //         div.innerHTML = `
-        //             <div class="card-img"><img src="${item.href}" alt="${item.title}" /></div>
-        //             <h3 class="card-title">${item.title}</h3>
-        //         `;
-        //         container.appendChild(div);
-        //     });
-        // }
-
-        // function renderProduk(selector) {
-        //     const container = document.querySelector(selector);
-        //     produk.forEach(item => {
-        //         const div = document.createElement("div");
-        //         div.className = "card";
-        //         div.innerHTML = `
-        //             <div class="card-img"><img src="${item.href}" alt="${item.title}" /></div>
-        //             <div>
-        //                 <h3 class="card-title">${item.title}</h3>
-        //                 <h3 class="card-price">${formatRupiah(item.price)}</h3>
-        //                 <div class="card-meta">
-        //                 <span>⭐ ${item.rating}</span>
-        //                 <span>|</span>
-        //                 <span>${item.sold}</span>
-        //                 </div>
-        //             </div>
-        //         `;
-        //         container.appendChild(div);
-        //     });
-        // }
-
-        // renderKategori();
-        // renderProduk(".produk-terlaris");
-        // renderProduk(".produk-rating");
-        // renderProduk(".produk-terbaik");
-
     }
 
     async loadBanner() {
@@ -151,36 +113,36 @@ class HomePage {
             this.renderBanner();
         } catch (error) {
             console.error('Error loading banner:', error);
-            // this.notificationService.error('Error', 'Failed to load admin users');
-            // this.renderError();
         }
     }
+
     showBannerSkeleton() {
         const container = document.querySelector('#banner .swiper-wrapper');
         if (container) {
             container.innerHTML = `
-            <div class="swiper-slide">
-                <div class="banner-skeleton animate-pulse">
-                <div class="skeleton-img"></div>
+                <div class="swiper-slide">
+                    <div class="home-banner-skeleton">
+                        <div class="home-skeleton-img"></div>
+                    </div>
                 </div>
-            </div>
             `;
         }
     }
+
     renderBanner() {
         const container = document.querySelector('#banner .swiper-wrapper');
         if (container) {
             container.innerHTML = this.banners.map(banner => `
-            <div class="swiper-slide">
-                <div class="banner">
-                    <img src="${banner.banner_image_url}" alt="${banner.title}" />
+                <div class="swiper-slide">
+                    <div class="home-banner-item">
+                        <img src="${banner.banner_image_url}" alt="${banner.title}" class="home-banner-img" />
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `).join('');
         }
 
         Swiper.use([Navigation, Pagination]);
-        const swiper = new Swiper('.swiper', {
+        new Swiper('.swiper', {
             loop: true,
             pagination: {
                 el: '.swiper-pagination',
@@ -193,6 +155,31 @@ class HomePage {
         });
     }
 
+    async loadCategories() {
+        const container = document.querySelector(".kategori");
+        container.innerHTML = '<p class="home-loading-text">Loading categories...</p>';
+
+        try {
+            const response = await this.UserApiService.get('/categories');
+            const categories = response.data;
+
+            if (categories && categories.length > 0) {
+                container.innerHTML = categories.map(cat => `
+                    <div class="home-category-card">
+                        <div class="home-category-img-wrapper">
+                            <img src="${cat.category_photo}" alt="${cat.name}" class="home-category-img" />
+                        </div>
+                        <p class="home-category-name">${cat.name}</p>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<p class="home-no-data">No categories available.</p>';
+            }
+        } catch (err) {
+            console.error("Failed to load categories:", err);
+            container.innerHTML = '<p class="home-error-text">Failed to load categories.</p>';
+        }
+    }
 }
 
 export default HomePage;
