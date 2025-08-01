@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Istok+Web:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 /* Base Styles */
 .home-page {
   color: #313131;
@@ -87,6 +88,7 @@
 }
 
 .home-section-title {
+  font-family: 'Istok Web', sans-serif;
   font-weight: 600;
   text-transform: uppercase;
   font-size: 1rem;
@@ -202,8 +204,9 @@
 }
 
 .home-category-name {
+  font-family: 'Istok Web', sans-serif;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   color: #313131;
   line-height: 1.2;
   margin: 0;
@@ -216,14 +219,8 @@
   background-color: #fff;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
   cursor: pointer;
-}
-
-.home-product-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
 }
 
 .home-product-img-wrapper {
@@ -246,6 +243,7 @@
 }
 
 .home-product-title {
+  font-family: 'Istok Web', sans-serif;
   font-size: 14px;
   text-transform: capitalize;
   color: #313131;
@@ -256,7 +254,7 @@
 .home-product-price {
   font-size: 14px;
   font-weight: 600;
-  color: #e6b120;
+  color: #000000;
   margin: 0 0 8px 0;
 }
 
@@ -346,6 +344,8 @@
   }
 
   .home-product-name {
+    font-family: 'Istok Web', sans-serif;
+    font-weight: 400;
     font-size: 14px;
   }
 
@@ -366,7 +366,7 @@
   }
   
   .home-section-title {
-    font-size: 1.1rem;
+    font-size: 1.5rem;
   }
 }
 
@@ -388,15 +388,18 @@
   }
 
   .home-product-img-wrapper {
+    border-radius: 8px;
     height: 200px;
     width: 200px;
   }
 
   .home-product-content {
-    padding: 16px;
+    padding: 12px 5px 0 5px;
   }
 
   .home-product-name {
+    font-family: 'Istok Web', sans-serif;
+    font-weight: 400;
     font-size: 15px;
   }
 

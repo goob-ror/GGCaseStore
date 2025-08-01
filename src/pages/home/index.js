@@ -58,16 +58,16 @@ class HomePage {
                     </div>
                 </div>
 
-                <!-- Best Selling Products Section -->
+                <!-- Best Products Section -->
                 <div class="home-section-wrapper">
                     <div class="home-section-header">
-                        <h2 class="home-section-title">Produk Terlaris</h2>
+                        <h2 class="home-section-title">Produk Terbaik</h2>
                         <div class="home-view-all">
-                            <span class="home-view-all-text">lihat semua</span>
+                            <span class="home-view-all-text">Lihat Semua</span>
                             <span class="home-view-all-arrow">&rsaquo;</span>
                         </div>
                     </div>
-                    <div class="home-products-grid produk-terlaris"></div>
+                    <div class="home-products-grid produk-terbaik"></div>
                 </div>
 
                 <!-- Highest Rated Products Section -->
@@ -82,16 +82,16 @@ class HomePage {
                     <div class="home-products-grid produk-rating"></div>
                 </div>
 
-                <!-- Best Products Section -->
+                <!-- Best Selling Products Section -->
                 <div class="home-section-wrapper">
                     <div class="home-section-header">
-                        <h2 class="home-section-title">Produk Terbaik</h2>
+                        <h2 class="home-section-title">Produk Terlaris</h2>
                         <div class="home-view-all">
-                            <span class="home-view-all-text">Lihat Semua</span>
+                            <span class="home-view-all-text">lihat semua</span>
                             <span class="home-view-all-arrow">&rsaquo;</span>
                         </div>
                     </div>
-                    <div class="home-products-grid produk-terbaik"></div>
+                    <div class="home-products-grid produk-terlaris"></div>
                 </div>
             </div>
 
