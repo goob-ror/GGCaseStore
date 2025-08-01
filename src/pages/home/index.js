@@ -3,7 +3,7 @@ import { TopNavigationBar, initializeTopNavigationSearch } from '../../component
 import { BottomNavigationBar } from '../../components/BottomNavigationBar.js';
 import { Footer } from '../../components/Footer.js';
 import Swiper from 'swiper';
-import { Navigation, Pagination, Grid } from 'swiper/modules';
+import { Navigation, Pagination, Grid, Autoplay } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/grid';
@@ -64,7 +64,7 @@ class HomePage {
                     <div class="home-section-header">
                         <h2 class="home-section-title">Produk Terbaik</h2>
                         <div class="home-view-all">
-                            <span class="home-view-all-text">Lihat Semua</span>
+                            <a href="/katalog" class="home-view-all-text">Lihat Semua</a>
                             <span class="home-view-all-arrow">&rsaquo;</span>
                         </div>
                     </div>
@@ -76,7 +76,7 @@ class HomePage {
                     <div class="home-section-header">
                         <h2 class="home-section-title">Produk dengan Rating Tertinggi</h2>
                         <div class="home-view-all">
-                            <span class="home-view-all-text">Lihat Semua</span>
+                            <a href="/katalog" class="home-view-all-text">Lihat Semua</a>
                             <span class="home-view-all-arrow">&rsaquo;</span>
                         </div>
                     </div>
@@ -88,7 +88,7 @@ class HomePage {
                     <div class="home-section-header">
                         <h2 class="home-section-title">Produk Terlaris</h2>
                         <div class="home-view-all">
-                            <span class="home-view-all-text">lihat semua</span>
+                            <a href="/katalog" class="home-view-all-text">lihat semua</a>
                             <span class="home-view-all-arrow">&rsaquo;</span>
                         </div>
                     </div>
@@ -168,7 +168,7 @@ class HomePage {
                     <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
                 </div>
                 <div class="home-product-content">
-                    <h3 class="home-product-name">${product.name}</h3>
+                    <h3 class="home-product-name ellipsis-3">${product.name}</h3>
                     <p class="home-product-price">${this.formatRupiah(product.price)}</p>
                     <div class="home-product-rating">
                         <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
@@ -306,8 +306,8 @@ class HomePage {
             `).join('');
         }
 
-        Swiper.use([Navigation, Pagination]);
-        new Swiper('.swiper', {
+        Swiper.use([Navigation, Pagination, Autoplay]);
+        const banner = new Swiper('.swiper', {
             loop: true,
             pagination: {
                 el: '.swiper-pagination',
@@ -316,7 +316,12 @@ class HomePage {
                 nextEl: '.swiper-button-next',
                 prevEl: '.swiper-button-prev',
             },
-            spaceBetween: 28
+            spaceBetween: 28,
+            autoplay: {
+                delay: 4000,
+                disableOnInteraction: true, // autoplay akan stop saat interaksi
+            },
+            speed: 800,
         });
     }
 
@@ -331,7 +336,7 @@ class HomePage {
             if (categories && categories.length > 0) {
                 container.innerHTML = categories.map(cat => `
                     <div class="swiper-slide">
-                        <div class="home-category-card" data-category-id="${cat.id}" data-category-name="${cat.name}">
+                        <div class="home-category-card ellipsis-3" data-category-id="${cat.id}" data-category-name="${cat.name}">
                             <div class="home-category-img-wrapper">
                                 <img src="${cat.category_photo}" alt="${cat.name}" class="home-category-img" />
                             </div>
@@ -496,7 +501,7 @@ class HomePage {
                             <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
                         </div>
                         <div class="home-product-content">
-                            <h3 class="home-product-name">${product.name}</h3>
+                            <h3 class="home-product-name ellipsis-3">${product.name}</h3>
                             <p class="home-product-price">${this.formatRupiah(product.price)}</p>
                             <div class="home-product-rating">
                                 <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
@@ -546,7 +551,7 @@ class HomePage {
                             <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
                         </div>
                         <div class="home-product-content">
-                            <h3 class="home-product-name">${product.name}</h3>
+                            <h3 class="home-product-name ellipsis-3">${product.name}</h3>
                             <p class="home-product-price">${this.formatRupiah(product.price)}</p>
                             <div class="home-product-rating">
                                 <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
@@ -596,7 +601,7 @@ class HomePage {
                             <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
                         </div>
                         <div class="home-product-content">
-                            <h3 class="home-product-name">${product.name}</h3>
+                            <h3 class="home-product-name ellipsis-3">${product.name}</h3>
                             <p class="home-product-price">${this.formatRupiah(product.price)}</p>
                             <div class="home-product-rating">
                                 <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>

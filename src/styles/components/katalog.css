@@ -242,7 +242,12 @@
 /* Desktop - 5 columns at 1024px and above */
 @media (min-width: 1024px) {
     .catalog-product-grid {
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(4 , 1fr);
+    }
+}
+@media (min-width: 1280px) {
+    .catalog-product-grid {
+        grid-template-columns: repeat(5 , 1fr);
     }
 }
 

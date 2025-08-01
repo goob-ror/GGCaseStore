@@ -31,7 +31,7 @@ class UserBrandsPage {
 
             <div class="main-layout">
 
-            <h2 class="page-title">OUR TRUSTED BRANDS</h2>
+            <h2 class="page-title" style="font-size:20px; font-weight:500;">OUR TRUSTED BRANDS</h2>
                 <div class="brands-container">
                 </div>
             </div>
@@ -101,7 +101,7 @@ class UserBrandsPage {
                 <div class="brands-image-container">
                     <img src="${brand.brand_photo}" alt="${brand.name}" style="width: 100%; height: 100%; object-fit: contain;" />
                 </div>
-                <h3 class="text-uppercase brands-title">${brand.name}</h3>
+                <h3 class="text-uppercase brands-title" style="font-size:14px;">${brand.name}</h3>
                 </div>
         `).join('');
 

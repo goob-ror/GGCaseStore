@@ -48,7 +48,7 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: './public/index.html',
-      title: 'GG Case Catalogs - Admin Dashboard',
+      title: 'GG Case Catalogs',
       favicon: './public/favicon.ico'
     })
   ],

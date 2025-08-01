@@ -43,7 +43,7 @@ class UserSearchResult {
 
             <div class="main-layout">
 
-            <h2 class="page-title">Menampilkan Hasil pencarian "${key}" </h2>
+                <h2 class="page-title">Menampilkan Hasil pencarian "${key}" </h2>
                 <div class="items-grid"></div>
                 <div class="notFound"></div>
             </div>
@@ -114,12 +114,12 @@ class UserSearchResult {
                 return;
             } else {
                 container.innerHTML = this.product.map(product => `
-                    <div class="items-container" style="text-decoration: none;" data-product-id="${product.id}">
+                    <a href="/detail?id=${product.id}" class="items-container" style="text-decoration: none;" data-product-id="${product.id}">
                         <div class="items-image-wrapper">
                             <img src="${this.getProductImage(product)}" alt="${product.name}"/>
                         </div>
                         <div class="items-text-wrapper">
-                            <h3 class="items-title">${product.name}</h3>
+                            <h3 class="items-title line-ellipsis-3">${product.name}</h3>
                             <p class="items-price">${(product.base_price || product.price) ? `Rp ${(product.base_price || product.price).toLocaleString()}` : 'Rp -'}</p>
                             <span class="items-sold">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12px" height="12px" viewBox="0 0 32 32">
@@ -130,7 +130,7 @@ class UserSearchResult {
                                 <span>${product.total_sold || 0}+ Terjual</span>
                             </span>
                         </div>
-                    </div>
+                    </a>
                 `).join('');
 
                 // Add click event listeners after rendering
