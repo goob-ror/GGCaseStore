@@ -202,7 +202,7 @@ class DetailPage {
 
           <div class="price-section">
           <div class="price-container">
-            <span class="price">${this.formatPrice(this.product.price)}</span>
+            <span class="price">Rp ${this.formatPrice(this.product.price)}</span>
             <button class="wishlist-btn ${this.isInWishlist() ? 'added' : ''}" id="wishlist-btn">
               <i class="fas fa-heart"></i>
             </button>
