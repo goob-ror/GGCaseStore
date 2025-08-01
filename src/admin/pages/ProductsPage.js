@@ -1118,6 +1118,104 @@ class ProductsPage {
     }
   }
 
+  sanitizeRatingInput(value) {
+    let sanitized = String(value).trim();
+    
+    if (!sanitized || sanitized === '' || isNaN(sanitized)) {
+      return 0;
+    }
+    
+    // Convert to number and remove leading zeros
+    let numValue = parseFloat(sanitized);
+    
+    // Apply bounds: below 0 becomes 0, above 5 becomes 5
+    if (numValue < 0) {
+      numValue = 0;
+    } else if (numValue > 5) {
+      numValue = 5;
+    }
+    
+    // Round to 1 decimal place for rating precision
+    numValue = Math.round(numValue * 10) / 10;
+    
+    return numValue;
+  }
+
+  bindRatingInputs() {
+    const avgRatingInput = document.getElementById('avgRating');
+    const totalRatersInput = document.getElementById('totalRaters');
+
+    if (avgRatingInput && totalRatersInput) {
+      // Add input validation for avgRating
+      avgRatingInput.addEventListener('input', (e) => {
+        const sanitizedValue = this.sanitizeRatingInput(e.target.value);
+        
+        // Only update if the sanitized value is different from current value
+        if (parseFloat(e.target.value) !== sanitizedValue) {
+          e.target.value = sanitizedValue;
+        }
+        
+        const totalRaters = parseInt(totalRatersInput.value) || 0;
+        this.updateRatingDisplay(sanitizedValue, totalRaters);
+      });
+
+      // Add blur event to ensure final validation
+      avgRatingInput.addEventListener('blur', (e) => {
+        const sanitizedValue = this.sanitizeRatingInput(e.target.value);
+        e.target.value = sanitizedValue;
+        
+        const totalRaters = parseInt(totalRatersInput.value) || 0;
+        this.updateRatingDisplay(sanitizedValue, totalRaters);
+      });
+
+      // Add validation for totalRaters as well
+      totalRatersInput.addEventListener('input', (e) => {
+        let value = parseInt(e.target.value) || 0;
+        if (value < 0) {
+          value = 0;
+          e.target.value = value;
+        }
+        
+        const avgRating = this.sanitizeRatingInput(avgRatingInput.value);
+        this.updateRatingDisplay(avgRating, value);
+      });
+
+      totalRatersInput.addEventListener('blur', (e) => {
+        let value = parseInt(e.target.value) || 0;
+        if (value < 0) {
+          value = 0;
+          e.target.value = value;
+        }
+        
+        const avgRating = this.sanitizeRatingInput(avgRatingInput.value);
+        this.updateRatingDisplay(avgRating, value);
+      });
+    }
+  }
+
+  addRatingValidationStyles() {
+    // Add this CSS to your existing styles
+    const style = document.createElement('style');
+    style.textContent = `
+      .rating-input-invalid {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+      }
+      
+      .rating-input-valid {
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+      }
+      
+      .rating-validation-message {
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        color: #ef4444;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   populateDropdowns() {
     // Populate brand dropdown
     if (this.brandDropdown) {
@@ -1337,6 +1435,15 @@ class ProductsPage {
 
     // Get data from form components
     const formData = new FormData(e.target);
+    
+    // Apply security validation to rating before sending to backend
+    const rawRating = formData.get('avg_rating');
+    const sanitizedRating = this.sanitizeRatingInput(rawRating);
+    
+    // Ensure total_raters is also sanitized
+    const rawTotalRaters = formData.get('total_raters');
+    const sanitizedTotalRaters = Math.max(0, parseInt(rawTotalRaters) || 0);
+    
     const productData = {
       name: formData.get('name'),
       description: formData.get('description'),
@@ -1344,8 +1451,8 @@ class ProductsPage {
       category_id: this.categoryDropdown?.getValue() || null,
       base_price: this.priceFormatter?.getValue() || 0,
       total_sold: parseInt(formData.get('total_sold')) || 0,
-      avg_rating: parseFloat(formData.get('avg_rating')) || 0,
-      total_raters: parseInt(formData.get('total_raters')) || 0
+      avg_rating: sanitizedRating, // Use sanitized rating
+      total_raters: sanitizedTotalRaters // Use sanitized total raters
     };
 
     saveBtn.disabled = true;
@@ -1441,30 +1548,31 @@ class ProductsPage {
     }
   }
 
+  // Updated updateRatingDisplay method with proper 5-star limit
   updateRatingDisplay(avgRating, totalRaters) {
     const starsDisplay = document.getElementById('starsDisplay');
     const ratingText = document.getElementById('ratingText');
 
     if (starsDisplay && ratingText) {
-      // Generate star display (★ for filled, ☆ for empty)
-      const rating = parseFloat(avgRating) || 0;
-      const fullStars = Math.floor(rating);
-      const hasHalfStar = rating % 1 >= 0.5;
-      const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+      const rating = Math.max(0, Math.min(5, parseFloat(avgRating) || 0));
+      
+      const fullStars = Math.min(5, Math.floor(rating));
+      const hasHalfStar = (rating % 1 >= 0.5) && (fullStars < 5);
+      const emptyStars = Math.max(0, 5 - fullStars - (hasHalfStar ? 1 : 0));
 
       let starsHtml = '';
 
-      // Add full stars
+      // Add full stars (max 5)
       for (let i = 0; i < fullStars; i++) {
         starsHtml += '★';
       }
 
-      // Add half star if needed
+      // Add half star if needed and we haven't reached 5 stars yet
       if (hasHalfStar) {
-        starsHtml += '⭐'; // Using different character for half star
+        starsHtml += '☆';
       }
 
-      // Add empty stars
+      // Add empty stars to complete 5 total stars
       for (let i = 0; i < emptyStars; i++) {
         starsHtml += '☆';
       }
@@ -1500,24 +1608,23 @@ class ProductsPage {
   }
 
   generateStarsDisplay(rating) {
-    const ratingNum = parseFloat(rating) || 0;
-    const fullStars = Math.floor(ratingNum);
-    const hasHalfStar = ratingNum % 1 >= 0.5;
-    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    // Ensure rating is within 0-5 bounds
+    const ratingNum = Math.max(0, Math.min(5, parseFloat(rating) || 0));
+    
+    const fullStars = Math.min(5, Math.floor(ratingNum));
+    const hasHalfStar = (ratingNum % 1 >= 0.5) && (fullStars < 5);
+    const emptyStars = Math.max(0, 5 - fullStars - (hasHalfStar ? 1 : 0));
 
     let starsHtml = '';
 
-    // Add full stars
     for (let i = 0; i < fullStars; i++) {
       starsHtml += '★';
     }
 
-    // Add half star if needed
     if (hasHalfStar) {
       starsHtml += '☆';
     }
 
-    // Add empty stars
     for (let i = 0; i < emptyStars; i++) {
       starsHtml += '☆';
     }
