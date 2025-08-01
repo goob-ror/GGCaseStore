@@ -61,23 +61,28 @@ class UserSearchResult {
         `;
     }
 
-    bindEvents() {
-        const navLinks = document.querySelectorAll('.nav-links a');
-        const currentPath = window.location.pathname;
+  bindEvents() {
+    // Navigation events - highlight Katalog for detail pages
+    const navLinks = document.querySelectorAll('.nav-links a');
+    navLinks.forEach(link => {
+      // Remove any existing active class
+      link.classList.remove('active');
+      // Add active class to Katalog link since this is a product detail page
+      if (link.getAttribute('href') === '/katalog') {
+        link.classList.add('active');
+      }
+    });
 
-        navLinks.forEach(link => {
-            if (link.getAttribute('href') === currentPath) {
-                link.classList.add('active');
-            }
-        });
-
-        const links = document.querySelectorAll(".bottom-nav a");
-        links.forEach(link => {
-            if (link.getAttribute("data-path")?.toLowerCase() === currentPath) {
-                link.classList.add("active");
-            }
-        });
-    }
+    const bottomLinks = document.querySelectorAll(".bottom-nav a");
+    bottomLinks.forEach(link => {
+      // Remove any existing active class
+      link.classList.remove('active');
+      // Add active class to Katalog link
+      if (link.getAttribute("data-path") === '/katalog') {
+        link.classList.add("active");
+      }
+    });
+  }
 
     async loadProduct() {
         try {
@@ -187,17 +192,6 @@ class UserSearchResult {
                 if (productId) {
                     this.navigateToDetail(productId);
                 }
-            });
-
-            // Add hover effect
-            card.addEventListener('mouseenter', () => {
-                card.style.transform = 'translateY(-2px)';
-                card.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-            });
-
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = 'translateY(0)';
-                card.style.boxShadow = 'none';
             });
         });
     }
