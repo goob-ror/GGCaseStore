@@ -5,6 +5,7 @@ import { DynamicVariants } from '../../components/DynamicVariants.js';
 import { SearchableDropdown } from '../../components/SearchableDropdown.js';
 import { PriceFormatter } from '../../components/PriceFormatter.js';
 import { QRCodeGenerator } from '../../components/QRCodeGenerator.js';
+import { ProductSearch } from '../../components/ProductSearch.js';
 
 class ProductsPage {
   constructor() {
@@ -22,12 +23,17 @@ class ProductsPage {
     this.totalPages = 1;
     this.totalProducts = 0;
 
+    // Search state
+    this.searchQuery = '';
+    this.isSearching = false;
+
     // Initialize components
     this.imageUpload = null;
     this.brandDropdown = null;
     this.categoryDropdown = null;
     this.priceFormatter = null;
     this.qrGenerator = null;
+    this.productSearch = null;
   }
 
   async render(container) {
@@ -45,6 +51,9 @@ class ProductsPage {
             <p>Manage your product catalog</p>
           </div>
           <div class="header-controls">
+            <div class="search-controls">
+              <div id="productSearchContainer"></div>
+            </div>
             <div class="pagination-controls">
               <label for="itemsPerPage">Items per page:</label>
               <select id="itemsPerPage" class="form-control-sm">
@@ -554,6 +563,74 @@ class ProductsPage {
           display: flex;
           align-items: center;
           gap: 1rem;
+          flex-wrap: wrap;
+        }
+
+        .search-controls {
+          flex: 1;
+          max-width: 400px;
+          min-width: 250px;
+        }
+
+        .admin-search-box {
+          position: relative;
+          width: 100%;
+        }
+
+        .search-input-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+
+        .search-input-wrapper .search-icon {
+          position: absolute;
+          left: 0.75rem;
+          color: #6c757d;
+          font-size: 0.875rem;
+          z-index: 1;
+        }
+
+        .search-input-wrapper .search-input {
+          width: 100%;
+          padding: 0.5rem 2.5rem 0.5rem 2.25rem;
+          border: 1px solid #e6b120;
+          border-radius: 0.375rem;
+          font-size: 0.875rem;
+          background: white;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .search-input-wrapper .search-input:focus {
+          outline: none;
+          border-color: #ffcd29;
+          box-shadow: 0 0 0 3px rgba(255, 205, 41, 0.2);
+        }
+
+        .search-input-wrapper .search-input::placeholder {
+          color: #9ca3af;
+        }
+
+        .clear-search-btn {
+          position: absolute;
+          right: 0.75rem;
+          background: none;
+          border: none;
+          color: #6c757d;
+          cursor: pointer;
+          padding: 0.25rem;
+          border-radius: 0.25rem;
+          transition: color 0.2s ease, background-color 0.2s ease;
+          z-index: 1;
+        }
+
+        .clear-search-btn:hover {
+          color: #374151;
+          background-color: #f3f4f6;
+        }
+
+        .clear-search-btn i {
+          font-size: 0.75rem;
         }
 
         .pagination-controls {
@@ -621,6 +698,40 @@ class ProductsPage {
           color: white;
           border-color: #007bff;
         }
+
+        /* Responsive styles for search */
+        @media (max-width: 768px) {
+          .header-controls {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.75rem;
+          }
+
+          .search-controls {
+            max-width: none;
+            min-width: auto;
+            order: -1;
+          }
+
+          .pagination-controls {
+            justify-content: center;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .search-input-wrapper .search-input {
+            padding: 0.5rem 2rem 0.5rem 2rem;
+            font-size: 0.8rem;
+          }
+
+          .search-input-wrapper .search-icon {
+            left: 0.5rem;
+          }
+
+          .clear-search-btn {
+            right: 0.5rem;
+          }
+        }
       </style>
     `;
   }
@@ -639,6 +750,9 @@ class ProductsPage {
     modalBackdrop?.addEventListener('click', () => this.hideProductForm());
     productForm?.addEventListener('submit', (e) => this.handleFormSubmit(e));
 
+    // Initialize search component
+    this.initializeSearchComponent();
+
     // Initialize form components
     this.initializeFormComponents();
 
@@ -647,6 +761,82 @@ class ProductsPage {
 
     // Add pagination event listeners
     this.bindPaginationEvents();
+  }
+
+  initializeSearchComponent() {
+    const searchContainer = document.getElementById('productSearchContainer');
+    if (!searchContainer) return;
+
+    // Create a simple search input instead of the complex ProductSearch component
+    searchContainer.innerHTML = `
+      <div class="admin-search-box">
+        <div class="search-input-wrapper">
+          <i class="fas fa-search search-icon"></i>
+          <input
+            type="text"
+            class="search-input"
+            id="adminProductSearchInput"
+            placeholder="Search products by name, brand, or category..."
+            autocomplete="off"
+          >
+          <button type="button" class="clear-search-btn" id="clearSearchBtn" style="display: none;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    `;
+
+    const searchInput = document.getElementById('adminProductSearchInput');
+    const clearBtn = document.getElementById('clearSearchBtn');
+
+    if (searchInput) {
+      let searchTimeout;
+
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+
+        // Show/hide clear button
+        if (clearBtn) {
+          clearBtn.style.display = query.length > 0 ? 'block' : 'none';
+        }
+
+        // Clear previous timeout
+        if (searchTimeout) {
+          clearTimeout(searchTimeout);
+        }
+
+        // Debounce search
+        searchTimeout = setTimeout(() => {
+          this.handleSearch(query);
+        }, 300);
+      });
+
+      // Handle Enter key
+      searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const query = searchInput.value.trim();
+          this.handleSearch(query);
+        }
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        clearBtn.style.display = 'none';
+        this.handleSearch('');
+        searchInput.focus();
+      });
+    }
+  }
+
+  async handleSearch(query) {
+    this.searchQuery = query;
+    this.currentPage = 1; // Reset to first page when searching
+    this.isSearching = query.length > 0;
+
+    await this.loadData();
   }
 
   initializeFormComponents() {
@@ -775,8 +965,16 @@ class ProductsPage {
 
   async loadData() {
     try {
+      // Build products API endpoint with search if needed
+      let productsEndpoint = `/products?page=${this.currentPage}&limit=${this.itemsPerPage}`;
+
+      if (this.isSearching && this.searchQuery) {
+        // Use search endpoint instead of regular products endpoint
+        productsEndpoint = `/products/search?q=${encodeURIComponent(this.searchQuery)}&page=${this.currentPage}&limit=${this.itemsPerPage}`;
+      }
+
       const [productsResponse, brandsResponse, categoriesResponse] = await Promise.all([
-        this.apiService.get(`/products?page=${this.currentPage}&limit=${this.itemsPerPage}`),
+        this.apiService.get(productsEndpoint),
         this.apiService.get('/brands'),
         this.apiService.get('/categories')
       ]);
@@ -789,6 +987,10 @@ class ProductsPage {
       if (productsResponse.pagination) {
         this.totalPages = productsResponse.pagination.totalPages;
         this.totalProducts = productsResponse.pagination.totalProducts;
+      } else if (this.isSearching) {
+        // For search results, set pagination based on results
+        this.totalProducts = this.products.length;
+        this.totalPages = Math.ceil(this.totalProducts / this.itemsPerPage);
       }
 
       this.renderProductsList();
@@ -808,11 +1010,24 @@ class ProductsPage {
     if (!container) return;
 
     if (this.products.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
+      const emptyStateContent = this.isSearching
+        ? `
+          <i class="fas fa-search"></i>
+          <h3>No Products Found</h3>
+          <p>No products match your search for "${this.escapeHtml(this.searchQuery)}". Try different keywords or clear the search.</p>
+          <button class="btn btn-secondary" onclick="document.getElementById('adminProductSearchInput').value = ''; document.getElementById('clearSearchBtn').click();">
+            Clear Search
+          </button>
+        `
+        : `
           <i class="fas fa-box"></i>
           <h3>No Products Found</h3>
           <p>Start by adding your first product to the catalog.</p>
+        `;
+
+      container.innerHTML = `
+        <div class="empty-state">
+          ${emptyStateContent}
         </div>
       `;
       return;
@@ -1299,7 +1514,7 @@ class ProductsPage {
 
     // Add half star if needed
     if (hasHalfStar) {
-      starsHtml += '⭐';
+      starsHtml += '☆';
     }
 
     // Add empty stars

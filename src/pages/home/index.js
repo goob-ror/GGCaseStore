@@ -12,17 +12,18 @@ import '../../styles/components/home.css';
 class HomePage {
     constructor() {
         this.UserApiService = new UserApiService();
+        this.currentBreakpoint = null;
+        this.resizeTimeout = null;
     }
 
     async render(container) {
         container.innerHTML = this.getHTML();
         this.setUpNavigation();
         this.bindEvents();
+        this.setupResponsiveHandler();
         await this.loadBanner();
         await this.loadCategories();
-        await this.loadHighRatingProducts();
-        await this.loadBestSellingProducts();
-        await this.loadBestProducts();
+        await this.loadResponsiveProducts();
     }
 
     setUpNavigation() {
@@ -117,6 +118,156 @@ class HomePage {
                 link.classList.add("active");
             }
         });
+    }
+
+    // Setup responsive handler for window resize
+    setupResponsiveHandler() {
+        window.addEventListener('resize', () => {
+            clearTimeout(this.resizeTimeout);
+            this.resizeTimeout = setTimeout(() => {
+                const newBreakpoint = this.getCurrentBreakpoint();
+                if (newBreakpoint !== this.currentBreakpoint) {
+                    this.currentBreakpoint = newBreakpoint;
+                    this.updateGridClasses();
+                    this.updateProductDisplays();
+                }
+            }, 250);
+        });
+    }
+
+    // Update product displays with new limits (without re-fetching)
+    updateProductDisplays() {
+        const config = this.getResponsiveConfig();
+
+        // Update high rating products
+        if (this.highRatingProducts) {
+            this.renderProductSection('.produk-rating', this.highRatingProducts, config.displayLimit);
+        }
+
+        // Update best selling products
+        if (this.bestSellingProducts) {
+            this.renderProductSection('.produk-terlaris', this.bestSellingProducts, config.displayLimit);
+        }
+
+        // Update best products
+        if (this.bestProducts) {
+            this.renderProductSection('.produk-terbaik', this.bestProducts, config.displayLimit);
+        }
+    }
+
+    // Helper method to render product section with given limit
+    renderProductSection(containerSelector, allProducts, displayLimit) {
+        const container = document.querySelector(containerSelector);
+        if (!container || !allProducts) return;
+
+        const displayProducts = allProducts.slice(0, displayLimit);
+        
+        container.innerHTML = displayProducts.map(product => `
+            <div class="home-product-card loading-fade-in" data-product-id="${product.id}">
+                <div class="home-product-img-wrapper">
+                    <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
+                </div>
+                <div class="home-product-content">
+                    <h3 class="home-product-name">${product.name}</h3>
+                    <p class="home-product-price">${this.formatRupiah(product.price)}</p>
+                    <div class="home-product-rating">
+                        <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
+                        <span class="home-rating-divider">|</span>
+                        <span class="home-sales-count">${product.total_sold ?? 0}+ Terjual</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        // Re-bind click events
+        this.bindProductCardEvents(container);
+    }
+
+    // Get current breakpoint based on window width
+    getCurrentBreakpoint() {
+        const width = window.innerWidth;
+        if (width < 640) return 'mobile';
+        if (width < 768) return 'tablet-sm';
+        if (width < 1024) return 'tablet';
+        if (width < 1280) return 'desktop';
+        return 'desktop-lg';
+    }
+
+    // Get responsive configuration based on breakpoint
+    getResponsiveConfig() {
+        const breakpoint = this.getCurrentBreakpoint();
+        
+        const configs = {
+            'mobile': {
+                columns: 2,
+                rows: 2,
+                displayLimit: 6,
+                gridClass: 'home-products-grid-mobile'
+            },
+            'tablet-sm': {
+                columns: 3,
+                rows: 2,
+                displayLimit: 8,
+                gridClass: 'home-products-grid-tablet-sm'
+            },
+            'tablet': {
+                columns: 3,
+                rows: 2,
+                displayLimit: 8,
+                gridClass: 'home-products-grid-tablet'
+            },
+            'desktop': {
+                columns: 3,
+                rows: 2,
+                displayLimit: 9,
+                gridClass: 'home-products-grid-desktop'
+            },
+            'desktop-lg': {
+                columns: 5,
+                rows: 2,
+                displayLimit: 10,
+                gridClass: 'home-products-grid-desktop-lg'
+            }
+        };
+
+        return configs[breakpoint] || configs['desktop'];
+    }
+
+    // Update grid CSS classes based on current breakpoint
+    updateGridClasses() {
+        const config = this.getResponsiveConfig();
+        const productGrids = document.querySelectorAll('.home-products-grid');
+        
+        productGrids.forEach(grid => {
+            // Remove all existing grid classes
+            grid.classList.remove(
+                'home-products-grid-mobile',
+                'home-products-grid-tablet-sm', 
+                'home-products-grid-tablet',
+                'home-products-grid-desktop',
+                'home-products-grid-desktop-lg'
+            );
+            
+            // Add current breakpoint class
+            grid.classList.add(config.gridClass);
+            
+            // Set CSS custom properties for dynamic grid
+            grid.style.setProperty('--grid-columns', config.columns);
+            grid.style.setProperty('--grid-rows', config.rows);
+        });
+    }
+
+    // Load all product sections with responsive limits
+    async loadResponsiveProducts() {
+        this.currentBreakpoint = this.getCurrentBreakpoint();
+        this.updateGridClasses();
+        
+        // Fetch all products once, then filter by display limits
+        await Promise.all([
+            this.loadHighRatingProducts(),
+            this.loadBestSellingProducts(), 
+            this.loadBestProducts()
+        ]);
     }
 
     async loadBanner() {
@@ -308,18 +459,27 @@ class HomePage {
 
     async loadHighRatingProducts() {
         const container = document.querySelector(".produk-rating");
+        
         container.innerHTML = '<p class="home-loading-text loading-fade-in">Loading high rating products...</p>';
 
         try {
+            // Always fetch a reasonable amount of products (e.g., 12-16)
             const response = await this.UserApiService.get('/products/high-rating', {
                 sort: 'rating',
                 order: 'desc',
-                limit: 8
+                limit: 16
             });
-            const products = response.data || [];
+            const allProducts = response.data || [];
 
-            if (products.length > 0) {
-                container.innerHTML = products.map(product => `
+            // Store all products for potential resize handling
+            this.highRatingProducts = allProducts;
+
+            // Get current display limit and slice array
+            const config = this.getResponsiveConfig();
+            const displayProducts = allProducts.slice(0, config.displayLimit);
+
+            if (displayProducts.length > 0) {
+                container.innerHTML = displayProducts.map(product => `
                     <div class="home-product-card loading-fade-in" data-product-id="${product.id}">
                         <div class="home-product-img-wrapper">
                             <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
@@ -349,18 +509,27 @@ class HomePage {
 
     async loadBestSellingProducts() {
         const container = document.querySelector(".produk-terlaris");
+        
         container.innerHTML = '<p class="home-loading-text loading-fade-in">Loading best selling products...</p>';
 
         try {
+            // Always fetch a reasonable amount of products (e.g., 12-16)
             const response = await this.UserApiService.get('/products/high-sales', {
                 sort: 'total_sold',
                 order: 'desc',
-                limit: 8
+                limit: 16
             });
-            const products = response.data || [];
+            const allProducts = response.data || [];
 
-            if (products.length > 0) {
-                container.innerHTML = products.map(product => `
+            // Store all products for potential resize handling
+            this.bestSellingProducts = allProducts;
+
+            // Get current display limit and slice array
+            const config = this.getResponsiveConfig();
+            const displayProducts = allProducts.slice(0, config.displayLimit);
+
+            if (displayProducts.length > 0) {
+                container.innerHTML = displayProducts.map(product => `
                     <div class="home-product-card loading-fade-in" data-product-id="${product.id}">
                         <div class="home-product-img-wrapper">
                             <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
@@ -390,18 +559,27 @@ class HomePage {
 
     async loadBestProducts() {
         const container = document.querySelector(".produk-terbaik");
+        
         container.innerHTML = '<p class="home-loading-text loading-fade-in">Loading best products...</p>';
 
         try {
+            // Always fetch a reasonable amount of products (e.g., 12-16)
             const response = await this.UserApiService.get('/products/best', {
                 sort: 'best',
                 order: 'desc',
-                limit: 8
+                limit: 16
             });
-            const products = response.data || [];
+            const allProducts = response.data || [];
 
-            if (products.length > 0) {
-                container.innerHTML = products.map(product => `
+            // Store all products for potential resize handling
+            this.bestProducts = allProducts;
+
+            // Get current display limit and slice array
+            const config = this.getResponsiveConfig();
+            const displayProducts = allProducts.slice(0, config.displayLimit);
+
+            if (displayProducts.length > 0) {
+                container.innerHTML = displayProducts.map(product => `
                     <div class="home-product-card loading-fade-in" data-product-id="${product.id}">
                         <div class="home-product-img-wrapper">
                             <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
@@ -462,12 +640,18 @@ class HomePage {
         window.location.href = `/detail?id=${productId}`;
     }
 
-    // Cleanup method to destroy swipers when page is destroyed
+    // Cleanup method to destroy swipers and event listeners when page is destroyed
     destroy() {
         if (this.categoriesSwiper) {
             this.categoriesSwiper.destroy(true, true);
             this.categoriesSwiper = null;
         }
+        
+        // Clean up resize event listener
+        if (this.resizeTimeout) {
+            clearTimeout(this.resizeTimeout);
+        }
+        window.removeEventListener('resize', this.setupResponsiveHandler);
     }
 }
 
