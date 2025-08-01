@@ -196,14 +196,16 @@ class DetailPage {
                 <span class="rating-count">Terjual ${this.product.total_sold || 0}+</span>
               </div>
             </div>
+          </div>
+
+          <div class="price-section">
+          <div class="price-container">
+            <span class="price">Rp ${this.formatPrice(this.product.price)}</span>
             <button class="wishlist-btn ${this.isInWishlist() ? 'added' : ''}" id="wishlist-btn">
               <i class="fas fa-heart"></i>
             </button>
           </div>
-
-          <div class="price-section">
-            <span class="price">Rp ${this.formatPrice(this.product.price)}</span>
-          </div>
+        </div>
 
           ${this.renderVariantsSection()}
 
