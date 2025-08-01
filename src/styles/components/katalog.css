@@ -118,6 +118,7 @@
     flex: 1;
     min-width: 0;
     width: 100%;
+    margin: 0 0 40px 0;
 }
 
 .catalog-header {
@@ -231,6 +232,12 @@
 }
 
 /* ===== RESPONSIVE DESIGN ===== */
+@media (min-width: 400px) {
+    footer {
+        display: none;
+    }
+}
+
 
 /* Desktop - 5 columns at 1024px and above */
 @media (min-width: 1024px) {

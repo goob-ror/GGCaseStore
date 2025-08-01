@@ -341,6 +341,10 @@
 }
 
 @media (min-width: 400px) {
+  footer {
+    display: flex;
+  }
+
   .home-categories-grid {
     grid-template-columns: repeat(4, 1fr);
   }

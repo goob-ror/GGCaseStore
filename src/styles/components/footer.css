@@ -3,7 +3,7 @@ footer {
   color: #444;
   border-top: 1px solid #323232;
   padding-top: 2.5rem;
-  display: none;
+  display: flex;
   flex-direction: column;
 }
 
@@ -11,11 +11,9 @@ footer {
   display: grid;
   grid-template-columns: 1fr;
   gap: 2.5rem;
-  padding-bottom: 2.5rem;
+  padding: 0 1rem 2.5rem;
   width: 100%;
   margin: 0 auto;
-  padding-left: 1rem;
-  padding-right: 1rem;
 }
 
 @media (min-width: 640px) {
@@ -24,38 +22,45 @@ footer {
   }
 }
 
-@media (min-width: 1280px) {
-  footer {
-    display: flex;
-  }
-
+@media (min-width: 1024px) {
   .footer-content {
     grid-template-columns: repeat(3, 1fr);
     max-width: 1140px;
   }
+
+  .footer-links {
+    display: flex;
+    gap: 2.5rem;
+    justify-content: space-between;
+  }
 }
 
-.footer-logo img {
+.footer-logo {
+  display: inline-block;
   margin-bottom: 1rem;
 }
 .logo-image {
   width: 40px;
   height: 40px;
 }
+
 .footer-description {
   font-size: 0.875rem;
   line-height: 1.5;
+  color: #999;
 }
 
 .footer-section h2 {
   font-size: 1rem;
   font-weight: 600;
   margin-bottom: 1rem;
+  color: #fff;
 }
 
 .footer-section ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .footer-section ul li {
@@ -64,17 +69,21 @@ footer {
 }
 
 .footer-section ul li a {
-  color: #444;
+  color: #ccc;
   text-decoration: none;
+  transition: color 0.3s ease;
+}
+.footer-section ul li a:hover {
+  color: #eda412;
 }
 
-.footer-section .contact-list li {
+.contact-list li {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.footer-section .contact-list i {
+.footer-section i {
   color: #eda412;
 }
 
@@ -87,13 +96,20 @@ footer {
   margin-top: 1.5rem;
 }
 
-.map-info img {
-  width: 50px;
-  height: 50px;
+.map-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
 }
 
-.map-info p {
+.map-row img {
+  width: 40px;
+  height: 40px;
+}
+
+.map-row p {
   font-size: 0.875rem;
+  color: #999;
 }
 
 .footer-bottom {

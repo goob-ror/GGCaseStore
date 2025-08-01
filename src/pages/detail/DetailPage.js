@@ -47,9 +47,11 @@ class DetailPage {
 
           <!-- Related Products Section -->
           <div class="related-products-section">
-            <h2 class="section-title">Produk Terkait</h2>
-            <div class="related-products-grid" id="related-products">
-              <div class="loading-text">Loading related products...</div>
+            <div class="related-products-container">
+              <h2 class="related-title">Produk Terkait</h2>
+              <div class="related-grid" id="related-products">
+                <div class="loading-text">Loading related products...</div>
+              </div>
             </div>
           </div>
         </main>
@@ -196,14 +198,16 @@ class DetailPage {
                 <span class="rating-count">Terjual ${this.product.total_sold || 0}+</span>
               </div>
             </div>
+          </div>
+
+          <div class="price-section">
+          <div class="price-container">
+            <span class="price">${this.formatPrice(this.product.price)}</span>
             <button class="wishlist-btn ${this.isInWishlist() ? 'added' : ''}" id="wishlist-btn">
               <i class="fas fa-heart"></i>
             </button>
           </div>
-
-          <div class="price-section">
-            <span class="price">Rp ${this.formatPrice(this.product.price)}</span>
-          </div>
+        </div>
 
           ${this.renderVariantsSection()}
 
@@ -228,7 +232,7 @@ class DetailPage {
         </div>
         <div class="related-info">
           <h4 class="related-name">${product.name}</h4>
-          <div class="related-price">Rp ${this.formatPrice(product.price)}</div>
+          <div class="related-price">${this.formatPrice(product.price)}</div>
           <div class="related-rating">
             <span class="related-stars">${this.renderStars(product.avg_rating || 0)}</span>
             <span class="related-sold">Terjual ${product.total_sold || 0}+</span>
@@ -475,7 +479,13 @@ class DetailPage {
   }
 
   formatPrice(price) {
-    return price ? price.toLocaleString('id-ID') : '0';
+    if (!price) return '0';
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(price);
   }
 
   formatDescription(description) {
@@ -483,6 +493,31 @@ class DetailPage {
 
     // Convert \n to <br> tags for line breaks
     return description.replace(/\n/g, '<br>');
+  }
+
+  renderStars(rating) {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+    let starsHTML = '';
+
+    // Full stars
+    for (let i = 0; i < fullStars; i++) {
+      starsHTML += '★';
+    }
+
+    // Half star
+    if (hasHalfStar) {
+      starsHTML += '☆';
+    }
+
+    // Empty stars
+    for (let i = 0; i < emptyStars; i++) {
+      starsHTML += '☆';
+    }
+
+    return starsHTML;
   }
 
   getPlaceholderImage() {
@@ -534,7 +569,7 @@ class DetailPage {
       id: this.product.id,
       title: this.product.name, // wishlist page expects 'title'
       name: this.product.name,
-      price: `Rp ${this.formatPrice(this.product.price)}`, // formatted price
+      price: this.formatPrice(this.product.price), // formatted price with currency
       image: this.getCurrentImage(),
       brand_name: this.product.brand_name,
       category_name: this.product.category_name,

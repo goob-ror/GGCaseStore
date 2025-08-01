@@ -46,7 +46,9 @@ class KatalogPage {
     setUpNavigation() {
         document.getElementById('top-bar').innerHTML = TopNavigationBar();
         document.getElementById('bottom-bar').innerHTML = BottomNavigationBar();
-        document.getElementById('footer').innerHTML = Footer();
+        if (window.innerWidth > 768) {
+            document.getElementById('footer').innerHTML = Footer();
+        }
 
         // Initialize product search functionality
         initializeTopNavigationSearch();

@@ -39,6 +39,13 @@
   justify-content: between;
   grid-template-columns: repeat(3, 1fr);
 }
+
+@media (min-width: 400px) {
+  footer {
+    display: flex;
+  }
+}
+
 @media (min-width: 640px) {
   .brands-container {
     grid-template-columns: repeat(4, 1fr);
