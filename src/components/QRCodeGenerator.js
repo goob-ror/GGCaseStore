@@ -121,8 +121,8 @@ export class QRCodeGenerator {
    */
   createProductQRData(productData) {
     const baseUrl = window.location.origin;
-    const productUrl = `${baseUrl}/product/${productData.id}`;
-    
+    const productUrl = `${baseUrl}/detail?id=${productData.id}`;
+
     // Create structured data for QR code
     const qrData = {
       type: 'product',

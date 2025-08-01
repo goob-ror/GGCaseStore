@@ -40,16 +40,12 @@ class WishListPage {
                         <button class="clear-btn">Hapus</button>
                     </div>` : ``}
 
-
                     <h2 class="wishlist-heading">YOUR WISHLIST</h2>
-
                     <div class="items-container"></div>
-
                 </div>
 
                 <div class="notFound"></div>
         </div>
-
             <div id="confirm-modal" class="modal-overlay hidden">
                 <div class="modal-box">
                     <p>Apakah kamu yakin ingin menghapus item ini?</p>
@@ -61,8 +57,8 @@ class WishListPage {
             </div>
 
             <div id="footer"></div>
-            <div id="bottom-bar"></div>
         </div>
+        <div id="bottom-bar"></div>
         `;
     }
 

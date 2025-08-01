@@ -37,8 +37,8 @@ class UserBrandsPage {
             </div>
 
             <div id="footer"></div>
-            <div id="bottom-bar"></div>
         </div>
+        <div id="bottom-bar"></div>
         `;
     }
 
