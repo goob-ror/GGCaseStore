@@ -106,7 +106,7 @@ class WishListPage {
         const data = this.getWishlist();
 
         if (!data || data.length === 0) {
-            const notFoundContainer = document.querySelector('.notFound');
+            const notFoundContainer = document.querySelector('.items-container');
             notFoundContainer.innerHTML = `<div style="
                                                         display: flex;
                                                         justify-content: center;
@@ -251,7 +251,7 @@ class WishListPage {
                 let wishlist = this.getWishlist();
                 wishlist = wishlist.filter(item => !selectedIds.includes(item.id));
                 localStorage.setItem('wishlist', JSON.stringify(wishlist));
-                this.renderWishlist(); // refresh view
+                window.location.reload();
             });
         });
     }

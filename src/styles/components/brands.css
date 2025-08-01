@@ -1,5 +1,5 @@
 .brands-title {
-  font-size: 12px;
+  font-size: 20px;
   font-weight: semibold;
   color: #313131;
 }
@@ -31,7 +31,8 @@
 }
 
 .page-title {
-  font-size: 20px;
+  font-size: 28px;
+  font-weight: 600;
 }
 .brands-container {
   display: grid;

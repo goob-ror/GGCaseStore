@@ -503,7 +503,7 @@ class KatalogPage {
             productElement.innerHTML = `
                 <img src="${this.getProductImage(product)}" alt="${product.name}" class="catalog-product-card__image"/>
                 <div class="catalog-product-card__content">
-                    <h3 class="catalog-product-card__name">${product.name}</h3>
+                    <h3 class="catalog-product-card__name ellipsis-3">${product.name}</h3>
                     <p class="catalog-product-card__price">${this.formatRupiah(product.price)}</p>
                     <div class="catalog-product-card__rating">
                         <span><i class="fas fa-star"></i>${product.avg_rating ? product.avg_rating.toFixed(1) : 'Belum ada rating'}</span>

@@ -292,6 +292,23 @@ a:hover {
 .text-gray-500 {
   color: #6b7280 !important;
 }
+.ellipsis-3 {
+  line-clamp: 3;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ellipsis-2 {
+  line-clamp: 2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 
 .main-layout {
   position: relative;
@@ -303,6 +320,7 @@ a:hover {
   padding-right: 1.25rem;
   margin-bottom: 120px;
   min-height: 100vh;
+  color: #66686a;
 }
 
 @media (min-width: 640px) {

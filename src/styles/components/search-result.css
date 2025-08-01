@@ -283,17 +283,17 @@
   }
 }
 
-@media (min-width: 1280px) {
-  .brands-container {
-    grid-template-columns: repeat(5, 1fr);
+  @media (min-width: 1280px) {
+    .brands-container {
+      grid-template-columns: repeat(5, 1fr);
+    }
+    .brands-image-container {
+      height: 250px;
+    }
+    .brands-image-skeleton {
+      height: 225px;
+    }
   }
-  .brands-image-container {
-    height: 250px;
-  }
-  .brands-image-skeleton {
-    height: 225px;
-  }
-}
 
 /* Loading States */
 .items-container.loading {
