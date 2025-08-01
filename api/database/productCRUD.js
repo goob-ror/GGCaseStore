@@ -373,6 +373,138 @@ const searchProducts = async (req, res) => {
   }
 };
 
+// Get products by category ID
+const getProductsByCategory = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const { page = 1, limit = 20 } = req.query;
+
+    // Validate categoryId
+    if (!categoryId || isNaN(categoryId)) {
+      return res.status(400).json({ success: false, error: 'Valid category ID is required' });
+    }
+
+    const validLimit = Math.min(parseInt(limit), 100);
+    const offset = (parseInt(page) - 1) * validLimit;
+
+    const query = `
+      SELECT
+        p.*,
+        p.price as base_price,
+        b.name as brand_name,
+        c.name as category_name,
+        COALESCE(p.avg_rating, 0) as avg_rating,
+        COALESCE(p.total_raters, 0) as total_raters,
+        COALESCE(p.total_sold, 0) as total_sold
+      FROM products p
+      LEFT JOIN brands b ON p.brand_id = b.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.category_id = ?
+      ORDER BY p.created_at DESC
+      LIMIT ${validLimit} OFFSET ${offset}
+    `;
+
+    const [rows] = await db.execute(query, [categoryId]);
+
+    // Get photos for each product
+    for (let product of rows) {
+      const [photoRows] = await db.execute(
+        'SELECT * FROM product_photos WHERE product_id = ? ORDER BY id ASC',
+        [product.id]
+      );
+      product.photos = photoRows;
+    }
+
+    // Get total count for pagination
+    const [countResult] = await db.execute(
+      'SELECT COUNT(*) as total FROM products WHERE category_id = ?',
+      [categoryId]
+    );
+    const totalProducts = countResult[0].total;
+    const totalPages = Math.ceil(totalProducts / validLimit);
+
+    res.json({
+      success: true,
+      data: rows,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalProducts,
+        limit: validLimit
+      }
+    });
+  } catch (error) {
+    console.error('Error in getProductsByCategory:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// Get products by brand ID
+const getProductsByBrand = async (req, res) => {
+  try {
+    const { brandId } = req.params;
+    const { page = 1, limit = 20 } = req.query;
+
+    // Validate brandId
+    if (!brandId || isNaN(brandId)) {
+      return res.status(400).json({ success: false, error: 'Valid brand ID is required' });
+    }
+
+    const validLimit = Math.min(parseInt(limit), 100);
+    const offset = (parseInt(page) - 1) * validLimit;
+
+    const query = `
+      SELECT
+        p.*,
+        p.price as base_price,
+        b.name as brand_name,
+        c.name as category_name,
+        COALESCE(p.avg_rating, 0) as avg_rating,
+        COALESCE(p.total_raters, 0) as total_raters,
+        COALESCE(p.total_sold, 0) as total_sold
+      FROM products p
+      LEFT JOIN brands b ON p.brand_id = b.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.brand_id = ?
+      ORDER BY p.created_at DESC
+      LIMIT ${validLimit} OFFSET ${offset}
+    `;
+
+    const [rows] = await db.execute(query, [brandId]);
+
+    // Get photos for each product
+    for (let product of rows) {
+      const [photoRows] = await db.execute(
+        'SELECT * FROM product_photos WHERE product_id = ? ORDER BY id ASC',
+        [product.id]
+      );
+      product.photos = photoRows;
+    }
+
+    // Get total count for pagination
+    const [countResult] = await db.execute(
+      'SELECT COUNT(*) as total FROM products WHERE brand_id = ?',
+      [brandId]
+    );
+    const totalProducts = countResult[0].total;
+    const totalPages = Math.ceil(totalProducts / validLimit);
+
+    res.json({
+      success: true,
+      data: rows,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalProducts,
+        limit: validLimit
+      }
+    });
+  } catch (error) {
+    console.error('Error in getProductsByBrand:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 // Get product details with related products for detail page
 const getProductDetails = async (req, res) => {
   try {
@@ -464,5 +596,7 @@ module.exports = {
   getHighSalesProducts,
   getBestProducts,
   getProductsByPrice,
-  searchProducts
+  searchProducts,
+  getProductsByCategory,
+  getProductsByBrand
 };

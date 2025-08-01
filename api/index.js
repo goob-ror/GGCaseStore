@@ -222,6 +222,12 @@ app.get('/api/products/price', productCRUD.getProductsByPrice);
 // Get High Rating Products (public)
 app.get('/api/products/high-rating', productCRUD.getHighRatingProducts);
 
+// Get products by category ID (public)
+app.get('/api/products/category/:categoryId', productCRUD.getProductsByCategory);
+
+// Get products by brand ID (public)
+app.get('/api/products/brand/:brandId', productCRUD.getProductsByBrand);
+
 // Get product details with related products for detail page (public)
 app.get('/api/products/:id/details', productCRUD.getProductDetails);
 

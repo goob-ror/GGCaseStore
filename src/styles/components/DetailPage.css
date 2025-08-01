@@ -303,6 +303,12 @@
   margin-bottom: 8px;
 }
 
+.category-info {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
 .description-text {
   font-size: 14px;
   line-height: 1.6;

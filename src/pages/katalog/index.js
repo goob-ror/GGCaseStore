@@ -2,11 +2,13 @@ import { UserApiService } from '../../lib/UserApiService.js';
 import { TopNavigationBar, initializeTopNavigationSearch } from '../../components/TopNavigationBar.js';
 import { BottomNavigationBar } from '../../components/BottomNavigationBar.js';
 import { Footer } from '../../components/Footer.js';
+import { SearchableDropdown } from '../../components/SearchableDropdown.js';
 import Swiper from 'swiper';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
-import '../../styles/components/katalog.css'; 
+import '../../styles/components/katalog.css';
+import '../../styles/components/searchable-dropdown.css';
 
 class KatalogPage {
     constructor() {
@@ -20,15 +22,24 @@ class KatalogPage {
             minPrice: null,
             maxPrice: null,
             minRating: null,
+            categoryId: null,
+            brandId: null,
             sortBy: 'newest'
         };
+        this.categoryDropdown = null;
+        this.brandDropdown = null;
+        this.categories = [];
+        this.brands = [];
     }
 
     async render(container) {
         container.innerHTML = this.getHTML();
         this.setUpNavigation();
+        await this.initializeCategoryDropdown();
+        await this.initializeBrandDropdown();
         this.bindEvents();
         this.setupInfiniteScroll();
+        this.parseUrlParameters();
         await this.loadProducts();
     }
 
@@ -41,6 +52,104 @@ class KatalogPage {
         initializeTopNavigationSearch();
     }
 
+    async initializeCategoryDropdown() {
+        try {
+            // Load categories from API
+            const response = await this.UserApiService.get('/categories');
+            this.categories = response.data || [];
+
+            // Initialize the searchable dropdown
+            this.categoryDropdown = new SearchableDropdown({
+                placeholder: 'Pilih Kategori...',
+                searchPlaceholder: 'Cari kategori...',
+                noResultsText: 'Kategori tidak ditemukan',
+                allowClear: true,
+                onSelect: (category) => {
+                    this.filters.categoryId = category.id;
+                    this.resetAndReload();
+                },
+                onClear: () => {
+                    this.filters.categoryId = null;
+                    this.resetAndReload();
+                }
+            });
+
+            // Render the dropdown
+            const container = document.getElementById('category-dropdown-container');
+            if (container) {
+                container.innerHTML = this.categoryDropdown.createHTML('category-filter');
+                this.categoryDropdown.initialize('category-filter');
+                this.categoryDropdown.setItems(this.categories.map(cat => ({
+                    id: cat.id,
+                    name: cat.name,
+                    value: cat.id
+                })));
+            }
+        } catch (error) {
+            console.error('Error loading categories:', error);
+        }
+    }
+
+    async initializeBrandDropdown() {
+        try {
+            // Load brands from API
+            const response = await this.UserApiService.get('/brands');
+            this.brands = response.data || [];
+
+            // Initialize the searchable dropdown
+            this.brandDropdown = new SearchableDropdown({
+                placeholder: 'Pilih Brand...',
+                searchPlaceholder: 'Cari brand...',
+                noResultsText: 'Brand tidak ditemukan',
+                allowClear: true,
+                onSelect: (brand) => {
+                    this.filters.brandId = brand.id;
+                    this.resetAndReload();
+                },
+                onClear: () => {
+                    this.filters.brandId = null;
+                    this.resetAndReload();
+                }
+            });
+
+            // Render the dropdown
+            const container = document.getElementById('brand-dropdown-container');
+            if (container) {
+                container.innerHTML = this.brandDropdown.createHTML('brand-filter');
+                this.brandDropdown.initialize('brand-filter');
+                this.brandDropdown.setItems(this.brands.map(brand => ({
+                    id: brand.id,
+                    name: brand.name,
+                    value: brand.id
+                })));
+            }
+        } catch (error) {
+            console.error('Error loading brands:', error);
+        }
+    }
+
+    parseUrlParameters() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoryId = urlParams.get('category');
+        const brandId = urlParams.get('brand');
+
+        if (categoryId && this.categoryDropdown) {
+            this.filters.categoryId = categoryId;
+            // Set the selected category in the dropdown
+            this.categoryDropdown.setValue(categoryId);
+        }
+
+        if (brandId && this.brandDropdown) {
+            this.filters.brandId = brandId;
+            // Set the selected brand in the dropdown
+            this.brandDropdown.setValue(brandId);
+        }
+    }
+
+    resetAndReload() {
+        this.loadProducts();
+    }
+
     getHTML() {
         return `
             <div id="top-bar"></div>
@@ -50,6 +159,14 @@ class KatalogPage {
                         <!-- Filter Sidebar -->
                         <div class="catalog-filter">
                             <h3 class="catalog-filter__title">Filter</h3>
+                            <div class="catalog-filter__group">
+                                <label class="catalog-filter__label">Kategori</label>
+                                <div id="category-dropdown-container"></div>
+                            </div>
+                            <div class="catalog-filter__group">
+                                <label class="catalog-filter__label">Brand</label>
+                                <div id="brand-dropdown-container"></div>
+                            </div>
                             <div class="catalog-filter__group">
                                 <label class="catalog-filter__label">Harga</label>
                                 <div class="catalog-filter__input-row">
@@ -76,6 +193,7 @@ class KatalogPage {
                                     <option value="price-high">Harga Tertinggi</option>
                                     <option value="rating">Rating Tertinggi</option>
                                     <option value="popular">Terpopuler</option>
+                                    <option value="best">Terbaik</option>
                                 </select>
                             </div>
                         </div>
@@ -205,7 +323,51 @@ class KatalogPage {
             let allProducts = [];
 
             // Determine which API endpoint to use based on filters
-            if (this.filters.minPrice && this.filters.maxPrice) {
+            if (this.filters.categoryId) {
+                // Use category filtering endpoint
+                const params = {
+                    page: this.currentPage,
+                    limit: this.itemsPerPage
+                };
+                const response = await this.UserApiService.get(`/products/category/${this.filters.categoryId}`, params);
+                allProducts = response.data || [];
+
+                // Handle pagination for category filtering
+                if (response.pagination) {
+                    this.hasMoreProducts = this.currentPage < response.pagination.totalPages;
+                } else {
+                    this.hasMoreProducts = allProducts.length === this.itemsPerPage;
+                }
+
+                // Apply additional client-side filters and sorting
+                allProducts = this.applyClientSideFilters(allProducts);
+                allProducts = this.sortProducts(allProducts);
+                this.appendProducts(allProducts);
+                this.currentPage++;
+                return;
+            } else if (this.filters.brandId) {
+                // Use brand filtering endpoint
+                const params = {
+                    page: this.currentPage,
+                    limit: this.itemsPerPage
+                };
+                const response = await this.UserApiService.get(`/products/brand/${this.filters.brandId}`, params);
+                allProducts = response.data || [];
+
+                // Handle pagination for brand filtering
+                if (response.pagination) {
+                    this.hasMoreProducts = this.currentPage < response.pagination.totalPages;
+                } else {
+                    this.hasMoreProducts = allProducts.length === this.itemsPerPage;
+                }
+
+                // Apply additional client-side filters and sorting
+                allProducts = this.applyClientSideFilters(allProducts);
+                allProducts = this.sortProducts(allProducts);
+                this.appendProducts(allProducts);
+                this.currentPage++;
+                return;
+            } else if (this.filters.minPrice && this.filters.maxPrice) {
                 // Use price filtering endpoint
                 const response = await this.UserApiService.get('/products/price', {
                     min_price: this.filters.minPrice,
@@ -270,6 +432,16 @@ class KatalogPage {
 
     applyClientSideFilters(products) {
         return products.filter(product => {
+            // Category filter (if not already applied by API)
+            if (this.filters.categoryId && product.category_id != this.filters.categoryId) {
+                return false;
+            }
+
+            // Brand filter (if not already applied by API)
+            if (this.filters.brandId && product.brand_id != this.filters.brandId) {
+                return false;
+            }
+
             // Rating filter
             if (this.filters.minRating && product.avg_rating < parseFloat(this.filters.minRating)) {
                 return false;
@@ -299,6 +471,13 @@ class KatalogPage {
                 return sortedProducts.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
             case 'popular':
                 return sortedProducts.sort((a, b) => (b.total_sold || 0) - (a.total_sold || 0));
+            case 'best':
+                // Sort by highest rating first, then by highest sales as tiebreaker
+                return sortedProducts.sort((a, b) => {
+                    const ratingDiff = (b.avg_rating || 0) - (a.avg_rating || 0);
+                    if (ratingDiff !== 0) return ratingDiff;
+                    return (b.total_sold || 0) - (a.total_sold || 0);
+                });
             case 'newest':
             default:
                 return sortedProducts.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));

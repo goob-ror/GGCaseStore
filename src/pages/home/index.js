@@ -331,7 +331,7 @@ class HomePage {
             if (categories && categories.length > 0) {
                 container.innerHTML = categories.map(cat => `
                     <div class="swiper-slide">
-                        <div class="home-category-card">
+                        <div class="home-category-card" data-category-id="${cat.id}" data-category-name="${cat.name}">
                             <div class="home-category-img-wrapper">
                                 <img src="${cat.category_photo}" alt="${cat.name}" class="home-category-img" />
                             </div>
@@ -342,6 +342,9 @@ class HomePage {
 
                 // Store categories count for pagination calculation
                 this.categoriesCount = categories.length;
+
+                // Add click event listeners to category cards
+                this.bindCategoryCardEvents();
 
                 // Initialize categories swiper after content is loaded
                 setTimeout(() => {
@@ -641,6 +644,22 @@ class HomePage {
                 this.navigateToDetail(productId);
             });
         });
+    }
+
+    bindCategoryCardEvents() {
+        const categoryCards = document.querySelectorAll('.home-category-card');
+        categoryCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const categoryId = card.getAttribute('data-category-id');
+                const categoryName = card.getAttribute('data-category-name');
+                this.navigateToKatalogWithCategory(categoryId, categoryName);
+            });
+        });
+    }
+
+    navigateToKatalogWithCategory(categoryId, categoryName) {
+        // Navigate to katalog page with category filter
+        window.location.href = `/katalog?category=${categoryId}&categoryName=${encodeURIComponent(categoryName)}`;
     }
 
     navigateToDetail(productId) {

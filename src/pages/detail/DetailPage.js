@@ -210,6 +210,7 @@ class DetailPage {
           <div class="description-section">
             <h3 class="description-title">Deskripsi</h3>
             <div class="brand-info">Brand: <strong>${this.product.brand_name || 'Unknown'}</strong></div>
+            <div class="category-info">Category: <strong>${this.product.category_name || 'Unknown'}</strong></div>
             <div class="description-text">${this.formatDescription(this.product.description || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.')}</div>
           </div>
         </div>

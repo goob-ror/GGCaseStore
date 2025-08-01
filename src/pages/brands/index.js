@@ -97,15 +97,34 @@ class UserBrandsPage {
                 return;
             } else {
                 container.innerHTML = this.banners.map(brand => `
-                    <div class="brands-item">
+                    <div class="brands-item" data-brand-id="${brand.id}" data-brand-name="${brand.name}" style="cursor: pointer;">
                 <div class="brands-image-container">
                     <img src="${brand.brand_photo}" alt="${brand.name}" style="width: 100%; height: 100%; object-fit: contain;" />
                 </div>
                 <h3 class="text-uppercase brands-title">${brand.name}</h3>
                 </div>
         `).join('');
+
+                // Bind click events to brand cards
+                this.bindBrandCardEvents();
             }
         }
+    }
+
+    bindBrandCardEvents() {
+        const brandCards = document.querySelectorAll('.brands-item[data-brand-id]');
+        brandCards.forEach(card => {
+            card.addEventListener('click', (e) => {
+                const brandId = card.getAttribute('data-brand-id');
+                const brandName = card.getAttribute('data-brand-name');
+                this.navigateToKatalogWithBrand(brandId, brandName);
+            });
+        });
+    }
+
+    navigateToKatalogWithBrand(brandId, brandName) {
+        // Navigate to katalog page with brand filter
+        window.location.href = `/katalog?brand=${brandId}&brandName=${encodeURIComponent(brandName)}`;
     }
 
     renderError() {
