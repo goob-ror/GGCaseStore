@@ -320,7 +320,7 @@ class HomePage {
 
             if (products.length > 0) {
                 container.innerHTML = products.map(product => `
-                    <div class="home-product-card loading-fade-in">
+                    <div class="home-product-card loading-fade-in" data-product-id="${product.id}">
                         <div class="home-product-img-wrapper">
                             <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
                         </div>
@@ -335,6 +335,9 @@ class HomePage {
                         </div>
                     </div>
                 `).join('');
+
+                // Add click event listeners after rendering
+                this.bindProductCardEvents(container);
             } else {
                 container.innerHTML = '<p class="home-no-data">No high rating products available.</p>';
             }
@@ -358,7 +361,7 @@ class HomePage {
 
             if (products.length > 0) {
                 container.innerHTML = products.map(product => `
-                    <div class="home-product-card loading-fade-in">
+                    <div class="home-product-card loading-fade-in" data-product-id="${product.id}">
                         <div class="home-product-img-wrapper">
                             <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
                         </div>
@@ -373,6 +376,9 @@ class HomePage {
                         </div>
                     </div>
                 `).join('');
+
+                // Add click event listeners after rendering
+                this.bindProductCardEvents(container);
             } else {
                 container.innerHTML = '<p class="home-no-data">No best selling products available.</p>';
             }
@@ -396,7 +402,7 @@ class HomePage {
 
             if (products.length > 0) {
                 container.innerHTML = products.map(product => `
-                    <div class="home-product-card loading-fade-in">
+                    <div class="home-product-card loading-fade-in" data-product-id="${product.id}">
                         <div class="home-product-img-wrapper">
                             <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
                         </div>
@@ -411,6 +417,9 @@ class HomePage {
                         </div>
                     </div>
                 `).join('');
+
+                // Add click event listeners after rendering
+                this.bindProductCardEvents(container);
             } else {
                 container.innerHTML = '<p class="home-no-data">No best products available.</p>';
             }
@@ -435,6 +444,22 @@ class HomePage {
         }
         // Return a placeholder image if no photos available
         return '/public/uploads/products/product_1_1753842813929_6xc3sp2s8un.webp';
+    }
+
+    bindProductCardEvents(container) {
+        // Add click event listeners to all product cards in the container
+        const productCards = container.querySelectorAll('.home-product-card[data-product-id]');
+        productCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const productId = card.getAttribute('data-product-id');
+                this.navigateToDetail(productId);
+            });
+        });
+    }
+
+    navigateToDetail(productId) {
+        // Navigate to detail page using query parameter
+        window.location.href = `/detail?id=${productId}`;
     }
 
     // Cleanup method to destroy swipers when page is destroyed

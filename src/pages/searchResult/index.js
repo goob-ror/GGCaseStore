@@ -114,7 +114,7 @@ class UserSearchResult {
                 return;
             } else {
                 container.innerHTML = this.product.map(product => `
-                    <div class="items-container" style="text-decoration: none;">
+                    <div class="items-container" style="text-decoration: none;" data-product-id="${product.id}">
                         <div class="items-image-wrapper">
                             <img src="${this.getProductImage(product)}" alt="${product.name}"/>
                         </div>
@@ -132,6 +132,9 @@ class UserSearchResult {
                         </div>
                     </div>
                 `).join('');
+
+                // Add click event listeners after rendering
+                this.bindProductCardEvents(container);
                         }
         }
     }
@@ -143,6 +146,22 @@ class UserSearchResult {
         }
         // Return a placeholder image if no photos available
         return '/public/uploads/products/product_1_1753842813929_6xc3sp2s8un.webp';
+    }
+
+    bindProductCardEvents(container) {
+        // Add click event listeners to all product cards in the container
+        const productCards = container.querySelectorAll('.items-container[data-product-id]');
+        productCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const productId = card.getAttribute('data-product-id');
+                this.navigateToDetail(productId);
+            });
+        });
+    }
+
+    navigateToDetail(productId) {
+        // Navigate to detail page using query parameter
+        window.location.href = `/detail?id=${productId}`;
     }
 }
 

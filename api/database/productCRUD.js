@@ -373,9 +373,90 @@ const searchProducts = async (req, res) => {
   }
 };
 
+// Get product details with related products for detail page
+const getProductDetails = async (req, res) => {
+  try {
+    const productId = req.params.id;
+
+    // Get main product details
+    const [productRows] = await db.execute(`
+      SELECT
+        p.*,
+        p.price as base_price,
+        b.name as brand_name,
+        c.name as category_name,
+        COALESCE(p.avg_rating, 0) as avg_rating,
+        COALESCE(p.total_raters, 0) as total_raters,
+        COALESCE(p.total_sold, 0) as total_sold
+      FROM products p
+      LEFT JOIN brands b ON p.brand_id = b.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.id = ?
+    `, [productId]);
+
+    if (productRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    const product = productRows[0];
+
+    // Get product variants
+    const [variantRows] = await db.execute(
+      'SELECT * FROM product_variants WHERE product_id = ?',
+      [productId]
+    );
+
+    // Get product photos
+    const [photoRows] = await db.execute(
+      'SELECT * FROM product_photos WHERE product_id = ?',
+      [productId]
+    );
+
+    // Get related products (same category, excluding current product)
+    const [relatedRows] = await db.execute(`
+      SELECT
+        p.id,
+        p.name,
+        p.price,
+        p.price as base_price,
+        b.name as brand_name,
+        c.name as category_name,
+        COALESCE(p.avg_rating, 0) as avg_rating,
+        COALESCE(p.total_raters, 0) as total_raters,
+        COALESCE(p.total_sold, 0) as total_sold,
+        (SELECT photo_url FROM product_photos WHERE product_id = p.id LIMIT 1) as main_photo
+      FROM products p
+      LEFT JOIN brands b ON p.brand_id = b.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.category_id = ? AND p.id != ?
+      ORDER BY p.avg_rating DESC, p.total_sold DESC
+      LIMIT 8
+    `, [product.category_id, productId]);
+
+    // Format related products with photos array
+    const relatedProducts = relatedRows.map(relatedProduct => ({
+      ...relatedProduct,
+      photos: relatedProduct.main_photo ? [{ photo_url: relatedProduct.main_photo }] : []
+    }));
+
+    const productDetails = {
+      ...product,
+      variants: variantRows,
+      photos: photoRows,
+      related_products: relatedProducts
+    };
+
+    res.json({ success: true, data: productDetails });
+  } catch (error) {
+    console.error('Error in getProductDetails:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 module.exports = {
   getAllProducts,
   getProductById,
+  getProductDetails,
   createProduct,
   updateProduct,
   deleteProduct,

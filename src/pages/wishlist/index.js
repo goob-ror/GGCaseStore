@@ -85,8 +85,13 @@ class WishListPage {
     }
 
     getWishlist() {
-        const data = JSON.parse(localStorage.getItem('wishlist')) || [];
-        return data ? data : [];
+        try {
+            const data = JSON.parse(localStorage.getItem('wishlist')) || [];
+            return Array.isArray(data) ? data : [];
+        } catch (error) {
+            console.error('Error reading wishlist from localStorage:', error);
+            return [];
+        }
     }
 
     async loadBanner() {
@@ -124,27 +129,38 @@ class WishListPage {
 
             document.getElementById('counter').textContent = 0;
         container.innerHTML = data.map(item => `
-    <div class="wishlist-items">
+    <div class="wishlist-items" data-product-id="${item.id}">
       <input type="checkbox" class="wishlist-checkbox" />
 
       <div class="wishlist-image">
-        <img src="${item.image}" alt="${item.title}" />
+        <img src="${item.image || 'https://via.placeholder.com/100x100/f5f5f5/666666?text=No+Image'}" alt="${item.title || item.name}" />
       </div>
 
       <div class="wishlist-details">
-        <div class="wishlist-name">${item.title}</div>
+        <div class="wishlist-name">${item.title || item.name}</div>
         <div class="wishlist-price">${item.price}</div>
+        ${item.brand_name ? `<div class="wishlist-brand">Brand: ${item.brand_name}</div>` : ''}
+        ${item.avg_rating ? `
+          <div class="wishlist-rating">
+            <span class="rating-stars">${this.renderStars(item.avg_rating)}</span>
+            <span class="rating-text">${item.avg_rating.toFixed(1)}</span>
+          </div>
+        ` : ''}
       </div>
 
-      <button class="wishlist-delete" data-id="${item.id}">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24">
-            <path fill="none" stroke="#000" stroke-linecap="round" d="M9.5 14.5v-3m5 3v-3M3 6.5h18v0c-1.404 0-2.107 0-2.611.337a2 2 0 0 0-.552.552C17.5 7.893 17.5 8.596 17.5 10v5.5c0 1.886 0 2.828-.586 3.414s-1.528.586-3.414.586h-3c-1.886 0-2.828 0-3.414-.586S6.5 17.386 6.5 15.5V10c0-1.404 0-2.107-.337-2.611a2 2 0 0 0-.552-.552C5.107 6.5 4.404 6.5 3 6.5zm6.5-3s.5-1 2.5-1s2.5 1 2.5 1" stroke-width="1" />
-        </svg>
-      </button>
+      <div class="wishlist-actions">
+        <button class="wishlist-view" data-id="${item.id}" title="View Product">
+          <i class="fas fa-eye"></i>
+        </button>
+        <button class="wishlist-delete" data-id="${item.id}" title="Remove from Wishlist">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
     </div>
   `).join('');
 
         this.bindDeleteEvents();
+        this.bindViewEvents();
         this.bindCheckboxEvents();
         this.bindBulkDelete();
     }
@@ -160,9 +176,19 @@ class WishListPage {
                 this.showDeleteConfirmation(() => {
                     this.removeFromWishlist(id);
                     this.renderWishlist();
-                    window.location.reload();
-
                 });
+            });
+        });
+    }
+
+    bindViewEvents() {
+        const viewButtons = document.querySelectorAll('.wishlist-view');
+
+        viewButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const id = button.dataset.id;
+                // Navigate to product detail page
+                window.location.href = `/detail?id=${id}`;
             });
         });
     }
@@ -239,6 +265,31 @@ class WishListPage {
         const wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
         const updated = wishlist.filter(item => item.id !== id);
         localStorage.setItem('wishlist', JSON.stringify(updated));
+    }
+
+    renderStars(rating) {
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 !== 0;
+        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+        let starsHTML = '';
+
+        // Full stars
+        for (let i = 0; i < fullStars; i++) {
+            starsHTML += '<i class="fas fa-star"></i>';
+        }
+
+        // Half star
+        if (hasHalfStar) {
+            starsHTML += '<i class="fas fa-star-half-alt"></i>';
+        }
+
+        // Empty stars
+        for (let i = 0; i < emptyStars; i++) {
+            starsHTML += '<i class="far fa-star"></i>';
+        }
+
+        return starsHTML;
     }
 
     renderError() {

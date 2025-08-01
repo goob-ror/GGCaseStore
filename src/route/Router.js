@@ -53,6 +53,11 @@ class Router {
       this.handleRoute();
     });
 
+    // Handle hash changes (if needed for other functionality)
+    window.addEventListener('hashchange', () => {
+      this.handleHashRoute();
+    });
+
     // Handle initial route
     this.handleRoute();
   }
@@ -63,6 +68,12 @@ class Router {
     } else {
       window.history.pushState({}, '', path);
     }
+    this.handleRoute();
+  }
+
+  async handleHashRoute() {
+    // For now, just handle normal routing
+    // Hash routing can be added here if needed for other features
     this.handleRoute();
   }
 
@@ -80,9 +91,9 @@ class Router {
       }
     }
 
-    // Default to login if no route found
+    // Default to home if no route found (changed from login for user pages)
     if (!route) {
-      this.navigate('/login', true);
+      this.navigate('/', true);
       return;
     }
 

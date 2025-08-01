@@ -1,5 +1,5 @@
 import { UserApiService } from '../../lib/UserApiService.js';
-import { TopNavigationBar } from '../../components/TopNavigationBar.js';
+import { TopNavigationBar, initializeTopNavigationSearch } from '../../components/TopNavigationBar.js';
 import { BottomNavigationBar } from '../../components/BottomNavigationBar.js';
 import { Footer } from '../../components/Footer.js';
 import '../../styles/components/DetailPage.css';
@@ -27,6 +27,9 @@ class DetailPage {
     document.getElementById('top-bar').innerHTML = TopNavigationBar();
     document.getElementById('bottom-bar').innerHTML = BottomNavigationBar();
     document.getElementById('footer').innerHTML = Footer();
+
+    // Initialize search functionality
+    initializeTopNavigationSearch();
   }
 
   getHTML() {
@@ -59,8 +62,31 @@ class DetailPage {
   // ===== DATA LOADING METHODS =====
   
   getProductId() {
+    // Handle hash-based routing from catalog page
+    const hash = window.location.hash;
+
+    if (hash.includes('/detail/')) {
+      const productId = hash.split('/detail/')[1];
+      if (productId && productId !== 'detail' && productId.trim() !== '') {
+        return productId.trim();
+      }
+    }
+
+    // Fallback to query params
     const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('id') || window.location.pathname.split('/').pop();
+    const queryId = urlParams.get('id');
+    if (queryId) {
+      return queryId;
+    }
+
+    // Last fallback - check if there's a path parameter
+    const pathParts = window.location.pathname.split('/');
+    const lastPart = pathParts[pathParts.length - 1];
+    if (lastPart && lastPart !== 'detail' && !isNaN(lastPart)) {
+      return lastPart;
+    }
+
+    return null;
   }
 
   async loadProductData() {
@@ -69,12 +95,12 @@ class DetailPage {
 
     try {
       const productId = this.getProductId();
-      
+
       if (!productId) {
         throw new Error('Product ID not found');
       }
 
-      const response = await this.UserApiService.get(`/products/${productId}`);
+      const response = await this.UserApiService.get(`/products/${productId}/details`);
       this.product = response.data;
 
       if (!this.product) {
@@ -101,17 +127,15 @@ class DetailPage {
     container.innerHTML = '<div class="loading-text">Loading related products...</div>';
 
     try {
-      const productId = this.getProductId();
-      const response = await this.UserApiService.get(`/products/${productId}/related`);
-      this.relatedProducts = response.data || [];
+      // Related products are now included in the main product details response
+      if (this.product?.related_products && this.product.related_products.length > 0) {
+        this.relatedProducts = this.product.related_products;
 
-      if (this.relatedProducts.length === 0) {
-        container.innerHTML = '<p class="no-data-text">No related products found</p>';
-        return;
+        this.renderRelatedProducts(container);
+        this.bindRelatedProductEvents();
+      } else {
+        container.innerHTML = '<p class="no-data-text">Produk terkait tidak ditemukan.</p>';
       }
-
-      this.renderRelatedProducts(container);
-      this.bindRelatedProductEvents();
 
     } catch (error) {
       console.error('Error loading related products:', error);
@@ -120,7 +144,6 @@ class DetailPage {
   }
 
   // ===== SKELETON & LOADING STATES =====
-
   showProductSkeleton(container) {
     container.innerHTML = `
       <div class="product-skeleton">
@@ -143,59 +166,52 @@ class DetailPage {
   }
 
   // ===== RENDER METHODS =====
-
   renderProductDetails(container) {
     if (!this.product) return;
 
     container.innerHTML = `
-      <div class="product-images">
-        <div class="main-image">
-          <img src="${this.getCurrentImage()}" 
-               alt="${this.product.name}" 
-               class="product-main-img" />
-        </div>
-        ${this.renderThumbnails()}
+      <div class="detail-header">
+        <button class="back-btn" id="back-btn">
+          <i class="fas fa-arrow-left"></i>
+        </button>
       </div>
 
-      <div class="product-info">
-        <h1 class="product-title">${this.product.name}</h1>
-        
-        <div class="product-rating">
-          <div class="stars">${this.renderStars(this.product.rating || 0)}</div>
-          <span class="rating-text">${this.product.rating || 0}</span>
-          <span class="sold-text">Terjual ${this.product.sold_count || 0}+</span>
+      <div class="product-detail-container">
+        <div class="product-images-section">
+          <div class="main-image-container">
+            <img src="${this.getCurrentImage()}"
+                 alt="${this.product.name}"
+                 class="product-main-img" />
+          </div>
+          ${this.renderThumbnails()}
         </div>
 
-        <div class="product-price">
-          <span class="price">Rp ${this.formatPrice(this.product.price)}</span>
-          <button class="wishlist-btn" id="wishlist-btn">
-            <span class="heart">❤️</span>
-          </button>
-        </div>
+        <div class="product-info-section">
+          <div class="product-header">
+            <div class="title-rating">
+              <h1 class="product-title">${this.product.name}</h1>
+              <div class="product-rating">
+                <div class="stars filled">★ </div>
+                <span class="rating-text">${this.product.avg_rating ? this.product.avg_rating.toFixed(1) : '0.0'}</span>
+                <span class="rating-count">Terjual ${this.product.total_sold || 0}+</span>
+              </div>
+            </div>
+            <button class="wishlist-btn ${this.isInWishlist() ? 'added' : ''}" id="wishlist-btn">
+              <i class="fas fa-heart"></i>
+            </button>
+          </div>
 
-        <div class="stock-info">
-          <span class="stock-text">
-            Stock: ${this.product.stock > 0 ? this.product.stock : 'Out of Stock'}
-          </span>
-        </div>
+          <div class="price-section">
+            <span class="price">Rp ${this.formatPrice(this.product.price)}</span>
+          </div>
 
-        ${this.renderVariantsSection()}
+          ${this.renderVariantsSection()}
 
-        <div class="description-section">
-          <h3 class="description-title">Deskripsi</h3>
-          <p class="brand-info">Brand: ${this.product.brand_name || 'Unknown'}</p>
-          <p class="description-text">${this.product.description || 'No description available'}</p>
-        </div>
-
-        <div class="action-buttons">
-          <button class="add-to-cart-btn" id="add-to-cart-btn" 
-                  ${this.product.stock === 0 ? 'disabled' : ''}>
-            ${this.product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-          </button>
-          <button class="buy-now-btn" id="buy-now-btn" 
-                  ${this.product.stock === 0 ? 'disabled' : ''}>
-            ${this.product.stock === 0 ? 'Out of Stock' : 'Buy Now'}
-          </button>
+          <div class="description-section">
+            <h3 class="description-title">Deskripsi</h3>
+            <div class="brand-info">Brand: <strong>${this.product.brand_name || 'Unknown'}</strong></div>
+            <div class="description-text">${this.formatDescription(this.product.description || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.')}</div>
+          </div>
         </div>
       </div>
     `;
@@ -205,16 +221,16 @@ class DetailPage {
     container.innerHTML = this.relatedProducts.map(product => `
       <div class="related-card" data-product-id="${product.id}">
         <div class="related-image">
-          <img src="${product.image_url || product.thumbnail || this.getPlaceholderImage()}" 
-               alt="${product.name}" 
+          <img src="${this.getProductImage(product)}"
+               alt="${product.name}"
                loading="lazy" />
         </div>
         <div class="related-info">
           <h4 class="related-name">${product.name}</h4>
           <div class="related-price">Rp ${this.formatPrice(product.price)}</div>
           <div class="related-rating">
-            <span class="related-stars">${this.renderStars(product.rating || 0)}</span>
-            <span class="related-sold">Terjual ${product.sold_count || 0}+</span>
+            <span class="related-stars">${this.renderStars(product.avg_rating || 0)}</span>
+            <span class="related-sold">Terjual ${product.total_sold || 0}+</span>
           </div>
         </div>
       </div>
@@ -222,54 +238,49 @@ class DetailPage {
   }
 
   renderThumbnails() {
-    if (!this.product.photos || this.product.photos.length <= 1) {
+    if (!this.product.photos || this.product.photos.length === 0) {
       return '<div class="thumbnail-images"></div>';
     }
-    
-    const thumbnails = this.product.photos.slice(1).map((photo, index) => `
-      <div class="thumbnail ${this.selectedImage === index + 1 ? 'active' : ''}" 
-           data-index="${index + 1}">
-        <img src="${photo.image_url || this.getPlaceholderImage()}" 
-             alt="${this.product.name} ${index + 2}" 
+
+    // Display ALL product images in a simple scrollable container
+    const thumbnails = this.product.photos.map((photo, index) => `
+      <div class="thumbnail ${this.selectedImage === index ? 'active' : ''}"
+           data-index="${index}">
+        <img src="${photo.photo_url || this.getPlaceholderImage()}"
+             alt="${this.product.name} ${index + 1}"
              loading="lazy" />
       </div>
     `).join('');
 
-    return `<div class="thumbnail-images">${thumbnails}</div>`;
+    return `
+      <div class="thumbnail-images">
+        <div class="thumbnail-container">
+          ${thumbnails}
+        </div>
+      </div>
+    `;
   }
 
   renderVariantsSection() {
     if (!this.product.variants || this.product.variants.length === 0) {
       return '';
     }
-    
-    const variants = this.product.variants.map(variant => `
-      <button class="variant-btn ${this.selectedVariant === variant.name ? 'active' : ''} ${!variant.available ? 'disabled' : ''}"
-              data-variant="${variant.name}"
-              data-variant-id="${variant.id}"
-              ${!variant.available ? 'disabled' : ''}>
-        <div class="variant-icon ${variant.color || 'default'}"></div>
-        <span>${variant.name}</span>
-        ${variant.stock <= 5 && variant.stock > 0 ? 
-          `<small class="stock-warning">Stock: ${variant.stock}</small>` : ''}
-      </button>
-    `).join('');
+
+    const variantsHTML = this.product.variants
+      .map(variant => {
+        const name = variant.name || variant.variant_name || 'Unknown';
+        return `<div class="variant-box">${name}</div>`;
+      })
+      .join('');
 
     return `
       <div class="variants-section">
-        <h3 class="variants-title">Varian:</h3>
-        <div class="variants-container">${variants}</div>
+        <div class="variants-title">Varian:</div>
+        <div class="variants-container">
+          ${variantsHTML}
+        </div>
       </div>
     `;
-  }
-
-  renderStars(rating) {
-    let stars = '';
-    for (let i = 0; i < 5; i++) {
-      const isFilled = i < Math.floor(rating);
-      stars += `<span class="star ${isFilled ? 'filled' : ''}">★</span>`;
-    }
-    return stars;
   }
 
   // ===== ERROR & NOT FOUND STATES =====
@@ -298,25 +309,37 @@ class DetailPage {
   // ===== EVENT BINDING =====
 
   bindEvents() {
-    // Navigation events
+    // Navigation events - highlight Katalog for detail pages
     const navLinks = document.querySelectorAll('.nav-links a');
-    const currentPath = window.location.pathname;
-
     navLinks.forEach(link => {
-      if (link.getAttribute('href') === currentPath) {
+      // Remove any existing active class
+      link.classList.remove('active');
+      // Add active class to Katalog link since this is a product detail page
+      if (link.getAttribute('href') === '/katalog') {
         link.classList.add('active');
       }
     });
 
     const bottomLinks = document.querySelectorAll(".bottom-nav a");
     bottomLinks.forEach(link => {
-      if (link.getAttribute("data-path").toLowerCase() === currentPath) {
+      // Remove any existing active class
+      link.classList.remove('active');
+      // Add active class to Katalog link
+      if (link.getAttribute("data-path") === '/katalog') {
         link.classList.add("active");
       }
     });
   }
 
   bindProductEvents() {
+    // Back button
+    const backBtn = document.getElementById('back-btn');
+    if (backBtn) {
+      backBtn.addEventListener('click', () => {
+        window.history.back();
+      });
+    }
+
     // Thumbnail events
     document.querySelectorAll('.thumbnail').forEach(thumbnail => {
       thumbnail.addEventListener('click', (e) => {
@@ -325,31 +348,23 @@ class DetailPage {
       });
     });
 
-    // Variant events
-    document.querySelectorAll('.variant-btn:not(.disabled)').forEach(button => {
+    // Variant events - updated for new class name
+    document.querySelectorAll('.variant-option').forEach(button => {
       button.addEventListener('click', (e) => {
-        const variant = e.currentTarget.dataset.variant;
-        this.handleVariantClick(variant);
+        const variantId = e.currentTarget.dataset.variantId;
+        const variantName = e.currentTarget.dataset.variantName;
+        this.handleVariantClick(variantId, variantName);
       });
     });
 
     // Action button events
     const wishlistBtn = document.getElementById('wishlist-btn');
-    const addToCartBtn = document.getElementById('add-to-cart-btn');
-    const buyNowBtn = document.getElementById('buy-now-btn');
-
     if (wishlistBtn) {
       wishlistBtn.addEventListener('click', () => this.handleWishlistClick());
     }
-
-    if (addToCartBtn && !addToCartBtn.disabled) {
-      addToCartBtn.addEventListener('click', () => this.handleAddToCart());
-    }
-
-    if (buyNowBtn && !buyNowBtn.disabled) {
-      buyNowBtn.addEventListener('click', () => this.handleBuyNow());
-    }
   }
+
+
 
   bindRelatedProductEvents() {
     document.querySelectorAll('.related-card').forEach(card => {
@@ -365,39 +380,46 @@ class DetailPage {
   handleThumbnailClick(index) {
     this.selectedImage = index;
     const mainImg = document.querySelector('.product-main-img');
-    
+
     if (mainImg && this.product.photos && this.product.photos[index]) {
-      mainImg.src = this.product.photos[index].image_url || this.getPlaceholderImage();
+      mainImg.src = this.product.photos[index].photo_url || this.getPlaceholderImage();
     }
-    
-    // Update thumbnail active state
+
+    // Update thumbnail active state - now all images are included, so index matches directly
     document.querySelectorAll('.thumbnail').forEach((thumb, i) => {
-      thumb.classList.toggle('active', i === index - 1);
+      thumb.classList.toggle('active', i === index);
     });
   }
 
-  handleVariantClick(variant) {
-    this.selectedVariant = variant;
-    
+  handleVariantClick(variantId, variantName) {
+    this.selectedVariant = variantId;
+
     // Update variant active state
-    document.querySelectorAll('.variant-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.variant === variant);
+    document.querySelectorAll('.variant-option').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.variantId === variantId);
     });
   }
 
   async handleWishlistClick() {
     try {
-      await this.UserApiService.post('/wishlist', {
-        product_id: this.product.id
-      });
-      
       const wishlistBtn = document.getElementById('wishlist-btn');
-      wishlistBtn.classList.add('added');
-      this.showSuccessMessage('Added to wishlist');
-      
+      const isCurrentlyInWishlist = this.isInWishlist();
+
+      if (isCurrentlyInWishlist) {
+        // Remove from wishlist
+        this.removeFromWishlist();
+        wishlistBtn.classList.remove('added');
+        this.showSuccessMessage('Removed from wishlist');
+      } else {
+        // Add to wishlist
+        this.addToWishlist();
+        wishlistBtn.classList.add('added');
+        this.showSuccessMessage('Added to wishlist');
+      }
+
     } catch (error) {
-      console.error('Error adding to wishlist:', error);
-      this.showErrorMessage('Failed to add to wishlist');
+      console.error('Error handling wishlist:', error);
+      this.showErrorMessage('Failed to update wishlist');
     }
   }
 
@@ -425,16 +447,24 @@ class DetailPage {
   }
 
   handleRelatedProductClick(id) {
-    window.location.href = `/product-detail?id=${id}`;
+    window.location.hash = `#/detail/${id}`;
   }
 
   // ===== UTILITY METHODS =====
-
   getCurrentImage() {
     if (!this.product.photos || this.product.photos.length === 0) {
       return this.getPlaceholderImage();
     }
-    return this.product.photos[this.selectedImage]?.image_url || this.getPlaceholderImage();
+    // API returns photos with 'photo_url' field, not 'image_url'
+    return this.product.photos[this.selectedImage]?.photo_url || this.getPlaceholderImage();
+  }
+
+  getProductImage(product) {
+    // Get the first photo from the product's photos array, or use placeholder
+    if (product.photos && product.photos.length > 0) {
+      return product.photos[0].photo_url || this.getPlaceholderImage();
+    }
+    return this.getPlaceholderImage();
   }
 
   getSelectedVariantId() {
@@ -447,18 +477,144 @@ class DetailPage {
     return price ? price.toLocaleString('id-ID') : '0';
   }
 
+  formatDescription(description) {
+    if (!description) return 'No description available';
+
+    // Convert \n to <br> tags for line breaks
+    return description.replace(/\n/g, '<br>');
+  }
+
   getPlaceholderImage() {
     return 'https://via.placeholder.com/400x400/f5f5f5/666666?text=No+Image';
   }
 
+  // ===== WISHLIST MANAGEMENT =====
+
+  getWishlistKey() {
+    return 'wishlist';
+  }
+
+  getWishlist() {
+    try {
+      const wishlist = localStorage.getItem(this.getWishlistKey());
+      return wishlist ? JSON.parse(wishlist) : [];
+    } catch (error) {
+      console.error('Error reading wishlist from localStorage:', error);
+      return [];
+    }
+  }
+
+  saveWishlist(wishlist) {
+    try {
+      localStorage.setItem(this.getWishlistKey(), JSON.stringify(wishlist));
+    } catch (error) {
+      console.error('Error saving wishlist to localStorage:', error);
+    }
+  }
+
+  isInWishlist() {
+    if (!this.product) return false;
+    const wishlist = this.getWishlist();
+    return wishlist.some(item => item.id === this.product.id);
+  }
+
+  addToWishlist() {
+    if (!this.product) return;
+
+    const wishlist = this.getWishlist();
+
+    // Check if already in wishlist
+    if (wishlist.some(item => item.id === this.product.id)) {
+      return;
+    }
+
+    // Add product with data structure matching wishlist page expectations
+    const wishlistItem = {
+      id: this.product.id,
+      title: this.product.name, // wishlist page expects 'title'
+      name: this.product.name,
+      price: `Rp ${this.formatPrice(this.product.price)}`, // formatted price
+      image: this.getCurrentImage(),
+      brand_name: this.product.brand_name,
+      category_name: this.product.category_name,
+      avg_rating: this.product.avg_rating || 0,
+      total_sold: this.product.total_sold || 0,
+      stock: this.product.stock || 0,
+      addedAt: new Date().toISOString()
+    };
+
+    wishlist.push(wishlistItem);
+    this.saveWishlist(wishlist);
+  }
+
+  removeFromWishlist() {
+    if (!this.product) return;
+
+    const wishlist = this.getWishlist();
+    const updatedWishlist = wishlist.filter(item => item.id !== this.product.id);
+    this.saveWishlist(updatedWishlist);
+  }
+
   showSuccessMessage(message) {
-    // Implementation for success toast/notification
-    console.log('Success:', message);
+    // Create a simple toast notification
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification success';
+    toast.textContent = message;
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #4CAF50;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      z-index: 10000;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideIn 0.3s ease-out;
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.animation = 'slideOut 0.3s ease-in';
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, 3000);
   }
 
   showErrorMessage(message) {
-    // Implementation for error toast/notification
-    console.log('Error:', message);
+    // Create a simple error toast notification
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification error';
+    toast.textContent = message;
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #f44336;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      z-index: 10000;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideIn 0.3s ease-out;
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.animation = 'slideOut 0.3s ease-in';
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, 3000);
   }
 }
 

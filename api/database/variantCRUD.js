@@ -31,6 +31,8 @@ const createVariant = async (req, res) => {
 
 // Bulk update variants for a product
 const updateProductVariants = async (req, res) => {
+  const connection = await db.getConnection();
+
   try {
     const productId = req.params.productId;
     const { variants } = req.body; // Array of variant objects
@@ -40,38 +42,41 @@ const updateProductVariants = async (req, res) => {
     }
 
     // Start transaction
-    await db.execute('START TRANSACTION');
+    await connection.beginTransaction();
 
     try {
       // Delete existing variants for this product
-      await db.execute('DELETE FROM product_variants WHERE product_id = ?', [productId]);
+      await connection.execute('DELETE FROM product_variants WHERE product_id = ?', [productId]);
 
       // Insert new variants
       if (variants.length > 0) {
         const values = variants.map(variant => [productId, variant.variant_name]).filter(v => v[1] && v[1].trim());
 
         if (values.length > 0) {
-          const placeholders = values.map(() => '(?, ?)').join(', ');
-          const flatValues = values.flat();
-
-          await db.execute(
-            `INSERT INTO product_variants (product_id, variant_name) VALUES ${placeholders}`,
-            flatValues
-          );
+          // Insert variants one by one to avoid prepared statement issues
+          for (const [prodId, variantName] of values) {
+            await connection.execute(
+              'INSERT INTO product_variants (product_id, variant_name) VALUES (?, ?)',
+              [prodId, variantName]
+            );
+          }
         }
       }
 
       // Commit transaction
-      await db.execute('COMMIT');
+      await connection.commit();
 
       res.json({ success: true, message: 'Product variants updated successfully' });
     } catch (error) {
       // Rollback transaction on error
-      await db.execute('ROLLBACK');
+      await connection.rollback();
       throw error;
     }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+  } finally {
+    // Always release the connection
+    connection.release();
   }
 };
 

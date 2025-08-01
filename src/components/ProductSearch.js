@@ -234,7 +234,7 @@ export class ProductSearch {
    * Default product selection handler - navigate to product detail
    */
   defaultOnSelect(product) {
-    window.location.href = `/product/${product.id}`;
+    window.location.href = `/detail?id=${product.id}`;
   }
 
   /**

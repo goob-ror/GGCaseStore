@@ -44,57 +44,57 @@ class KatalogPage {
     getHTML() {
         return `
             <div id="top-bar"></div>
-            <div class="main-layout">
-                <div class="container"> 
-                    <!-- Filter Sidebar -->
-                    <div class="filter">
-                        <h3>Filter</h3>
-                        <div class="filter-group">
-                            <div for="min-price" class="label-input">Harga</div>
-                            <div class="filter-row">
-                                <label class="filter-sub">Min</label>
-                                <input type="number" class="filter-input" placeholder="Rp 20.000">
-                            </div>
-                            <div class="filter-row">
-                                <label class="filter-sub">Maks</label>
-                                <input type="number" class="filter-input" placeholder="Rp 500.000">
-                            </div>
-                        </div>
-                        <div class="filter-group-select">
-                            <div for="rating-filter" class="label-input-b">Rating</div>
-                                <div class="select-status">
-                                    <select id="rating-filter" class="filter-select">
-                                        <option value="">Semua Rating</option>
-                                        <option value="4">4+ Bintang</option>
-                                        <option value="3">3+ Bintang</option>
-                                        <option value="2">2+ Bintang</option>
-                                        <option value="1">1+ Bintang</option>
-                                    </select>
-                                    <select id="sort-filter" class="filter-select">
-                                        <option value="newest">Terbaru</option>
-                                        <option value="price-low">Harga Terendah</option>
-                                        <option value="price-high">Harga Tertinggi</option>
-                                        <option value="rating">Rating Tertinggi</option>
-                                        <option value="popular">Terpopuler</option>
-                                    </select>
+            <div class="catalog-main-layout">
+                <div class="catalog-content-wrapper">
+                    <div class="catalog-container">
+                        <!-- Filter Sidebar -->
+                        <div class="catalog-filter">
+                            <h3 class="catalog-filter__title">Filter</h3>
+                            <div class="catalog-filter__group">
+                                <label class="catalog-filter__label">Harga</label>
+                                <div class="catalog-filter__input-row">
+                                    <span class="catalog-filter__input-prefix">Min</span>
+                                    <input type="number" class="catalog-filter__input" placeholder="20000" id="min-price-input">
+                                </div>
+                                <div class="catalog-filter__input-row">
+                                    <span class="catalog-filter__input-prefix">Maks</span>
+                                    <input type="number" class="catalog-filter__input" placeholder="500000" id="max-price-input">
                                 </div>
                             </div>
-                        </div>
-                        <!-- Main Content -->
-                        <div class="main-content">
-                            <div class="header-bar">
-                                <p id="product-count">Memuat produk...</p>
+                            <div class="catalog-filter__group">
+                                <label class="catalog-filter__label">Rating & Urutan</label>
+                                <select id="rating-filter" class="catalog-filter__select">
+                                    <option value="">Semua Rating</option>
+                                    <option value="4">4+ Bintang</option>
+                                    <option value="3">3+ Bintang</option>
+                                    <option value="2">2+ Bintang</option>
+                                    <option value="1">1+ Bintang</option>
+                                </select>
+                                <select id="sort-filter" class="catalog-filter__select">
+                                    <option value="newest">Terbaru</option>
+                                    <option value="price-low">Harga Terendah</option>
+                                    <option value="price-high">Harga Tertinggi</option>
+                                    <option value="rating">Rating Tertinggi</option>
+                                    <option value="popular">Terpopuler</option>
+                                </select>
                             </div>
-    
-                            <div class="product-grid">
+                        </div>
+
+                        <!-- Main Content -->
+                        <div class="catalog-main-content">
+                            <div class="catalog-header">
+                                <p class="catalog-header__count" id="product-count">Memuat produk...</p>
+                            </div>
+
+                            <div class="catalog-product-grid" id="product-grid">
                                 <!-- Products will be loaded here -->
                             </div>
-                            <div class="loading-indicator hidden" id="loading-indicator">
+                            <div class="catalog-loading hidden" id="loading-indicator">
                                 <i class="fas fa-spinner fa-spin"></i> Memuat produk...
                             </div>
                         </div>
                     </div>
-
+                </div>
                 <div id="footer"></div>
                 <div id="bottom-bar"></div>
             </div>
@@ -123,10 +123,10 @@ class KatalogPage {
     }
 
     bindFilterEvents() {
-        const minPriceInput = document.querySelector('.filter-input[placeholder*="20.000"]');
-        const maxPriceInput = document.querySelector('.filter-input[placeholder*="500.000"]');
-        const ratingSelect = document.querySelector('#rating-filter');
-        const sortSelect = document.querySelector('#sort-filter');
+        const minPriceInput = document.getElementById('min-price-input');
+        const maxPriceInput = document.getElementById('max-price-input');
+        const ratingSelect = document.getElementById('rating-filter');
+        const sortSelect = document.getElementById('sort-filter');
 
         if (minPriceInput) {
             minPriceInput.addEventListener('input', this.debounce(() => {
@@ -188,8 +188,10 @@ class KatalogPage {
         this.currentPage = 1;
         this.products = [];
         this.hasMoreProducts = true;
-        const container = document.querySelector('.product-grid');
-        container.innerHTML = '';
+        const container = document.getElementById('product-grid');
+        if (container) {
+            container.innerHTML = '';
+        }
         await this.loadMoreProducts();
     }
 
@@ -255,8 +257,10 @@ class KatalogPage {
         } catch (err) {
             console.error('Error loading products:', err);
             if (this.products.length === 0) {
-                const container = document.querySelector('.product-grid');
-                container.innerHTML = `<p>Gagal memuat produk.</p>`;
+                const container = document.getElementById('product-grid');
+                if (container) {
+                    container.innerHTML = `<p>Gagal memuat produk.</p>`;
+                }
             }
         } finally {
             this.isLoading = false;
@@ -302,20 +306,26 @@ class KatalogPage {
     }
 
     appendProducts(newProducts) {
-        const container = document.querySelector('.product-grid');
+        const container = document.getElementById('product-grid');
+
+        if (!container) {
+            console.error('Product grid container not found');
+            return;
+        }
 
         newProducts.forEach(product => {
             this.products.push(product);
             const productElement = document.createElement('div');
-            productElement.className = 'product-card';
+            productElement.className = 'catalog-product-card';
+            productElement.setAttribute('data-product-id', product.id);
+            productElement.addEventListener('click', () => this.navigateToDetail(product.id));
             productElement.innerHTML = `
-                <img src="${this.getProductImage(product)}" alt="${product.name}" class="card-img"/>
-                <div class="card-content">
-                    <div class="product-name">${product.name}</div>
-                    <p class="product-price">${this.formatRupiah(product.price)}</p>
-                    <div class="card-rating">
+                <img src="${this.getProductImage(product)}" alt="${product.name}" class="catalog-product-card__image"/>
+                <div class="catalog-product-card__content">
+                    <h3 class="catalog-product-card__name">${product.name}</h3>
+                    <p class="catalog-product-card__price">${this.formatRupiah(product.price)}</p>
+                    <div class="catalog-product-card__rating">
                         <span><i class="fas fa-star"></i>${product.avg_rating ? product.avg_rating.toFixed(1) : 'Belum ada rating'}</span>
-                        <span>|</span>
                         <span>${product.total_sold ?? 0}+ Terjual</span>
                     </div>
                 </div>
@@ -324,6 +334,11 @@ class KatalogPage {
         });
 
         this.updateProductCount();
+    }
+
+    navigateToDetail(productId) {
+        // Navigate to detail page using query parameter
+        window.location.href = `/detail?id=${productId}`;
     }
 
     updateProductCount() {
@@ -338,7 +353,7 @@ class KatalogPage {
         this.currentPage = 1;
         this.products = [];
         this.hasMoreProducts = true;
-        const container = document.querySelector('.product-grid');
+        const container = document.getElementById('product-grid');
         container.innerHTML = '';
 
         // Update count display
