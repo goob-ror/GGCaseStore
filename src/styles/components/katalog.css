@@ -114,10 +114,10 @@
 }
 
 /* ===== MAIN CONTENT AREA ===== */
-
 .catalog-main-content {
     flex: 1;
     min-width: 0;
+    width: 100%;
 }
 
 .catalog-header {
@@ -226,7 +226,7 @@
 }
 
 .catalog-product-card__rating i {
-    color: #f39c12;
+    color: #FFD700;
     margin-right: 4px;
 }
 
