@@ -126,14 +126,12 @@
   color: #313131;
 }
 
-/* Grid Layouts */
 .home-categories-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
 }
 
-/* Categories Swiper */
 .home-categories-container {
   position: relative;
 }
@@ -174,13 +172,6 @@
   transform: scale(1.1);
 }
 
-.home-products-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 1rem;
-}
-
-/* Category Card */
 .home-category-card {
   border-radius: 8px;
   transition: all 0.2s ease;
@@ -213,6 +204,12 @@
 }
 
 /* Product Card */
+.home-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
 .home-product-card {
   display: flex;
   flex-direction: column;
@@ -313,14 +310,59 @@
 }
 
 /* Responsive Design */
-@media (min-width: 400px) {
-  .home-category-card {
-    width: 140px;
-    height: 140px;
+@media (max-width: 639px) {
+  .home-categories-container {
+    width: 100%;
+  }
+
+  .home-categories-swiper {
+    padding-bottom: 2rem;
   }
 
   .home-categories-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .home-category-card {
+    width: 100px;
+    height: auto;
+    margin: 0 auto;
+  }
+
+  .home-category-img-wrapper {
+    width: 100px;
+    height: 100px;
+  }
+
+  .home-category-name {
+    font-size: 11px;
+    text-align: center;
+  }
+}
+
+@media (min-width: 400px) {
+  .home-categories-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .home-categories-pagination {
+    display: block;
+  }
+
+  .home-category-card {
+    width: 80px;
+    height: auto;
+    margin: 0 auto;
+  }
+
+  .home-category-img-wrapper {
+    width: 80px;
+    height: 80px;
+  }
+
+  .home-category-name {
+    font-size: 11px;
+    text-align: center;
   }
 }
 
@@ -329,17 +371,17 @@
     margin-top: 1.25rem;
     max-width: 700px;
   }
-  
+
   .home-banner-item {
     height: 200px;
   }
-  
+
   .home-banner-skeleton {
     height: 200px;
   }
-  
+
   .home-categories-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 
   .home-category-img-wrapper {

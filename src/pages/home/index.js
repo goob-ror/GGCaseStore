@@ -421,6 +421,14 @@ class HomePage {
                     },
                     spaceBetween: 12,
                 },
+                400: {
+                    slidesPerView: 4,
+                    grid: {
+                        rows: 2,
+                        fill: 'row'
+                    },
+                    spaceBetween: 12,
+                },
                 640: {
                     slidesPerView: 4,
                     grid: {
