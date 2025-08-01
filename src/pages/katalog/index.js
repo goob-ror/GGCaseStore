@@ -12,12 +12,23 @@ class KatalogPage {
     constructor() {
         this.UserApiService = new UserApiService();
         this.products = [];
+        this.currentPage = 1;
+        this.itemsPerPage = 20;
+        this.isLoading = false;
+        this.hasMoreProducts = true;
+        this.filters = {
+            minPrice: null,
+            maxPrice: null,
+            minRating: null,
+            sortBy: 'newest'
+        };
     }
 
     async render(container) {
         container.innerHTML = this.getHTML();
         this.setUpNavigation();
         this.bindEvents();
+        this.setupInfiniteScroll();
         await this.loadProducts();
     }
 
@@ -33,7 +44,8 @@ class KatalogPage {
     getHTML() {
         return `
             <div id="top-bar"></div>
-                <div class="container">
+            <div class="main-layout">
+                <div class="container"> 
                     <!-- Filter Sidebar -->
                     <div class="filter">
                         <h3>Filter</h3>
@@ -49,36 +61,39 @@ class KatalogPage {
                             </div>
                         </div>
                         <div class="filter-group-select">
-                            <div for="status" class="label-input-b">Status</div>
+                            <div for="rating-filter" class="label-input-b">Rating</div>
                                 <div class="select-status">
-                                    <select id="status" class="filter-select">
-                                        <option>Tersedia</option>
-                                        <option>Habis</option>
+                                    <select id="rating-filter" class="filter-select">
+                                        <option value="">Semua Rating</option>
+                                        <option value="4">4+ Bintang</option>
+                                        <option value="3">3+ Bintang</option>
+                                        <option value="2">2+ Bintang</option>
+                                        <option value="1">1+ Bintang</option>
                                     </select>
-                                    <select id="status" class="filter-select">
-                                        <option>Default</option>
-                                        <option>Habis</option>
+                                    <select id="sort-filter" class="filter-select">
+                                        <option value="newest">Terbaru</option>
+                                        <option value="price-low">Harga Terendah</option>
+                                        <option value="price-high">Harga Tertinggi</option>
+                                        <option value="rating">Rating Tertinggi</option>
+                                        <option value="popular">Terpopuler</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
-                            <!-- Main Content -->
-                            <div class="main-content">
-                                <div class="header-bar">
-                                    <p>Berdasarkan Produk</p>
-                                    <select class="select-bar">
-                                        <option>Urutkan</option>
-                                    </select>
-                                </div>
-        
-                                <div class="product-grid">
-                                    <!-- Produk diulang -->
-                                    <!-- Salin dan ubah untuk produk lainnya -->
-                                    <!-- ... -->
-                                </div>
+                        <!-- Main Content -->
+                        <div class="main-content">
+                            <div class="header-bar">
+                                <p id="product-count">Memuat produk...</p>
                             </div>
-                </div>
-
+    
+                            <div class="product-grid">
+                                <!-- Products will be loaded here -->
+                            </div>
+                            <div class="loading-indicator hidden" id="loading-indicator">
+                                <i class="fas fa-spinner fa-spin"></i> Memuat produk...
+                            </div>
+                        </div>
+                    </div>
 
                 <div id="footer"></div>
                 <div id="bottom-bar"></div>
@@ -102,41 +117,260 @@ class KatalogPage {
                 link.classList.add("active");
             }
         });
+
+        // Bind filter events
+        this.bindFilterEvents();
+    }
+
+    bindFilterEvents() {
+        const minPriceInput = document.querySelector('.filter-input[placeholder*="20.000"]');
+        const maxPriceInput = document.querySelector('.filter-input[placeholder*="500.000"]');
+        const ratingSelect = document.querySelector('#rating-filter');
+        const sortSelect = document.querySelector('#sort-filter');
+
+        if (minPriceInput) {
+            minPriceInput.addEventListener('input', this.debounce(() => {
+                this.filters.minPrice = minPriceInput.value || null;
+                this.resetAndReload();
+            }, 500));
+        }
+
+        if (maxPriceInput) {
+            maxPriceInput.addEventListener('input', this.debounce(() => {
+                this.filters.maxPrice = maxPriceInput.value || null;
+                this.resetAndReload();
+            }, 500));
+        }
+
+        if (ratingSelect) {
+            ratingSelect.addEventListener('change', () => {
+                this.filters.minRating = ratingSelect.value || null;
+                this.resetAndReload();
+            });
+        }
+
+        if (sortSelect) {
+            sortSelect.addEventListener('change', () => {
+                this.filters.sortBy = sortSelect.value;
+                this.resetAndReload();
+            });
+        }
+    }
+
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    setupInfiniteScroll() {
+        window.addEventListener('scroll', this.debounce(() => {
+            if (this.isLoading || !this.hasMoreProducts) return;
+
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+
+            // Load more when user is 200px from bottom
+            if (scrollTop + windowHeight >= documentHeight - 200) {
+                this.loadMoreProducts();
+            }
+        }, 100));
     }
 
     async loadProducts() {
-    const container = document.querySelector('.product-grid');
-    try {
-        const response = await this.UserApiService.get('/products'); 
-        this.products = response.data || [];
+        this.currentPage = 1;
+        this.products = [];
+        this.hasMoreProducts = true;
+        const container = document.querySelector('.product-grid');
+        container.innerHTML = '';
+        await this.loadMoreProducts();
+    }
 
-        container.innerHTML = this.products.map(product => `
-            <div class="card">
+    async loadMoreProducts() {
+        if (this.isLoading || !this.hasMoreProducts) return;
+
+        this.isLoading = true;
+        this.showLoadingIndicator();
+
+        try {
+            let allProducts = [];
+
+            // Determine which API endpoint to use based on filters
+            if (this.filters.minPrice && this.filters.maxPrice) {
+                // Use price filtering endpoint
+                const response = await this.UserApiService.get('/products/price', {
+                    min_price: this.filters.minPrice,
+                    max_price: this.filters.maxPrice
+                });
+                allProducts = response.data || [];
+            } else if (this.filters.minRating) {
+                // Use high rating endpoint for rating filter
+                const response = await this.UserApiService.get('/products/high-rating');
+                allProducts = (response.data || []).filter(product =>
+                    product.avg_rating >= parseFloat(this.filters.minRating)
+                );
+            } else {
+                // Use regular pagination endpoint
+                const params = {
+                    page: this.currentPage,
+                    limit: this.itemsPerPage
+                };
+                const response = await this.UserApiService.get('/products', params);
+                allProducts = response.data || [];
+
+                // For regular pagination, handle it normally
+                if (response.pagination) {
+                    this.hasMoreProducts = this.currentPage < response.pagination.totalPages;
+                } else {
+                    this.hasMoreProducts = allProducts.length === this.itemsPerPage;
+                }
+
+                // Apply client-side sorting
+                allProducts = this.sortProducts(allProducts);
+                this.appendProducts(allProducts);
+                this.currentPage++;
+                return;
+            }
+
+            // For filtered results, apply additional client-side filtering and sorting
+            allProducts = this.applyClientSideFilters(allProducts);
+            allProducts = this.sortProducts(allProducts);
+
+            // Handle pagination for filtered results
+            const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+            const endIndex = startIndex + this.itemsPerPage;
+            const pageProducts = allProducts.slice(startIndex, endIndex);
+
+            this.hasMoreProducts = endIndex < allProducts.length;
+            this.appendProducts(pageProducts);
+            this.currentPage++;
+
+        } catch (err) {
+            console.error('Error loading products:', err);
+            if (this.products.length === 0) {
+                const container = document.querySelector('.product-grid');
+                container.innerHTML = `<p>Gagal memuat produk.</p>`;
+            }
+        } finally {
+            this.isLoading = false;
+            this.hideLoadingIndicator();
+        }
+    }
+
+    applyClientSideFilters(products) {
+        return products.filter(product => {
+            // Rating filter
+            if (this.filters.minRating && product.avg_rating < parseFloat(this.filters.minRating)) {
+                return false;
+            }
+
+            // Price filter (if not already applied by API)
+            if (this.filters.minPrice && product.price < parseFloat(this.filters.minPrice)) {
+                return false;
+            }
+            if (this.filters.maxPrice && product.price > parseFloat(this.filters.maxPrice)) {
+                return false;
+            }
+
+            return true;
+        });
+    }
+
+    sortProducts(products) {
+        const sortedProducts = [...products];
+
+        switch (this.filters.sortBy) {
+            case 'price-low':
+                return sortedProducts.sort((a, b) => a.price - b.price);
+            case 'price-high':
+                return sortedProducts.sort((a, b) => b.price - a.price);
+            case 'rating':
+                return sortedProducts.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
+            case 'popular':
+                return sortedProducts.sort((a, b) => (b.total_sold || 0) - (a.total_sold || 0));
+            case 'newest':
+            default:
+                return sortedProducts.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        }
+    }
+
+    appendProducts(newProducts) {
+        const container = document.querySelector('.product-grid');
+
+        newProducts.forEach(product => {
+            this.products.push(product);
+            const productElement = document.createElement('div');
+            productElement.className = 'product-card';
+            productElement.innerHTML = `
                 <img src="${this.getProductImage(product)}" alt="${product.name}" class="card-img"/>
                 <div class="card-content">
                     <div class="product-name">${product.name}</div>
                     <p class="product-price">${this.formatRupiah(product.price)}</p>
                     <div class="card-rating">
-                        <span>⭐ ${product.avg_rating ? product.avg_rating.toFixed(1) : 'Belum ada rating'}</span>
+                        <span><i class="fas fa-star"></i>${product.avg_rating ? product.avg_rating.toFixed(1) : 'Belum ada rating'}</span>
                         <span>|</span>
                         <span>${product.total_sold ?? 0}+ Terjual</span>
                     </div>
                 </div>
-            </div>
-        `).join('');
-    } catch (err) {
-        container.innerHTML = `<p>Gagal memuat produk.</p>`;
-        console.error('Error loading products:', err);
-    }
-}
+            `;
+            container.appendChild(productElement);
+        });
 
-formatRupiah(angka) {
-    return new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-    }).format(angka);
-}
+        this.updateProductCount();
+    }
+
+    updateProductCount() {
+        const countElement = document.getElementById('product-count');
+        if (countElement) {
+            const count = this.products.length;
+            countElement.textContent = `Menampilkan ${count} produk`;
+        }
+    }
+
+    resetAndReload() {
+        this.currentPage = 1;
+        this.products = [];
+        this.hasMoreProducts = true;
+        const container = document.querySelector('.product-grid');
+        container.innerHTML = '';
+
+        // Update count display
+        const countElement = document.getElementById('product-count');
+        if (countElement) {
+            countElement.textContent = 'Memuat produk...';
+        }
+
+        this.loadMoreProducts();
+    }
+
+    showLoadingIndicator() {
+        const indicator = document.getElementById('loading-indicator');
+        if (indicator) {
+            indicator.classList.remove('hidden');
+        }
+    }
+
+    hideLoadingIndicator() {
+        const indicator = document.getElementById('loading-indicator');
+        if (indicator) {
+            indicator.classList.add('hidden');
+        }
+    }
+
+    formatRupiah(angka) {
+        return new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            minimumFractionDigits: 0,
+        }).format(angka);
+    }
 
     getProductImage(product) {
         // Return the first image from the photos array, or a placeholder if no images
