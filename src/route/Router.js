@@ -15,6 +15,7 @@ import KatalogPage from '../pages/katalog/index.js';
 import WishListPage from '../pages/wishlist/index.js';
 import UserBrandsPage from '../pages/brands/index.js';
 import UserSearchResult from '../pages/searchResult/index.js';
+import DetailPage from '../pages/detail/DetailPage.js';
 
 class Router {
   constructor() {
@@ -30,6 +31,7 @@ class Router {
     this.routes.set('/katalog', { component: KatalogPage, requiresAuth: false });
     this.routes.set('/wishlist', { component: WishListPage, requiresAuth: false });
     this.routes.set('/brands', { component: UserBrandsPage, requiresAuth: false });
+    this.routes.set('/detail', { component: DetailPage, requiresAuth: false });
     this.routes.set('/search', { component: UserSearchResult, requiresAuth: false });
     this.routes.set('/login', { component: LoginPage, requiresAuth: false });
 
