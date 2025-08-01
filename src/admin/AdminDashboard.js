@@ -125,6 +125,10 @@ class AdminDashboard {
       </div>
       
       <style>
+        .page-container {
+          flex-direction: row;
+        }
+
         .admin-layout {
           display: flex;
           height: 100vh;

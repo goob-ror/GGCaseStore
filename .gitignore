@@ -3,7 +3,7 @@ node_modules/
 dist/
 
 # Ignore uploaded files
-# public/uploads/
+public/uploads/
 
 .env
 
