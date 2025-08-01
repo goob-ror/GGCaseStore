@@ -26,19 +26,18 @@ class UserBrandsPage {
     }
     getHTML() {
         return `
-        <div>
-        <div id="top-bar"></div>
+        <div class="page-container">
+            <div id="top-bar"></div>
 
-        <div class="main-layout">
+            <div class="main-layout">
 
-        <h2 class="page-title">OUR TRUSTED BRANDS</h2>
-            <div class="brands-container">
+            <h2 class="page-title">OUR TRUSTED BRANDS</h2>
+                <div class="brands-container">
+                </div>
             </div>
-        </div>
 
-
-        <div id="footer"></div>
-        <div id="bottom-bar"></div>
+            <div id="footer"></div>
+            <div id="bottom-bar"></div>
         </div>
         `;
     }

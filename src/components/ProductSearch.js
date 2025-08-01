@@ -172,9 +172,8 @@ export class ProductSearch {
     const resultsHTML = this.products.map(product => `
       <div class="search-result-item" data-id="${product.id}" data-name="${product.name}">
         <div class="result-image">
-          <img src="${product.image_url || 'https://via.placeholder.com/50x50?text=No+Image'}" 
-               alt="${this.escapeHtml(product.name)}" 
-               onerror="this.src='https://via.placeholder.com/50x50?text=No+Image'">
+          <img src="${product.photos?.[0]?.photo_url}" 
+               alt="${this.escapeHtml(product.name)}">
         </div>
         <div class="result-content">
           <div class="result-name">${this.escapeHtml(product.name)}</div>

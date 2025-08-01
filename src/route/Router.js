@@ -112,8 +112,20 @@ class Router {
     if (!this.container) return;
 
     try {
-      // Clear container
+      // Add exit animation to current content if it exists
+      const existingContent = this.container.querySelector('.route-transition');
+      if (existingContent) {
+        existingContent.classList.add('exiting');
+        await new Promise(resolve => setTimeout(resolve, 300)); // Wait for exit animation
+      }
+
+      // Create new route container with transition
+      const routeContainer = document.createElement('div');
+      routeContainer.className = 'route-transition entering';
+
+      // Clear container and add new route container
       this.container.innerHTML = '';
+      this.container.appendChild(routeContainer);
 
       // Create component instance
       const ComponentClass = route.component;
@@ -124,28 +136,43 @@ class Router {
         const parentRoute = this.routes.get(route.parent);
         if (parentRoute) {
           const parentComponent = new parentRoute.component();
-          await parentComponent.render(this.container);
+          await parentComponent.render(routeContainer);
 
           // Find the content area in the parent component
-          const contentArea = this.container.querySelector('.admin-content');
+          const contentArea = routeContainer.querySelector('.admin-content');
           if (contentArea) {
             await component.render(contentArea);
           } else {
-            await component.render(this.container);
+            await component.render(routeContainer);
           }
         } else {
-          await component.render(this.container);
+          await component.render(routeContainer);
         }
       } else {
-        await component.render(this.container);
+        await component.render(routeContainer);
       }
+
+      // Add page container class for additional animations
+      const pageContent = routeContainer.firstElementChild;
+      if (pageContent) {
+        pageContent.classList.add('page-container');
+        // Trigger enter animation after a small delay
+        setTimeout(() => {
+          pageContent.classList.add('page-enter');
+        }, 50);
+      }
+
+      // Remove entering class after animation completes
+      setTimeout(() => {
+        routeContainer.classList.remove('entering');
+      }, 400);
 
       this.currentRoute = { route, path, component };
 
     } catch (error) {
       console.error('Error rendering route:', error);
       this.container.innerHTML = `
-        <div style="padding: 2rem; text-align: center;">
+        <div class="route-transition" style="padding: 2rem; text-align: center;">
           <h2>Error Loading Page</h2>
           <p>There was an error loading this page. Please try again.</p>
           <button onclick="window.location.reload()" class="btn btn-primary">Reload Page</button>

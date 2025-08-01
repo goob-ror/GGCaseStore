@@ -213,8 +213,14 @@ app.get('/api/products/search', productCRUD.searchProducts);
 // Get High Sales Product (public)
 app.get('/api/products/high-sales', productCRUD.getHighSalesProducts);
 
+// Get Best Product (public)
+app.get('/api/products/best', productCRUD.getBestProducts);
+
 // Get Product Based on User Input Price (public)
 app.get('/api/products/price', productCRUD.getProductsByPrice);
+
+// Get High Rating Products (public)
+app.get('/api/products/high-rating', productCRUD.getHighRatingProducts);
 
 // Get product by ID with variants and photos (public)
 app.get('/api/products/:id', productCRUD.getProductById);
@@ -260,9 +266,6 @@ app.delete('/api/photos/:id', strictLimiter, requireAdmin, photoCRUD.deletePhoto
 app.post('/api/products/:productId/upload-photos', strictLimiter, requireAdmin, upload.array('photos', 10), photoCRUD.uploadProductPhotos);
 
 // ===== RATING ROUTES =====
-
-// Get High Rating Products (public)
-app.get('/api/products/high-rating', productCRUD.getHighRatingProducts);
 
 // Get ratings for a product (public)
 app.get('/api/products/:productId/ratings', ratingCRUD.getRatingsByProductId);

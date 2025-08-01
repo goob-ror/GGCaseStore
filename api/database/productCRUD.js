@@ -43,6 +43,15 @@ const getAllProducts = async (req, res) => {
 
     const [rows] = await db.query(query);
 
+    // Get photos for each product
+    for (let product of rows) {
+      const [photoRows] = await db.execute(
+        'SELECT * FROM product_photos WHERE product_id = ? ORDER BY id ASC',
+        [product.id]
+      );
+      product.photos = photoRows;
+    }
+
     res.json({
       success: true,
       data: rows,
@@ -204,6 +213,14 @@ const getHighRatingProducts = async (req, res) => {
       LIMIT 10
     `);
 
+    // Get photos for each product
+    for (let product of rows) {
+      const [photoRows] = await db.execute(
+        'SELECT * FROM product_photos WHERE product_id = ? ORDER BY id ASC',
+        [product.id]
+      );
+      product.photos = photoRows;
+    }
 
     res.json({ success: true, data: rows });
   } catch (error) {
@@ -230,6 +247,50 @@ const getHighSalesProducts = async (req, res) => {
       ORDER BY p.total_sold DESC
       LIMIT 10
     `);
+
+    // Get photos for each product
+    for (let product of rows) {
+      const [photoRows] = await db.execute(
+        'SELECT * FROM product_photos WHERE product_id = ? ORDER BY id ASC',
+        [product.id]
+      );
+      product.photos = photoRows;
+    }
+
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// Get Product Based on High Rating and High Review
+const getBestProducts = async (req, res) => {
+  try {
+    const [rows] = await db.execute(`
+      SELECT
+        p.*,
+        p.price as base_price,
+        b.name as brand_name,
+        c.name as category_name,
+        COALESCE(p.avg_rating, 0) as avg_rating,
+        COALESCE(p.total_raters, 0) as total_raters,
+        COALESCE(p.total_sold, 0) as total_sold
+      FROM products p
+      LEFT JOIN brands b ON p.brand_id = b.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.avg_rating > 0 AND p.total_raters > 0
+      ORDER BY p.avg_rating DESC, p.total_raters DESC
+      LIMIT 10
+    `);
+
+    // Get photos for each product
+    for (let product of rows) {
+      const [photoRows] = await db.execute(
+        'SELECT * FROM product_photos WHERE product_id = ? ORDER BY id ASC',
+        [product.id]
+      );
+      product.photos = photoRows;
+    }
 
     res.json({ success: true, data: rows });
   } catch (error) {
@@ -274,7 +335,6 @@ const searchProducts = async (req, res) => {
     }
 
     const searchTerm = `%${query.trim()}%`;
-    const validLimit = Math.min(Math.max(parseInt(limit) || 10, 1), 50);
 
     const searchQuery = `
       SELECT
@@ -290,12 +350,21 @@ const searchProducts = async (req, res) => {
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.name LIKE '${searchTerm}' OR p.description LIKE '${searchTerm}' OR b.name LIKE '${searchTerm}' OR c.name LIKE '${searchTerm}'
       ORDER BY p.avg_rating DESC, p.total_sold DESC
-      LIMIT ${validLimit}
+      LIMIT 10
     `;
 
     console.log('🔍 Executing search query:', searchQuery);
 
     const [rows] = await db.query(searchQuery);
+
+    // Get photos for each product
+    for (let product of rows) {
+      const [photoRows] = await db.execute(
+        'SELECT * FROM product_photos WHERE product_id = ? ORDER BY id ASC',
+        [product.id]
+      );
+      product.photos = photoRows;
+    }
 
     res.json({ success: true, data: rows });
   } catch (error) {
@@ -312,6 +381,7 @@ module.exports = {
   deleteProduct,
   getHighRatingProducts,
   getHighSalesProducts,
+  getBestProducts,
   getProductsByPrice,
   searchProducts
 };

@@ -30,38 +30,38 @@ class WishListPage {
         const data = this.getWishlist();
 
         return `
-        <div>
-        <div id="top-bar"></div>
-        <div class="main-layout">
-            <div class="wishlist-container">
+        <div class="page-container">
+            <div id="top-bar"></div>
+            <div class="main-layout">
+                <div class="wishlist-container">
 
-            ${data.length > 0 ? `<div class="wishlist-title">
-                    <span> <strong id="counter">0</strong> Produk Terpilih</span>
-                    <button class="clear-btn">Hapus</button>
-                </div>` : ``}
-               
+                ${data.length > 0 ? `<div class="wishlist-title">
+                        <span> <strong id="counter">0</strong> Produk Terpilih</span>
+                        <button class="clear-btn">Hapus</button>
+                    </div>` : ``}
 
-                <h2 class="wishlist-heading">YOUR WISHLIST</h2>
 
-                <div class="items-container"></div>
-          
-            </div>
+                    <h2 class="wishlist-heading">YOUR WISHLIST</h2>
 
-            <div class="notFound"></div>
+                    <div class="items-container"></div>
+
+                </div>
+
+                <div class="notFound"></div>
         </div>
 
-        <div id="confirm-modal" class="modal-overlay hidden">
-            <div class="modal-box">
-                <p>Apakah kamu yakin ingin menghapus item ini?</p>
-                <div class="modal-actions">
-                <button id="confirm-yes" class="modal-btn danger">Hapus</button>
-                <button id="confirm-no" class="modal-btn">Batal</button>
+            <div id="confirm-modal" class="modal-overlay hidden">
+                <div class="modal-box">
+                    <p>Apakah kamu yakin ingin menghapus item ini?</p>
+                    <div class="modal-actions">
+                    <button id="confirm-yes" class="modal-btn danger">Hapus</button>
+                    <button id="confirm-no" class="modal-btn">Batal</button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div id="footer"></div>
-        <div id="bottom-bar"></div>
+            <div id="footer"></div>
+            <div id="bottom-bar"></div>
         </div>
         `;
     }

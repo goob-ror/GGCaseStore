@@ -38,19 +38,18 @@ class UserSearchResult {
     getHTML() {
         const key = this.getParams();
         return `
-        <div>
-        <div id="top-bar"></div>
+        <div class="page-container">
+            <div id="top-bar"></div>
 
-        <div class="main-layout">
+            <div class="main-layout">
 
-        <h2 class="page-title">Menampilkan Hasil pencarian "${key}" </h2>
-            <div class="items-grid"></div>
-            <div class="notFound"></div>
-        </div>
+            <h2 class="page-title">Menampilkan Hasil pencarian "${key}" </h2>
+                <div class="items-grid"></div>
+                <div class="notFound"></div>
+            </div>
 
-
-        <div id="footer"></div>
-        <div id="bottom-bar"></div>
+            <div id="footer"></div>
+            <div id="bottom-bar"></div>
         </div>
         `;
     }
@@ -117,7 +116,7 @@ class UserSearchResult {
                 container.innerHTML = this.product.map(product => `
                     <div class="items-container" style="text-decoration: none;">
                         <div class="items-image-wrapper">
-                            <img src="${product.image_url || 'https://via.placeholder.com/300x300?text=No+Image'}" alt="${product.name}" />
+                            <img src="${this.getProductImage(product)}" alt="${product.name}"/>
                         </div>
                         <div class="items-text-wrapper">
                             <h3 class="items-title">${product.name}</h3>
@@ -135,6 +134,15 @@ class UserSearchResult {
                 `).join('');
                         }
         }
+    }
+
+    getProductImage(product) {
+        // Return the first image from the photos array, or a placeholder if no images
+        if (product.photos && product.photos.length > 0) {
+            return product.photos[0].photo_url;
+        }
+        // Return a placeholder image if no photos available
+        return '/public/uploads/products/product_1_1753842813929_6xc3sp2s8un.webp';
     }
 }
 

@@ -32,7 +32,8 @@ class KatalogPage {
 
     getHTML() {
         return `
-            <div id="top-bar"></div>
+            <div class="page-container">
+                <div id="top-bar"></div>
                 <div class="filter-container">
                     <div class="filter-row-2col">
                         <div class="filter-group">
@@ -72,12 +73,12 @@ class KatalogPage {
                     <div class="card-container">
                         //    tempat looping cardnya
                     </div>
-                
+
+                </div>
+
+                <div id="footer"></div>
+                <div id="bottom-bar"></div>
             </div>
-
-
-            <div id="footer"></div>
-            <div id="bottom-bar"></div>
         `;
     }
 
@@ -107,12 +108,12 @@ class KatalogPage {
 
         container.innerHTML = this.products.map(product => `
             <div class="card">
-                <img src="${product.photo_url}" alt="${product.name}" class="card-img"/>
+                <img src="${this.getProductImage(product)}" alt="${product.name}" class="card-img"/>
                 <div class="card-content">
                     <h3 class="product-name">${product.name}</h3>
                     <p class="product-price">${this.formatRupiah(product.price)}</p>
-                    <div class="card-rating">    
-                        <span>⭐ ${product.ratings ? product.ratings.toFixed(1) : 'Belum ada rating'}</span>
+                    <div class="card-rating">
+                        <span>⭐ ${product.avg_rating ? product.avg_rating.toFixed(1) : 'Belum ada rating'}</span>
                         <span>|</span>
                         <span>${product.total_sold ?? 0}+ Terjual</span>
                     </div>
@@ -132,6 +133,15 @@ formatRupiah(angka) {
         minimumFractionDigits: 0,
     }).format(angka);
 }
+
+    getProductImage(product) {
+        // Return the first image from the photos array, or a placeholder if no images
+        if (product.photos && product.photos.length > 0) {
+            return product.photos[0].photo_url;
+        }
+        // Return a placeholder image if no photos available
+        return '/public/uploads/products/product_1_1753842813929_6xc3sp2s8un.webp';
+    }
 }
 
 export default KatalogPage;

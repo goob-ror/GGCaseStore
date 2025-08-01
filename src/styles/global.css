@@ -323,6 +323,88 @@ a:hover {
   }
 }
 
+/* Page Transitions */
+.page-container {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-container.page-enter {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-container.page-exit {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+/* Fade transition for route changes */
+#root {
+  position: relative;
+}
+
+.route-transition {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  min-height: 100vh;
+  background: #ffffff;
+  z-index: 1;
+}
+
+.route-transition.entering {
+  animation: routeEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.route-transition.exiting {
+  animation: routeExit 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes routeEnter {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes routeExit {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Loading states with smooth transitions */
+.loading-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* Import component styles */
 @import "./components/image-upload.css";
 @import "./components/image-cropper.css";
