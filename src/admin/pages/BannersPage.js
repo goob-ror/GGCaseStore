@@ -160,7 +160,6 @@ class BannersPage {
         }
 
         .banner-preview {
-          height: 200px;
           background: #f8fafc;
           display: flex;
           align-items: center;
