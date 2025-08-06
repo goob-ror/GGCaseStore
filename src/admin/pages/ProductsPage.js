@@ -132,6 +132,54 @@ class ProductsPage {
                         <small class="form-text text-muted">This is the base price. You can add variants with different prices later.</small>
                       </div>
 
+                      <!-- NEW PROMO SECTION -->
+                      <div class="promo-section">
+                        <div class="promo-header">
+                          <h5><i class="fas fa-tags"></i> Promotional Settings</h5>
+                          <div class="promo-toggle">
+                            <label class="toggle-switch">
+                              <input type="checkbox" id="isPromo" name="is_promo">
+                              <span class="toggle-slider"></span>
+                            </label>
+                            <label for="isPromo" class="toggle-label">Enable Promotion</label>
+                          </div>
+                        </div>
+                        
+                        <div class="promo-fields" id="promoFields" style="display: none;">
+                          <div class="form-group">
+                            <label for="promoPrice" class="form-label">Promo Price *</label>
+                            <div id="productPromoPriceFormatter"></div>
+                            <small class="form-text text-muted">Must be lower than base price</small>
+                          </div>
+                          
+                          <div class="form-row">
+                            <div class="form-group">
+                              <label for="promoStartDate" class="form-label">Start Date</label>
+                              <input type="datetime-local" id="promoStartDate" name="promo_price_start_date" class="form-control">
+                              <small class="form-text text-muted">Leave empty for immediate start</small>
+                            </div>
+                            
+                            <div class="form-group">
+                              <label for="promoEndDate" class="form-label">End Date</label>
+                              <input type="datetime-local" id="promoEndDate" name="promo_price_end_date" class="form-control">
+                              <small class="form-text text-muted">Leave empty for no expiration</small>
+                            </div>
+                          </div>
+                          
+                          <div class="promo-preview" id="promoPreview">
+                            <div class="price-comparison">
+                              <span class="original-price" id="originalPriceDisplay">Rp 0</span>
+                              <span class="promo-price" id="promoPriceDisplay">Rp 0</span>
+                              <span class="discount-badge" id="discountBadge">0% OFF</span>
+                            </div>
+                            <div class="promo-period" id="promoPeriod">
+                              <i class="fas fa-calendar"></i>
+                              <span id="promoPeriodText">No time limit</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       <div class="form-group">
                         <label class="form-label">Total Sold</label>
                         <input type="number" class="form-control" id="totalSold" name="total_sold" min="0" placeholder="0">
@@ -484,6 +532,242 @@ class ProductsPage {
           .modal-large {
             width: 98%;
             max-width: none;
+          }
+        }
+
+        /* Promo Section Styles */
+        .promo-badge {
+          background: #dc2626;
+          color: white;
+          font-size: 0.6rem;
+          padding: 0.1rem 0.3rem;
+          border-radius: 3px;
+          font-weight: 600;
+          margin-left: 0.5rem;
+          vertical-align: top;
+        }
+
+        .price-cell {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+
+        .original-price-small {
+          font-size: 0.8rem;
+          color: #6b7280;
+          text-decoration: line-through;
+        }
+
+        .promo-price-small {
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: #dc2626;
+        }
+
+        .regular-price {
+          font-size: 0.9rem;
+          font-weight: 500;
+          color: #374151;
+        }
+
+        .discount-small {
+          background: #dc2626;
+          color: white;
+          font-size: 0.6rem;
+          padding: 0.1rem 0.25rem;
+          border-radius: 2px;
+          font-weight: 600;
+        }
+
+        .promo-section {
+          margin: 1.5rem 0;
+          padding: 1rem;
+          border: 2px solid #e5e7eb;
+          border-radius: 8px;
+          background: #f8f9fa;
+          transition: all 0.3s ease;
+        }
+
+        .promo-section.active {
+          border-color: #f59e0b;
+          background: #fffbeb;
+        }
+
+        .promo-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+        }
+
+        .promo-header h5 {
+          margin: 0;
+          font-size: 1rem;
+          font-weight: 600;
+          color: #374151;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .promo-header i {
+          color: #f59e0b;
+        }
+
+        .promo-toggle {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .toggle-switch {
+          position: relative;
+          display: inline-block;
+          width: 50px;
+          height: 24px;
+        }
+
+        .toggle-switch input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+
+        .toggle-slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #ccc;
+          transition: .4s;
+          border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+          position: absolute;
+          content: "";
+          height: 18px;
+          width: 18px;
+          left: 3px;
+          bottom: 3px;
+          background-color: white;
+          transition: .4s;
+          border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+          background-color: #f59e0b;
+        }
+
+        input:checked + .toggle-slider:before {
+          transform: translateX(26px);
+        }
+
+        .toggle-label {
+          font-size: 0.9rem;
+          font-weight: 500;
+          color: #374151;
+          cursor: pointer;
+          margin: 0;
+        }
+
+        .promo-fields {
+          padding-top: 1rem;
+          border-top: 1px solid #e5e7eb;
+          animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .promo-preview {
+          background: white;
+          padding: 1rem;
+          border-radius: 8px;
+          border: 1px solid #e5e7eb;
+          margin-top: 1rem;
+        }
+
+        .price-comparison {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 0.5rem;
+        }
+
+        .original-price {
+          font-size: 1rem;
+          color: #6b7280;
+          text-decoration: line-through;
+        }
+
+        .promo-price {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #dc2626;
+        }
+
+        .discount-badge {
+          background: #dc2626;
+          color: white;
+          padding: 0.25rem 0.5rem;
+          border-radius: 4px;
+          font-size: 0.75rem;
+          font-weight: 600;
+        }
+
+        .promo-period {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.875rem;
+          color: #6b7280;
+        }
+
+        .promo-period i {
+          color: #9ca3af;
+        }
+
+        /* Validation states */
+        .promo-price-error {
+          border-color: #ef4444 !important;
+          box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+        }
+
+        .promo-error-message {
+          color: #ef4444;
+          font-size: 0.75rem;
+          margin-top: 0.25rem;
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+        }
+
+        .promo-error-message i {
+          font-size: 0.7rem;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+          .promo-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+          }
+
+          .promo-toggle {
+            justify-content: center;
+          }
+
+          .price-comparison {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
           }
         }
 
@@ -885,6 +1169,14 @@ class ProductsPage {
       }
     });
 
+    // Initialize Promo Price Formatter
+    this.promoPriceFormatter = new PriceFormatter({
+      onValueChange: (value) => {
+        this.validatePromoPrice(value);
+        this.updatePromoPreview();
+      }
+    });
+
     // Initialize QR Generator
     this.qrGenerator = new QRCodeGenerator({
       size: 200,
@@ -907,6 +1199,9 @@ class ProductsPage {
 
     // Add event listeners for QR code updates
     this.bindQRUpdateEvents();
+
+    // NEW: Add promo event listeners
+    this.bindPromoEvents();
   }
 
   bindQRUpdateEvents() {
@@ -960,6 +1255,12 @@ class ProductsPage {
     if (variantsContainer) {
       variantsContainer.innerHTML = this.dynamicVariants.createHTML('productVariants');
       this.dynamicVariants.initialize('productVariants');
+    }
+    // Insert Promo Price Formatter HTML
+    const promoPriceFormatterContainer = document.getElementById('productPromoPriceFormatter');
+    if (promoPriceFormatterContainer) {
+      promoPriceFormatterContainer.innerHTML = this.promoPriceFormatter.createHTML('productPromoPriceFormatter', 'promo_price');
+      this.promoPriceFormatter.initialize('productPromoPriceFormatter');
     }
   }
 
@@ -1048,17 +1349,30 @@ class ProductsPage {
           </tr>
         </thead>
         <tbody>
-          ${this.products.map(product => `
+          ${this.products.map(product => {
+          // Check if promo is active
+          const now = new Date();
+          const isPromoActive = product.isPromo && 
+            (product.current_price || product.is_promo_active) &&
+            (!product.promo_price_start_date || new Date(product.promo_price_start_date) <= now) &&
+            (!product.promo_price_end_date || new Date(product.promo_price_end_date) >= now);
+
+          return `
             <tr>
               <td>
                 <div>
-                  <div class="font-weight-500">${this.escapeHtml(product.name)}</div>
+                  <div class="font-weight-500">
+                    ${this.escapeHtml(product.name)}
+                    ${isPromoActive ? '<span class="promo-badge">PROMO</span>' : ''}
+                  </div>
                   ${product.description ? `<div class="text-sm text-gray-500">${this.escapeHtml(product.description.substring(0, 60))}${product.description.length > 60 ? '...' : ''}</div>` : ''}
                 </div>
               </td>
               <td>${product.brand_name || '-'}</td>
               <td>${product.category_name || '-'}</td>
-              <td>${(Number(product.base_price || 0)).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+              <td>
+                ${this.formatPriceCell(product, isPromoActive)}
+              </td>
               <td>
                 <div class="rating-cell">
                   <span class="stars-small">${this.generateStarsDisplay(product.avg_rating || 0)}</span>
@@ -1078,7 +1392,8 @@ class ProductsPage {
                 </div>
               </td>
             </tr>
-          `).join('')}
+          `;
+        }).join('')}
         </tbody>
       </table>
     `;
@@ -1139,6 +1454,195 @@ class ProductsPage {
     numValue = Math.round(numValue * 10) / 10;
     
     return numValue;
+  }
+
+  bindPromoEvents() {
+    const promoToggle = document.getElementById('isPromo');
+    const promoFields = document.getElementById('promoFields');
+    const promoSection = document.querySelector('.promo-section');
+    const promoStartDate = document.getElementById('promoStartDate');
+    const promoEndDate = document.getElementById('promoEndDate');
+
+    if (promoToggle && promoFields) {
+      promoToggle.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        
+        if (isChecked) {
+          promoFields.style.display = 'block';
+          promoSection?.classList.add('active');
+          // Focus on promo price when enabled
+          setTimeout(() => {
+            const promoPriceInput = document.querySelector('#productPromoPriceFormatter input');
+            if (promoPriceInput) {
+              promoPriceInput.focus();
+            }
+          }, 100);
+        } else {
+          promoFields.style.display = 'none';
+          promoSection?.classList.remove('active');
+          // Clear promo fields when disabled
+          if (this.promoPriceFormatter) {
+            this.promoPriceFormatter.setValue(0);
+          }
+          if (promoStartDate) promoStartDate.value = '';
+          if (promoEndDate) promoEndDate.value = '';
+        }
+        
+        this.updatePromoPreview();
+      });
+    }
+
+    // Add listeners for date changes
+    if (promoStartDate) {
+      promoStartDate.addEventListener('change', () => this.updatePromoPreview());
+    }
+    
+    if (promoEndDate) {
+      promoEndDate.addEventListener('change', () => this.updatePromoPreview());
+    }
+
+    // Add listener for base price changes to update promo preview
+    if (this.priceFormatter) {
+      const originalOnValueChange = this.priceFormatter.onValueChange;
+      this.priceFormatter.onValueChange = (value) => {
+        if (originalOnValueChange) {
+          originalOnValueChange(value);
+        }
+        this.validatePromoPrice();
+        this.updatePromoPreview();
+      };
+    }
+  }
+
+  validatePromoPrice(promoPrice = null) {
+    const basePrice = this.priceFormatter?.getValue() || 0;
+    const currentPromoPrice = promoPrice !== null ? promoPrice : (this.promoPriceFormatter?.getValue() || 0);
+    const promoContainer = document.getElementById('productPromoPriceFormatter');
+    
+    // Remove any existing error styling and messages
+    const existingError = promoContainer?.querySelector('.promo-error-message');
+    if (existingError) {
+      existingError.remove();
+    }
+    
+    const promoPriceInput = promoContainer?.querySelector('input');
+    if (promoPriceInput) {
+      promoPriceInput.classList.remove('promo-price-error');
+    }
+
+    // Only validate if promo is enabled and has a price
+    const isPromoEnabled = document.getElementById('isPromo')?.checked;
+    if (!isPromoEnabled || currentPromoPrice <= 0) {
+      return true;
+    }
+
+    // Validate that promo price is less than base price
+    if (currentPromoPrice >= basePrice) {
+      if (promoPriceInput) {
+        promoPriceInput.classList.add('promo-price-error');
+      }
+      
+      if (promoContainer) {
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'promo-error-message';
+        errorMessage.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Promo price must be lower than base price';
+        promoContainer.appendChild(errorMessage);
+      }
+      
+      return false;
+    }
+
+    return true;
+  }
+
+  updatePromoPreview() {
+    const basePrice = this.priceFormatter?.getValue() || 0;
+    const promoPrice = this.promoPriceFormatter?.getValue() || 0;
+    const isPromoEnabled = document.getElementById('isPromo')?.checked;
+    
+    const originalPriceDisplay = document.getElementById('originalPriceDisplay');
+    const promoPriceDisplay = document.getElementById('promoPriceDisplay');
+    const discountBadge = document.getElementById('discountBadge');
+    const promoPeriodText = document.getElementById('promoPeriodText');
+
+    if (!originalPriceDisplay || !promoPriceDisplay || !discountBadge || !promoPeriodText) {
+      return;
+    }
+
+    if (!isPromoEnabled || promoPrice <= 0) {
+      originalPriceDisplay.textContent = 'Rp 0';
+      promoPriceDisplay.textContent = 'Rp 0';
+      discountBadge.textContent = '0% OFF';
+      promoPeriodText.textContent = 'Promotion disabled';
+      return;
+    }
+
+    // Format prices
+    originalPriceDisplay.textContent = basePrice.toLocaleString('id-ID', { 
+      style: 'currency', 
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0 
+    });
+    
+    promoPriceDisplay.textContent = promoPrice.toLocaleString('id-ID', { 
+      style: 'currency', 
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0 
+    });
+
+    // Calculate discount percentage
+    const discountPercentage = basePrice > 0 ? Math.round(((basePrice - promoPrice) / basePrice) * 100) : 0;
+    discountBadge.textContent = `${discountPercentage}% OFF`;
+
+    // Update period text
+    const startDate = document.getElementById('promoStartDate')?.value;
+    const endDate = document.getElementById('promoEndDate')?.value;
+    
+    if (startDate || endDate) {
+      const startText = startDate ? new Date(startDate).toLocaleDateString() : 'Now';
+      const endText = endDate ? new Date(endDate).toLocaleDateString() : 'No end date';
+      promoPeriodText.textContent = `${startText} - ${endText}`;
+    } else {
+      promoPeriodText.textContent = 'No time limit';
+    }
+  }
+
+  formatPriceCell(product, isPromoActive) {
+    const basePrice = Number(product.base_price || product.price || 0);
+    const promoPrice = Number(product.promo_price || product.current_price || 0);
+
+    if (isPromoActive && promoPrice < basePrice) {
+      const discountPercentage = Math.round(((basePrice - promoPrice) / basePrice) * 100);
+      
+      return `
+        <div class="price-cell">
+          <span class="original-price-small">${basePrice.toLocaleString('id-ID', { 
+            style: 'currency', 
+            currency: 'IDR', 
+            minimumFractionDigits: 0, 
+            maximumFractionDigits: 0 
+          })}</span>
+          <span class="promo-price-small">${promoPrice.toLocaleString('id-ID', { 
+            style: 'currency', 
+            currency: 'IDR', 
+            minimumFractionDigits: 0, 
+            maximumFractionDigits: 0 
+          })}</span>
+          <span class="discount-small">${discountPercentage}% OFF</span>
+        </div>
+      `;
+    } else {
+      return `
+        <span class="regular-price">${basePrice.toLocaleString('id-ID', { 
+          style: 'currency', 
+          currency: 'IDR', 
+          minimumFractionDigits: 0, 
+          maximumFractionDigits: 0 
+        })}</span>
+      `;
+    }
   }
 
   bindRatingInputs() {
@@ -1324,6 +1828,10 @@ class ProductsPage {
     // Populate basic form fields immediately
     const productNameField = document.getElementById('productName');
     const productDescriptionField = document.getElementById('productDescription');
+    const isPromoToggle = document.getElementById('isPromo');
+    const promoStartDate = document.getElementById('promoStartDate');
+    const promoEndDate = document.getElementById('promoEndDate');
+
 
     if (productNameField) {
       productNameField.value = product.name || '';
@@ -1332,6 +1840,36 @@ class ProductsPage {
     if (productDescriptionField) {
       productDescriptionField.value = product.description || '';
     }
+
+    if (isPromoToggle) {
+      isPromoToggle.checked = product.isPromo || false;
+      
+      // Trigger the change event to show/hide promo fields
+      const event = new Event('change');
+      isPromoToggle.dispatchEvent(event);
+    }
+
+    // Use setTimeout to ensure promo fields are visible before populating
+    setTimeout(() => {
+      if (this.promoPriceFormatter && product.promo_price) {
+        this.promoPriceFormatter.setValue(product.promo_price);
+      }
+
+      if (promoStartDate && product.promo_price_start_date) {
+        // Convert to datetime-local format
+        const startDate = new Date(product.promo_price_start_date);
+        promoStartDate.value = startDate.toISOString().slice(0, 16);
+      }
+
+      if (promoEndDate && product.promo_price_end_date) {
+        // Convert to datetime-local format  
+        const endDate = new Date(product.promo_price_end_date);
+        promoEndDate.value = endDate.toISOString().slice(0, 16);
+      }
+
+      // Update promo preview after populating
+      this.updatePromoPreview();
+    }, 200);
 
     // Populate legacy selects (if they exist)
     const brandSelect = document.getElementById('productBrand');
@@ -1443,6 +1981,17 @@ class ProductsPage {
     // Ensure total_raters is also sanitized
     const rawTotalRaters = formData.get('total_raters');
     const sanitizedTotalRaters = Math.max(0, parseInt(rawTotalRaters) || 0);
+
+    const isPromo = document.getElementById('isPromo')?.checked || false;
+    const promoPrice = isPromo ? (this.promoPriceFormatter?.getValue() || null) : null;
+    const promoStartDate = formData.get('promo_price_start_date') || null;
+    const promoEndDate = formData.get('promo_price_end_date') || null;
+
+    // Validate promo price if enabled
+    if (isPromo && !this.validatePromoPrice(promoPrice)) {
+      this.notificationService.error('Validation Error', 'Please fix the promo price error before saving');
+      return;
+    }
     
     const productData = {
       name: formData.get('name'),
@@ -1451,8 +2000,12 @@ class ProductsPage {
       category_id: this.categoryDropdown?.getValue() || null,
       base_price: this.priceFormatter?.getValue() || 0,
       total_sold: parseInt(formData.get('total_sold')) || 0,
-      avg_rating: sanitizedRating, // Use sanitized rating
-      total_raters: sanitizedTotalRaters // Use sanitized total raters
+      avg_rating: sanitizedRating,
+      total_raters: sanitizedTotalRaters,
+      is_promo: isPromo,
+      promo_price: promoPrice,
+      promo_price_start_date: promoStartDate,
+      promo_price_end_date: promoEndDate
     };
 
     saveBtn.disabled = true;

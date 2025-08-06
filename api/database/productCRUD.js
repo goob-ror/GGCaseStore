@@ -7,7 +7,6 @@ const { emitProductCreated, emitProductUpdated, emitProductDeleted } = require('
  */
 
 const getAllProducts = async (req, res) => {
-  console.log('🔍 getAllProducts route hit');
 
   try {
     // Parse pagination parameters
@@ -27,6 +26,23 @@ const getAllProducts = async (req, res) => {
       SELECT
         p.*,
         p.price AS base_price,
+        CASE 
+          WHEN p.isPromo = 1 
+          AND (p.promo_price_start_date IS NULL OR p.promo_price_start_date <= NOW())
+          AND (p.promo_price_end_date IS NULL OR p.promo_price_end_date >= NOW())
+          THEN p.promo_price 
+          ELSE p.price 
+        END AS current_price,
+        CASE 
+          WHEN p.isPromo = 1 
+          AND (p.promo_price_start_date IS NULL OR p.promo_price_start_date <= NOW())
+          AND (p.promo_price_end_date IS NULL OR p.promo_price_end_date >= NOW())
+          THEN 1 
+          ELSE 0 
+        END AS is_promo_active,
+        p.promo_price,
+        p.promo_price_start_date,
+        p.promo_price_end_date,
         b.name AS brand_name,
         c.name AS category_name,
         COALESCE(p.avg_rating, 0) AS avg_rating,
@@ -121,25 +137,41 @@ const getProductById = async (req, res) => {
 // Create new product
 const createProduct = async (req, res) => {
   try {
-    const { name, description, brand_id, category_id, base_price, total_sold, avg_rating, total_raters } = req.body;
+    const { name, description, brand_id, category_id, base_price, total_sold, avg_rating, total_raters, is_promo = false, promo_price = null, promo_price_start_date = null, promo_price_end_date = null } = req.body;
 
-    // Convert base_price to price (frontend uses base_price, DB uses price)
     const price = base_price || 0;
+    const discPrice = promo_price || null;
     const soldCount = total_sold || 0;
     const avgRating = avg_rating || 0;
     const totalRatersCount = total_raters || 0;
 
+    if(is_promo && (promo_price === null || promo_price >= price)) {
+      return res.status(400).json({ success: false, message: 'Harga promo harus lebih kecil dari harga normal.'})
+    }
+
     const [result] = await db.execute(
-      'INSERT INTO products (name, description, brand_id, category_id, price, total_sold, avg_rating, total_raters, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
-      [name, description, brand_id, category_id, price, soldCount, avgRating, totalRatersCount]
+      'INSERT INTO products (name, description, brand_id, category_id, isPromo, promo_price, price, total_sold, avg_rating, total_raters, promo_price_start_date, promo_price_end_date, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
+      [name, description, brand_id, category_id, is_promo, discPrice, price, soldCount, avgRating, totalRatersCount, promo_price_start_date, promo_price_end_date]
     );
 
     const productId = result.insertId;
-    const newProduct = { id: productId, name, description, brand_id, category_id, price, total_sold: soldCount, avg_rating: avgRating, total_raters: totalRatersCount };
+    const newProduct = { 
+      id: productId, 
+      name, 
+      description, 
+      brand_id, 
+      category_id, 
+      isPromo: is_promo, 
+      promo_price: discPrice, 
+      price, 
+      total_sold: soldCount, 
+      avg_rating: avgRating, 
+      total_raters: totalRatersCount, 
+      promo_price_start_date, 
+      promo_price_end_date 
+    };
 
-    // Emit webhook event
     emitProductCreated(req, newProduct);
-
     res.status(201).json({ success: true, id: productId, message: 'Product created successfully' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -149,27 +181,43 @@ const createProduct = async (req, res) => {
 // Update product
 const updateProduct = async (req, res) => {
   try {
-    const { name, description, brand_id, category_id, base_price, total_sold, avg_rating, total_raters } = req.body;
+    const { name, description, brand_id, category_id, base_price, total_sold, avg_rating, total_raters, is_promo = false, promo_price = null, promo_price_start_date = null, promo_price_end_date = null } = req.body;
 
-    // Convert base_price to price (frontend uses base_price, DB uses price)
     const price = base_price || 0;
     const soldCount = total_sold || 0;
     const avgRating = avg_rating || 0;
     const totalRatersCount = total_raters || 0;
 
+    if(is_promo && (promo_price === null || promo_price >= price)) {
+      return res.status(400).json({ success: false, message: 'Harga promo harus lebih kecil dari harga normal.'})
+    }
+
     const [result] = await db.execute(
-      'UPDATE products SET name = ?, description = ?, brand_id = ?, category_id = ?, price = ?, total_sold = ?, avg_rating = ?, total_raters = ?, updated_at = NOW() WHERE id = ?',
-      [name, description, brand_id, category_id, price, soldCount, avgRating, totalRatersCount, req.params.id]
+      'UPDATE products SET name = ?, description = ?, brand_id = ?, category_id = ?, isPromo = ?, promo_price = ?, price = ?, total_sold = ?, avg_rating = ?, total_raters = ?, promo_price_start_date = ?, promo_price_end_date = ?, updated_at = NOW() WHERE id = ?',
+      [name, description, brand_id, category_id, is_promo, promo_price, price, soldCount, avgRating, totalRatersCount, promo_price_start_date, promo_price_end_date, req.params.id]
     );
+
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    const updatedProduct = { id: req.params.id, name, description, brand_id, category_id, price, total_sold: soldCount, avg_rating: avgRating, total_raters: totalRatersCount };
+    const updatedProduct = { 
+      id: req.params.id, 
+      name, 
+      description, 
+      brand_id, 
+      category_id, 
+      isPromo: is_promo, 
+      promo_price, 
+      price, 
+      total_sold: soldCount, 
+      avg_rating: avgRating, 
+      total_raters: totalRatersCount, 
+      promo_price_start_date, 
+      promo_price_end_date 
+    };
 
-    // Emit webhook event
     emitProductUpdated(req, updatedProduct);
-
     res.json({ success: true, message: 'Product updated successfully' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -224,6 +272,77 @@ const getHighRatingProducts = async (req, res) => {
 
     res.json({ success: true, data: rows });
   } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+const getPromoProducts = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const allowedLimits = [10, 20, 50, 100];
+    const validLimit = allowedLimits.includes(limit) ? limit : 20;
+    const offset = (page - 1) * validLimit;
+
+    // Get total count for pagination info
+    const countQuery = `
+      SELECT COUNT(*) as total 
+      FROM products 
+      WHERE isPromo = 1 
+      AND (promo_price_start_date IS NULL OR promo_price_start_date <= NOW())
+      AND (promo_price_end_date IS NULL OR promo_price_end_date >= NOW())
+    `;
+    const [countResult] = await db.execute(countQuery);
+    const totalProducts = countResult[0].total;
+    const totalPages = Math.ceil(totalProducts / validLimit);
+
+    const query = `
+      SELECT
+        p.*,
+        p.price AS base_price,
+        p.promo_price AS current_price,
+        b.name AS brand_name,
+        c.name AS category_name,
+        COALESCE(p.avg_rating, 0) AS avg_rating,
+        COALESCE(p.total_raters, 0) AS total_raters,
+        COALESCE(p.total_sold, 0) AS total_sold,
+        -- Calculate discount percentage
+        ROUND(((p.price - p.promo_price) / p.price) * 100, 0) as discount_percentage
+      FROM products p
+      LEFT JOIN brands b ON p.brand_id = b.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.isPromo = 1 
+      AND (p.promo_price_start_date IS NULL OR p.promo_price_start_date <= NOW())
+      AND (p.promo_price_end_date IS NULL OR p.promo_price_end_date >= NOW())
+      ORDER BY discount_percentage DESC, p.created_at DESC
+      LIMIT ${validLimit} OFFSET ${offset}
+    `;
+
+    const [rows] = await db.query(query);
+
+    // Get photos for each product
+    for (let product of rows) {
+      const [photoRows] = await db.execute(
+        'SELECT * FROM product_photos WHERE product_id = ? ORDER BY id ASC',
+        [product.id]
+      );
+      product.photos = photoRows;
+    }
+
+    res.json({
+      success: true,
+      data: rows,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalProducts,
+        limit: validLimit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error in getPromoProducts:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -596,6 +715,7 @@ module.exports = {
   getHighSalesProducts,
   getBestProducts,
   getProductsByPrice,
+  getPromoProducts,
   searchProducts,
   getProductsByCategory,
   getProductsByBrand
