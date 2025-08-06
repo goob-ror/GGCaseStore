@@ -2,8 +2,11 @@ import '../styles/components/footer.css';
 import logo from '../../public/assets/logoCatalog.png';
 import facebook from '../../public/assets/facebook.png';
 import instagram from '../../public/assets/instagram.png';
-
 import gmaps from '../../public/assets/gmaps.png';
+import youtube from '../../public/assets/youtube.png';
+import tiktok from '../../public/assets/tiktok.png';
+import tokopedia from '../../public/assets/tokopedia.png';
+import shopee from '../../public/assets/shopee.png';
 
 export const Footer = () => {
     return `
@@ -15,8 +18,8 @@ export const Footer = () => {
                         <img src="${logo}" alt="GG Catalog logo" class="logo-image" />
                     </a>
                     <p class="footer-description">
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Eveniet expedita aliquid, quod dolore libero sint assumenda
-                        fugiat qui eligendi quam vel vitae.
+                        Solusi lengkap elektronik dan aksesoris, hanya di GG Case.
+                        Belanja mudah, cepat, dan aman.
                     </p>
                 </div>
 
@@ -31,32 +34,51 @@ export const Footer = () => {
                             <li><a href="/wishlist">Wishlist</a></li>
                         </ul>
                     </div>
-                    <div>
-                        <h2>Kategori</h2>
-                        <ul>
-                            <li><a href="#">Kategori 1</a></li>
-                            <li><a href="#">Kategori 2</a></li>
-                            <li><a href="#">Kategori 3</a></li>
-                            <li><a href="#">Kategori 4</a></li>
-                        </ul>
-                    </div>
                 </div>
 
                 <!-- Contact Info -->
                 <div class="footer-section">
                     <h2>Contact Information</h2>
                     <ul class="contact-list">
-                        <li><i class="fas fa-phone-alt"></i><span>+62 812 3456 7890</span></li>
-                        <li><i class="fas fa-envelope"></i><span>ggcatalogstore@gmail.com</span></li>
-                        <li><img src="${facebook}" alt="Facebook Icon" class="icon"><span>Facebook</span></li>
-                        <li><img src="${instagram}" alt="Instagram Icon" class="icon"><span>Instagram</span></li>
+                    <li>
+                        <img src="${youtube}" alt=Youtube Icon" class="icon">
+                        <a href="https://www.youtube.com/@ggcasegroupentertainment?si=qtgdwvn3h4jYXq7j" target="_blank">
+                            GG GROUP Entertainment
+                        </a>
+                    </li>
+                    <li>
+                            <img src="${instagram}" alt="Instagram Icon" class="icon">
+                            <a href="https://www.instagram.com/ggcasegroup.id?igsh=NnB2MDh2eGl4bWVk" target="_blank">
+                                ggcasegroup.id
+                            </a>
+                    </li>
+                    <li>
+                            <img src="${tiktok}" alt="Tiktok Icon" class="icon">
+                            <a href="https://www.tiktok.com/@ggaccindonesia?_t=ZS-8ydq3i7CD2I&_r=1" target="_blank">
+                                ggaccindonesia
+                            </a>
+                    </li>
+                    <li>
+                            <img src="${tokopedia}" alt="Tokopedia Icon" class="icon">
+                            <a href="https://www.tokopedia.com/ggcasegroups" target="_blank">
+                                GGCASE GROUP SAMARINDA
+                            </a>
+                    </li>
+                    <li>
+                            <img src="${shopee}" alt="Shopee Icon" class="icon">
+                            <a href="https://shopee.co.id/ggcasegroup" target="_blank">
+                                GG CASE GROUP
+                            </a>
+                    </li>
                     </ul>
 
                     <div class="map-info">
                         <h2>Company Address</h2>
                         <div class="map-row">
-                            <a href="#"><img src="${gmaps}" alt="Google Maps Icon"></a>
-                            <p>Jl. Raya Cibadak No.123, Cibadak, Cimahi, Jawa Barat</p>
+                             <img src="${gmaps}" alt="Google Maps Icon" class="icon">
+                            <a href="https://linktr.ee/qwerty30aja" target="_blank" class="text-white">
+                                  GG CASE GROUP
+                            </a>
                         </div>
                     </div>
                 </div>

@@ -47,7 +47,10 @@ footer {
 .footer-description {
   font-size: 0.875rem;
   line-height: 1.5;
-  color: #999;
+  color: #d8d8d8;
+}
+.text-white{
+   color: #d8d8d8;
 }
 
 .footer-section h2 {
