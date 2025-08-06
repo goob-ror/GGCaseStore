@@ -170,15 +170,16 @@ class HomePage {
                 <div class="home-product-content">
                     <h3 class="home-product-name ellipsis-3">${product.name}</h3>
                     <p class="home-product-price">${this.formatRupiah(product.price)}</p>
-                    <div class="home-product-rating">
-                        <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
-                        <span class="home-rating-divider">|</span>
-                        <span class="home-sales-count">${product.total_sold ?? 0}+ Terjual</span>
-                    </div>
+
                 </div>
             </div>
         `).join('');
 
+        // <div class="home-product-rating">
+        //     <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
+        //     <span class="home-rating-divider">|</span>
+        //     <span class="home-sales-count">${product.total_sold ?? 0}+ Terjual</span>
+        // </div>
         // Re-bind click events
         this.bindProductCardEvents(container);
     }
@@ -503,14 +504,15 @@ class HomePage {
                         <div class="home-product-content">
                             <h3 class="home-product-name ellipsis-3">${product.name}</h3>
                             <p class="home-product-price">${this.formatRupiah(product.price)}</p>
-                            <div class="home-product-rating">
-                                <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
-                                <span class="home-rating-divider">|</span>
-                                <span class="home-sales-count">${product.total_sold ?? 0}+ Terjual</span>
-                            </div>
+                            
                         </div>
                     </div>
                 `).join('');
+                // <div class="home-product-rating">
+                //     <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
+                //     <span class="home-rating-divider">|</span>
+                //     <span class="home-sales-count">${product.total_sold ?? 0}+ Terjual</span>
+                // </div>
 
                 // Add click event listeners after rendering
                 this.bindProductCardEvents(container);
@@ -553,15 +555,16 @@ class HomePage {
                         <div class="home-product-content">
                             <h3 class="home-product-name ellipsis-3">${product.name}</h3>
                             <p class="home-product-price">${this.formatRupiah(product.price)}</p>
-                            <div class="home-product-rating">
-                                <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
-                                <span class="home-rating-divider">|</span>
-                                <span class="home-sales-count">${product.total_sold ?? 0}+ Terjual</span>
-                            </div>
+                            
                         </div>
                     </div>
                 `).join('');
 
+                // <div class="home-product-rating">
+                //     <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
+                //     <span class="home-rating-divider">|</span>
+                //     <span class="home-sales-count">${product.total_sold ?? 0}+ Terjual</span>
+                // </div>
                 // Add click event listeners after rendering
                 this.bindProductCardEvents(container);
             } else {
@@ -603,15 +606,16 @@ class HomePage {
                         <div class="home-product-content">
                             <h3 class="home-product-name ellipsis-3">${product.name}</h3>
                             <p class="home-product-price">${this.formatRupiah(product.price)}</p>
-                            <div class="home-product-rating">
-                                <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
-                                <span class="home-rating-divider">|</span>
-                                <span class="home-sales-count">${product.total_sold ?? 0}+ Terjual</span>
-                            </div>
+                            
                         </div>
                     </div>
                 `).join('');
 
+                // <div class="home-product-rating">
+                //     <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
+                //     <span class="home-rating-divider">|</span>
+                //     <span class="home-sales-count">${product.total_sold ?? 0}+ Terjual</span>
+                // </div>
                 // Add click event listeners after rendering
                 this.bindProductCardEvents(container);
             } else {

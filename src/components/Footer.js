@@ -2,6 +2,7 @@ import '../styles/components/footer.css';
 import logo from '../../public/assets/logoCatalog.png';
 import facebook from '../../public/assets/facebook.png';
 import instagram from '../../public/assets/instagram.png';
+
 import gmaps from '../../public/assets/gmaps.png';
 
 export const Footer = () => {
