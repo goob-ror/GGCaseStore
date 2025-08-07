@@ -2,6 +2,17 @@ import { ApiService } from '../../lib/ApiService.js';
 import { NotificationService } from '../../components/NotificationService.js';
 import { ImageUpload } from '../../components/ImageUpload.js';
 
+/**
+ * BannersPage - Enhanced Admin Banner Management
+ *
+ * Features:
+ * - Create, edit, delete banners with WebP image conversion
+ * - Banner scheduling with start/end dates
+ * - Enhanced status tracking (active, inactive, scheduled, expired)
+ * - Date validation and client-side form validation
+ * - Responsive image upload with cropping
+ * - Real-time status display with visual indicators
+ */
 class BannersPage {
   constructor() {
     this.apiService = new ApiService();
@@ -88,6 +99,27 @@ class BannersPage {
                           Active Banner
                         </label>
                         <small class="form-text text-muted">Only active banners will be displayed on the website</small>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Banner Scheduling Section -->
+                  <div class="form-section">
+                    <div class="section-header">
+                      <h4><i class="fas fa-calendar-alt"></i> Banner Scheduling</h4>
+                      <small class="text-muted">Optional: Set when this banner should be active</small>
+                    </div>
+                    <div class="form-fields">
+                      <div class="form-group">
+                        <label for="bannerStartDate" class="form-label">Start Date & Time</label>
+                        <input type="datetime-local" id="bannerStartDate" name="start_date" class="form-control">
+                        <small class="form-text text-muted">Banner will become active at this date/time (leave empty for immediate activation)</small>
+                      </div>
+
+                      <div class="form-group">
+                        <label for="bannerEndDate" class="form-label">End Date & Time</label>
+                        <input type="datetime-local" id="bannerEndDate" name="end_date" class="form-control">
+                        <small class="form-text text-muted">Banner will become inactive at this date/time (leave empty for no expiration)</small>
                       </div>
                     </div>
                   </div>
@@ -201,6 +233,16 @@ class BannersPage {
           color: #991b1b;
         }
 
+        .banner-status.scheduled {
+          background: #dbeafe;
+          color: #1e40af;
+        }
+
+        .banner-status.expired {
+          background: #fef3c7;
+          color: #92400e;
+        }
+
         .banner-content {
           padding: 1.5rem;
         }
@@ -218,17 +260,35 @@ class BannersPage {
           margin-bottom: 1rem;
         }
 
+        .banner-meta .meta-item {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 0.25rem;
+        }
+
+        .banner-meta .meta-item i {
+          width: 14px;
+          color: #94a3b8;
+        }
+
         .banner-url {
           color: #3b82f6;
           font-size: 0.875rem;
           text-decoration: none;
           margin-bottom: 1rem;
-          display: block;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
           word-break: break-all;
         }
 
         .banner-url:hover {
           text-decoration: underline;
+        }
+
+        .banner-url i {
+          flex-shrink: 0;
         }
 
         .banner-actions {
@@ -410,6 +470,14 @@ class BannersPage {
           color: #6366f1;
         }
 
+        .section-header small {
+          display: block;
+          color: #64748b;
+          font-weight: normal;
+          font-size: 0.875rem;
+          margin-top: 0.25rem;
+        }
+
         .image-upload-container {
           max-width: 100%;
           margin: 0 auto;
@@ -534,6 +602,26 @@ class BannersPage {
     modalBackdrop?.addEventListener('click', () => this.hideBannerForm());
     bannerForm?.addEventListener('submit', (e) => this.handleFormSubmit(e));
 
+    // Add date validation
+    const startDateField = document.getElementById('bannerStartDate');
+    const endDateField = document.getElementById('bannerEndDate');
+
+    if (startDateField && endDateField) {
+      const validateDates = () => {
+        const startDate = startDateField.value;
+        const endDate = endDateField.value;
+
+        if (startDate && endDate && new Date(startDate) >= new Date(endDate)) {
+          endDateField.setCustomValidity('End date must be after start date');
+        } else {
+          endDateField.setCustomValidity('');
+        }
+      };
+
+      startDateField.addEventListener('change', validateDates);
+      endDateField.addEventListener('change', validateDates);
+    }
+
     // Initialize form components
     this.initializeFormComponents();
   }
@@ -604,17 +692,35 @@ class BannersPage {
              <div class="placeholder" style="display: none;"><i class="fas fa-image"></i></div>` :
             `<div class="placeholder"><i class="fas fa-image"></i></div>`
           }
-          <div class="banner-status ${banner.active ? 'active' : 'inactive'}">
-            ${banner.active ? 'Active' : 'Inactive'}
+          <div class="banner-status ${this.getBannerStatusClass(banner)}">
+            ${this.getBannerStatusText(banner)}
           </div>
         </div>
         <div class="banner-content">
           <h3 class="banner-title">${this.escapeHtml(banner.title)}</h3>
           <div class="banner-meta">
-            Created: ${new Date(banner.created_at).toLocaleDateString()}
+            <div class="meta-item">
+              <i class="fas fa-calendar"></i>
+              Created: ${new Date(banner.created_at).toLocaleDateString()}
+            </div>
+            ${banner.start_date ?
+              `<div class="meta-item">
+                <i class="fas fa-play"></i>
+                Starts: ${new Date(banner.start_date).toLocaleString()}
+              </div>` : ''
+            }
+            ${banner.end_date ?
+              `<div class="meta-item">
+                <i class="fas fa-stop"></i>
+                Ends: ${new Date(banner.end_date).toLocaleString()}
+              </div>` : ''
+            }
           </div>
-          ${banner.redirect_url ? 
-            `<a href="${banner.redirect_url}" target="_blank" class="banner-url">${banner.redirect_url}</a>` : 
+          ${banner.redirect_url ?
+            `<a href="${banner.redirect_url}" target="_blank" class="banner-url">
+              <i class="fas fa-external-link-alt"></i>
+              ${banner.redirect_url}
+            </a>` :
             ''
           }
           <div class="banner-actions">
@@ -700,6 +806,9 @@ class BannersPage {
       title.textContent = 'Add New Banner';
       form.reset();
       document.getElementById('bannerActive').checked = true;
+      // Clear date fields
+      document.getElementById('bannerStartDate').value = '';
+      document.getElementById('bannerEndDate').value = '';
     }
 
     modal.style.display = 'flex';
@@ -731,6 +840,22 @@ class BannersPage {
     document.getElementById('bannerRedirect').value = banner.redirect_url || '';
     document.getElementById('bannerActive').checked = banner.active;
 
+    // Populate scheduling fields
+    const startDateField = document.getElementById('bannerStartDate');
+    const endDateField = document.getElementById('bannerEndDate');
+
+    if (startDateField && banner.start_date) {
+      // Convert MySQL datetime to HTML datetime-local format
+      const startDate = new Date(banner.start_date);
+      startDateField.value = this.formatDateTimeLocal(startDate);
+    }
+
+    if (endDateField && banner.end_date) {
+      // Convert MySQL datetime to HTML datetime-local format
+      const endDate = new Date(banner.end_date);
+      endDateField.value = this.formatDateTimeLocal(endDate);
+    }
+
     // Populate legacy image field if it exists
     const imageField = document.getElementById('bannerImage');
     if (imageField) {
@@ -756,7 +881,9 @@ class BannersPage {
     const bannerData = {
       title: formData.get('title'),
       redirect_url: formData.get('redirect_url') || null,
-      active: formData.has('active')
+      active: formData.has('active'),
+      start_date: formData.get('start_date') || null,
+      end_date: formData.get('end_date') || null
     };
 
     saveBtn.disabled = true;
@@ -788,7 +915,9 @@ class BannersPage {
 
     } catch (error) {
       console.error('Error saving banner:', error);
-      this.notificationService.error('Error', error.message || 'Failed to save banner');
+      // Handle specific API error messages (like date validation)
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to save banner';
+      this.notificationService.error('Error', errorMessage);
     } finally {
       saveBtn.disabled = false;
       btnText.classList.remove('d-none');
@@ -855,6 +984,43 @@ class BannersPage {
       console.error('Error deleting banner:', error);
       this.notificationService.error('Error', error.message || 'Failed to delete banner');
     }
+  }
+
+  getBannerStatusClass(banner) {
+    if (banner.status) {
+      return banner.status; // Use the status from the API
+    }
+    // Fallback logic if status is not provided
+    if (!banner.active) return 'inactive';
+
+    const now = new Date();
+    const startDate = banner.start_date ? new Date(banner.start_date) : null;
+    const endDate = banner.end_date ? new Date(banner.end_date) : null;
+
+    if (startDate && startDate > now) return 'scheduled';
+    if (endDate && endDate < now) return 'expired';
+    return 'active';
+  }
+
+  getBannerStatusText(banner) {
+    const statusClass = this.getBannerStatusClass(banner);
+    const statusMap = {
+      'active': 'Active',
+      'inactive': 'Inactive',
+      'scheduled': 'Scheduled',
+      'expired': 'Expired'
+    };
+    return statusMap[statusClass] || 'Unknown';
+  }
+
+  formatDateTimeLocal(date) {
+    // Format date for HTML datetime-local input (YYYY-MM-DDTHH:MM)
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 
   escapeHtml(text) {

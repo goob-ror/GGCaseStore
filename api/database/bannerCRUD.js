@@ -11,7 +11,25 @@ const path = require('path');
 // Get all web banners
 const getAllBanners = async (req, res) => {
   try {
-    const [rows] = await db.execute('SELECT * FROM web_banners ORDER BY created_at DESC');
+    const [rows] = await db.execute(`
+      SELECT *,
+      CASE 
+        WHEN active = 1 
+        AND (start_date IS NULL OR start_date <= NOW())
+        AND (end_date IS NULL OR end_date >= NOW())
+        THEN 1 
+        ELSE 0 
+      END AS is_currently_active,
+      CASE 
+        WHEN start_date IS NOT NULL AND start_date > NOW() THEN 'scheduled'
+        WHEN end_date IS NOT NULL AND end_date < NOW() THEN 'expired'
+        WHEN active = 0 THEN 'inactive'
+        ELSE 'active'
+      END AS status
+      FROM web_banners 
+      ORDER BY created_at DESC
+    `);
+
     res.json({ success: true, data: rows });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -21,7 +39,20 @@ const getAllBanners = async (req, res) => {
 // Get active web banners only
 const getActiveBanners = async (req, res) => {
   try {
-    const [rows] = await db.execute('SELECT * FROM web_banners WHERE active = true ORDER BY created_at DESC');
+    const [rows] = await db.execute(`
+      SELECT *,
+      CASE 
+        WHEN start_date IS NOT NULL AND start_date > NOW() THEN 'scheduled'
+        WHEN end_date IS NOT NULL AND end_date < NOW() THEN 'expired'
+        ELSE 'active'
+      END AS status
+      FROM web_banners 
+      WHERE active = true 
+      AND (start_date IS NULL OR start_date <= NOW())
+      AND (end_date IS NULL OR end_date >= NOW())
+      ORDER BY created_at DESC
+    `);
+    
     res.json({ success: true, data: rows });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -31,11 +62,21 @@ const getActiveBanners = async (req, res) => {
 // Create new banner
 const createBanner = async (req, res) => {
   try {
-    const { title, banner_image_url, redirect_url, active = true } = req.body;
+    const { title, banner_image_url, redirect_url, active = true, start_date, end_date } = req.body;
+    
+    // Validate dates
+    if (start_date && end_date && new Date(start_date) >= new Date(end_date)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'End date must be after start date' 
+      });
+    }
+    
     const [result] = await db.execute(
-      'INSERT INTO web_banners (title, banner_image_url, redirect_url, active, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
-      [title || null, banner_image_url || null, redirect_url || null, active]
+      'INSERT INTO web_banners (title, banner_image_url, redirect_url, active, start_date, end_date, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
+      [title || null, banner_image_url || null, redirect_url || null, active, start_date || null, end_date || null]
     );
+    
     res.status(201).json({ success: true, id: result.insertId, message: 'Banner created successfully' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -45,14 +86,25 @@ const createBanner = async (req, res) => {
 // Update banner
 const updateBanner = async (req, res) => {
   try {
-    const { title, banner_image_url, redirect_url, active } = req.body;
+    const { title, banner_image_url, redirect_url, active, start_date, end_date } = req.body;
+    
+    // Validate dates
+    if (start_date && end_date && new Date(start_date) >= new Date(end_date)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'End date must be after start date' 
+      });
+    }
+    
     const [result] = await db.execute(
-      'UPDATE web_banners SET title = ?, banner_image_url = ?, redirect_url = ?, active = ?, updated_at = NOW() WHERE id = ?',
-      [title || null, banner_image_url || null, redirect_url || null, active, req.params.id]
+      'UPDATE web_banners SET title = ?, banner_image_url = ?, redirect_url = ?, active = ?, start_date = ?, end_date = ?, updated_at = NOW() WHERE id = ?',
+      [title || null, banner_image_url || null, redirect_url || null, active, start_date || null, end_date || null, req.params.id]
     );
+    
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'Banner not found' });
     }
+    
     res.json({ success: true, message: 'Banner updated successfully' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
