@@ -3,6 +3,8 @@ import { TopNavigationBar, initializeTopNavigationSearch } from '../../component
 import { BottomNavigationBar } from '../../components/BottomNavigationBar.js';
 import { Footer } from '../../components/Footer.js';
 import { SearchableDropdown } from '../../components/SearchableDropdown.js';
+import { EndlessScroll } from './EndlessScroll.js';
+import { ProductFormatter } from './ProductFormatter.js';
 import Swiper from 'swiper';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -16,8 +18,6 @@ class KatalogPage {
         this.products = [];
         this.currentPage = 1;
         this.itemsPerPage = 20;
-        this.isLoading = false;
-        this.hasMoreProducts = true;
         this.filters = {
             minPrice: null,
             maxPrice: null,
@@ -30,17 +30,52 @@ class KatalogPage {
         this.brandDropdown = null;
         this.categories = [];
         this.brands = [];
+        this.isInitialized = false;
+
+        // Initialize utility classes
+        this.productFormatter = new ProductFormatter();
+        this.endlessScroll = new EndlessScroll({
+            threshold: 200,
+            debounceDelay: 150,
+            onLoadMore: () => this.loadMoreProducts(),
+            loadingIndicatorId: 'loading-indicator'
+        });
+
+        // Bind methods to preserve context
+        this.loadMoreProducts = this.loadMoreProducts.bind(this);
+        this.resetAndReload = this.resetAndReload.bind(this);
     }
 
     async render(container) {
-        container.innerHTML = this.getHTML();
-        this.setUpNavigation();
-        await this.initializeCategoryDropdown();
-        await this.initializeBrandDropdown();
-        this.bindEvents();
-        this.setupInfiniteScroll();
-        this.parseUrlParameters();
-        await this.loadProducts();
+        try {
+            container.innerHTML = this.getHTML();
+            this.setUpNavigation();
+            
+            // Initialize dropdowns first and wait for completion
+            await Promise.all([
+                this.initializeCategoryDropdown(),
+                this.initializeBrandDropdown()
+            ]);
+            
+            // Parse URL parameters after dropdowns are ready
+            this.parseUrlParameters();
+            
+            // Bind events
+            this.bindEvents();
+            
+            // Initialize endless scroll
+            this.endlessScroll.initialize();
+            
+            // Mark as initialized
+            this.isInitialized = true;
+            
+            // Load initial products
+            await this.loadInitialProducts();
+            
+        } catch (error) {
+            console.error('Error rendering katalog page:', error);
+            this.showErrorMessage('Gagal memuat halaman katalog');
+        }
     }
 
     setUpNavigation() {
@@ -56,11 +91,9 @@ class KatalogPage {
 
     async initializeCategoryDropdown() {
         try {
-            // Load categories from API
             const response = await this.UserApiService.get('/categories');
             this.categories = response.data || [];
 
-            // Initialize the searchable dropdown
             this.categoryDropdown = new SearchableDropdown({
                 placeholder: 'Pilih Kategori...',
                 searchPlaceholder: 'Cari kategori...',
@@ -76,7 +109,6 @@ class KatalogPage {
                 }
             });
 
-            // Render the dropdown
             const container = document.getElementById('category-dropdown-container');
             if (container) {
                 container.innerHTML = this.categoryDropdown.createHTML('category-filter');
@@ -94,11 +126,9 @@ class KatalogPage {
 
     async initializeBrandDropdown() {
         try {
-            // Load brands from API
             const response = await this.UserApiService.get('/brands');
             this.brands = response.data || [];
 
-            // Initialize the searchable dropdown
             this.brandDropdown = new SearchableDropdown({
                 placeholder: 'Pilih Brand...',
                 searchPlaceholder: 'Cari brand...',
@@ -114,7 +144,6 @@ class KatalogPage {
                 }
             });
 
-            // Render the dropdown
             const container = document.getElementById('brand-dropdown-container');
             if (container) {
                 container.innerHTML = this.brandDropdown.createHTML('brand-filter');
@@ -135,21 +164,251 @@ class KatalogPage {
         const categoryId = urlParams.get('category');
         const brandId = urlParams.get('brand');
 
-        if (categoryId && this.categoryDropdown) {
+        if (categoryId) {
             this.filters.categoryId = categoryId;
-            // Set the selected category in the dropdown
-            this.categoryDropdown.setValue(categoryId);
         }
 
-        if (brandId && this.brandDropdown) {
+        if (brandId) {
             this.filters.brandId = brandId;
-            // Set the selected brand in the dropdown
-            this.brandDropdown.setValue(brandId);
         }
+
+        // Set dropdown values after a short delay to ensure dropdowns are ready
+        setTimeout(() => {
+            if (categoryId && this.categoryDropdown) {
+                this.categoryDropdown.setValue(categoryId);
+            }
+            if (brandId && this.brandDropdown) {
+                this.brandDropdown.setValue(brandId);
+            }
+        }, 100);
     }
 
     resetAndReload() {
-        this.loadProducts();
+        // Don't reset if not initialized yet
+        if (!this.isInitialized) {
+            return;
+        }
+
+        // Reset pagination state
+        this.currentPage = 1;
+        this.products = [];
+        
+        // Reset endless scroll state
+        this.endlessScroll.reset();
+        
+        // Clear product grid
+        const container = document.getElementById('product-grid');
+        if (container) {
+            container.innerHTML = '';
+        }
+
+        // Update count display
+        this.updateProductCount('Memuat produk...');
+
+        // Load new products
+        this.loadMoreProducts();
+    }
+
+    async loadInitialProducts() {
+        // Reset state for initial load
+        this.currentPage = 1;
+        this.products = [];
+        this.endlessScroll.reset();
+        
+        // Clear container
+        const container = document.getElementById('product-grid');
+        if (container) {
+            container.innerHTML = '';
+        }
+        
+        // Update count display
+        this.updateProductCount('Memuat produk...');
+        
+        // Load first batch
+        await this.loadMoreProducts();
+    }
+
+    async loadMoreProducts() {
+        // Prevent multiple simultaneous calls using EndlessScroll's state
+        if (this.endlessScroll.getLoadingState() || !this.endlessScroll.getHasMore()) {
+            console.log('⏳ Already loading or no more products, skipping...');
+            return;
+        }
+
+        try {
+            // Build API parameters
+            const params = this.buildApiParams();
+            
+            console.log('🔄 Loading products - Page:', this.currentPage, 'Params:', params);
+            
+            // Make API call
+            const response = await this.UserApiService.get('/products', params);
+            const newProducts = response.data || [];
+
+            console.log('✅ Received products:', newProducts.length);
+
+            // Handle empty results
+            if (newProducts.length === 0) {
+                this.handleEmptyResults();
+                return;
+            }
+
+            // Determine if there are more products
+            const hasMoreProducts = this.determineHasMore(newProducts, response);
+            
+            // Update endless scroll state
+            this.endlessScroll.setHasMore(hasMoreProducts);
+
+            // Append new products
+            this.appendProducts(newProducts);
+            
+            // Increment page for next load
+            this.currentPage++;
+
+            console.log('📊 Total products loaded:', this.products.length, 'Has more:', hasMoreProducts);
+
+        } catch (error) {
+            console.error('❌ Error loading products:', error);
+            this.handleLoadError(error);
+        }
+    }
+
+    buildApiParams() {
+        const params = {
+            page: this.currentPage,
+            limit: this.itemsPerPage
+        };
+
+        // Add filter parameters
+        if (this.filters.categoryId) {
+            params.category_id = this.filters.categoryId;
+        }
+
+        if (this.filters.brandId) {
+            params.brand_id = this.filters.brandId;
+        }
+
+        if (this.filters.minPrice) {
+            params.min_price = this.filters.minPrice;
+        }
+
+        if (this.filters.maxPrice) {
+            params.max_price = this.filters.maxPrice;
+        }
+
+        if (this.filters.minRating) {
+            params.min_rating = this.filters.minRating;
+        }
+
+        if (this.filters.sortBy) {
+            params.sort_by = this.filters.sortBy;
+        }
+
+        return params;
+    }
+
+    determineHasMore(products, response) {
+        // Use pagination info from response if available
+        if (response.pagination) {
+            return this.currentPage < response.pagination.totalPages;
+        }
+        
+        // Fallback: assume more products if we got a full page
+        return products.length === this.itemsPerPage;
+    }
+
+    handleEmptyResults() {
+        this.endlessScroll.setHasMore(false);
+        
+        if (this.products.length === 0) {
+            // No products at all
+            const container = document.getElementById('product-grid');
+            if (container) {
+                container.innerHTML = `
+                    <div class="no-products-message">
+                        <i class="fas fa-search fa-3x"></i>
+                        <h3>Tidak ada produk ditemukan</h3>
+                        <p>Coba ubah filter pencarian Anda</p>
+                    </div>
+                `;
+            }
+            this.updateProductCount('Tidak ada produk ditemukan');
+        } else {
+            // End of results
+            console.log('📝 Reached end of results');
+            this.updateProductCount();
+        }
+    }
+
+    handleLoadError(error) {
+        if (this.products.length === 0) {
+            // Show error message if no products loaded yet
+            this.showErrorMessage('Gagal memuat produk. Silakan coba lagi.');
+        } else {
+            // Just log the error if we already have some products
+            console.error('Failed to load more products, but keeping existing ones');
+        }
+        
+        // Don't disable endless scroll completely on error - allow retry
+        // The user can try scrolling again later
+    }
+
+    showErrorMessage(message) {
+        const container = document.getElementById('product-grid');
+        if (container) {
+            container.innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle fa-3x"></i>
+                    <h3>Terjadi Kesalahan</h3>
+                    <p>${message}</p>
+                    <button onclick="location.reload()" class="retry-button">
+                        <i class="fas fa-refresh"></i> Coba Lagi
+                    </button>
+                </div>
+            `;
+        }
+        
+        const countElement = document.getElementById('product-count');
+        if (countElement) {
+            countElement.textContent = 'Error memuat produk';
+        }
+    }
+
+    appendProducts(newProducts) {
+        const container = document.getElementById('product-grid');
+
+        if (!container) {
+            console.error('Product grid container not found');
+            return;
+        }
+
+        newProducts.forEach(product => {
+            this.products.push(product);
+            const productElement = this.productFormatter.createProductCard(
+                product,
+                (productId) => this.navigateToDetail(productId)
+            );
+            container.appendChild(productElement);
+        });
+
+        this.updateProductCount();
+    }
+
+    navigateToDetail(productId) {
+        window.location.href = `/detail?id=${productId}`;
+    }
+
+    updateProductCount(customText = null) {
+        const countElement = document.getElementById('product-count');
+        if (countElement) {
+            if (customText) {
+                countElement.textContent = customText;
+            } else {
+                const count = this.products.length;
+                const hasMore = this.endlessScroll.getHasMore();
+                countElement.textContent = `Menampilkan ${count} produk${hasMore ? ' (scroll untuk lebih banyak)' : ''}`;
+            }
+        }
     }
 
     getHTML() {
@@ -180,7 +439,24 @@ class KatalogPage {
                                     <input type="number" class="catalog-filter__input" placeholder="500000" id="max-price-input">
                                 </div>
                             </div>
-                           
+                            <div class="catalog-filter__group">
+                                <label class="catalog-filter__label">Rating & Urutan</label>
+                                <select id="rating-filter" class="catalog-filter__select">
+                                    <option value="">Semua Rating</option>
+                                    <option value="4">4+ Bintang</option>
+                                    <option value="3">3+ Bintang</option>
+                                    <option value="2">2+ Bintang</option>
+                                    <option value="1">1+ Bintang</option>
+                                </select>
+                                <select id="sort-filter" class="catalog-filter__select">
+                                    <option value="newest">Terbaru</option>
+                                    <option value="price-low">Harga Terendah</option>
+                                    <option value="price-high">Harga Tertinggi</option>
+                                    <option value="rating">Rating Tertinggi</option>
+                                    <option value="popular">Terpopuler</option>
+                                    <option value="best">Terbaik</option>
+                                </select>
+                            </div>
                         </div>
 
                         <!-- Main Content -->
@@ -193,7 +469,7 @@ class KatalogPage {
                                 <!-- Products will be loaded here -->
                             </div>
                             <div class="catalog-loading hidden" id="loading-indicator">
-                                <i class="fas fa-spinner fa-spin"></i> Memuat produk...
+                                <i class="fas fa-spinner fa-spin"></i> Memuat produk lainnya...
                             </div>
                         </div>
                     </div>
@@ -203,26 +479,6 @@ class KatalogPage {
             <div id="bottom-bar"></div>
         `;
     }
-
-    //  <div class="catalog-filter__group">
-    //     <label class="catalog-filter__label">Rating & Urutan</label>
-    //     <select id="rating-filter" class="catalog-filter__select">
-    //         <option value="">Semua Rating</option>
-    //         <option value="4">4+ Bintang</option>
-    //         <option value="3">3+ Bintang</option>
-    //         <option value="2">2+ Bintang</option>
-    //         <option value="1">1+ Bintang</option>
-    //     </select>
-    //     <select id="sort-filter" class="catalog-filter__select">
-    //         <option value="newest">Terbaru</option>
-    //         <option value="price-low">Harga Terendah</option>
-    //         <option value="price-high">Harga Tertinggi</option>
-    //         <option value="rating">Rating Tertinggi</option>
-    //         <option value="popular">Terpopuler</option>
-    //         <option value="best">Terbaik</option>
-    //     </select>
-    // </div>
-
 
     bindEvents() {
         const navLinks = document.querySelectorAll('.nav-links a');
@@ -292,276 +548,16 @@ class KatalogPage {
         };
     }
 
-    setupInfiniteScroll() {
-        window.addEventListener('scroll', this.debounce(() => {
-            if (this.isLoading || !this.hasMoreProducts) return;
-
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const windowHeight = window.innerHeight;
-            const documentHeight = document.documentElement.scrollHeight;
-
-            // Load more when user is 200px from bottom
-            if (scrollTop + windowHeight >= documentHeight - 200) {
-                this.loadMoreProducts();
-            }
-        }, 100));
-    }
-
-    async loadProducts() {
-        this.currentPage = 1;
-        this.products = [];
-        this.hasMoreProducts = true;
-        const container = document.getElementById('product-grid');
-        if (container) {
-            container.innerHTML = '';
+    /**
+     * Cleanup method to destroy endless scroll when page is destroyed
+     */
+    destroy() {
+        if (this.endlessScroll) {
+            this.endlessScroll.destroy();
         }
-        await this.loadMoreProducts();
-    }
-
-    async loadMoreProducts() {
-        if (this.isLoading || !this.hasMoreProducts) return;
-
-        this.isLoading = true;
-        this.showLoadingIndicator();
-
-        try {
-            // Build parameters for the unified API endpoint
-            const params = {
-                page: this.currentPage,
-                limit: this.itemsPerPage
-            };
-
-            // Add filter parameters
-            if (this.filters.categoryId) {
-                params.category_id = this.filters.categoryId;
-            }
-
-            if (this.filters.brandId) {
-                params.brand_id = this.filters.brandId;
-            }
-
-            if (this.filters.minPrice) {
-                params.min_price = this.filters.minPrice;
-            }
-
-            if (this.filters.maxPrice) {
-                params.max_price = this.filters.maxPrice;
-            }
-
-            if (this.filters.minRating) {
-                params.min_rating = this.filters.minRating;
-            }
-
-            if (this.filters.sortBy) {
-                params.sort_by = this.filters.sortBy;
-            }
-
-            // Use the unified products API endpoint
-            const response = await this.UserApiService.get('/products', params);
-            const allProducts = response.data || [];
-
-            // Handle pagination consistently
-            if (response.pagination) {
-                this.hasMoreProducts = this.currentPage < response.pagination.totalPages;
-            } else {
-                this.hasMoreProducts = allProducts.length === this.itemsPerPage;
-            }
-
-            // Append products and increment page
-            this.appendProducts(allProducts);
-            this.currentPage++;
-
-        } catch (err) {
-            console.error('Error loading products:', err);
-            if (this.products.length === 0) {
-                const container = document.getElementById('product-grid');
-                if (container) {
-                    container.innerHTML = `<p>Gagal memuat produk.</p>`;
-                }
-            }
-        } finally {
-            this.isLoading = false;
-            this.hideLoadingIndicator();
-        }
-    }
-
-
-
-    appendProducts(newProducts) {
-        const container = document.getElementById('product-grid');
-
-        if (!container) {
-            console.error('Product grid container not found');
-            return;
-        }
-
-        newProducts.forEach(product => {
-            this.products.push(product);
-            const productElement = document.createElement('div');
-            productElement.className = 'catalog-product-card';
-            productElement.setAttribute('data-product-id', product.id);
-            productElement.addEventListener('click', () => this.navigateToDetail(product.id));
-
-            // Check if promo is active
-            const isPromoActive = this.isPromoActive(product);
-            const priceHTML = this.formatProductPrice(product, isPromoActive);
-
-            productElement.innerHTML = `
-                <img src="${this.getProductImage(product)}" alt="${product.name}" class="catalog-product-card__image"/>
-                ${isPromoActive ? '<span class="promo-badge">PROMO</span>' : ''}
-
-                <div class="catalog-product-card__content">
-                    <h3 class="catalog-product-card__name ellipsis-3">
-                        ${product.name}
-                    </h3>
-                    ${priceHTML}
-                    
-                </div>
-            `;
-            container.appendChild(productElement);
-        });
-
-        // <div class="catalog-product-card__rating">
-        //     <span><i class="fas fa-star"></i>${product.avg_rating ? product.avg_rating.toFixed(1) : 'Belum ada rating'}</span>
-        //     <span>${product.total_sold ?? 0}+ Terjual</span>
-        // </div>
-
-        this.updateProductCount();
-    }
-
-    navigateToDetail(productId) {
-        // Navigate to detail page using query parameter
-        window.location.href = `/detail?id=${productId}`;
-    }
-
-    updateProductCount() {
-        const countElement = document.getElementById('product-count');
-        if (countElement) {
-            const count = this.products.length;
-            countElement.textContent = `Menampilkan ${count} produk`;
-        }
-    }
-
-    resetAndReload() {
-        this.currentPage = 1;
-        this.products = [];
-        this.hasMoreProducts = true;
-        const container = document.getElementById('product-grid');
-        container.innerHTML = '';
-
-        // Update count display
-        const countElement = document.getElementById('product-count');
-        if (countElement) {
-            countElement.textContent = 'Memuat produk...';
-        }
-
-        this.loadMoreProducts();
-    }
-
-    showLoadingIndicator() {
-        const indicator = document.getElementById('loading-indicator');
-        if (indicator) {
-            indicator.classList.remove('hidden');
-        }
-    }
-
-    hideLoadingIndicator() {
-        const indicator = document.getElementById('loading-indicator');
-        if (indicator) {
-            indicator.classList.add('hidden');
-        }
-    }
-
-    formatRupiah(angka) {
-        return new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            minimumFractionDigits: 0,
-        }).format(angka);
-    }
-
-    getProductImage(product) {
-        // Return the first image from the photos array, or a placeholder if no images
-        if (product.photos && product.photos.length > 0) {
-            return product.photos[0].photo_url;
-        }
-        // Return a placeholder image if no photos available
-        return '/public/uploads/products/product_1_1753842813929_6xc3sp2s8un.webp';
-    }
-
-    // Check if promo is currently active for a product
-    isPromoActive(product) {
-        // First check if the backend has already calculated this for us
-        if (product.is_promo_active !== undefined) {
-            return Boolean(product.is_promo_active);
-        }
-
-        // Fallback to manual calculation if is_promo_active is not provided
-        if (!product.is_promo && !product.isPromo) {
-            return false;
-        }
-
-        const now = new Date();
-
-        // Check if promo has valid pricing
-        const hasValidPromoPrice = (product.current_price || product.promo_price) &&
-                                   (product.current_price || product.promo_price) < (product.base_price || product.price);
-
-        if (!hasValidPromoPrice) {
-            return false;
-        }
-
-        // Check start date
-        if (product.promo_price_start_date) {
-            const startDate = new Date(product.promo_price_start_date);
-            if (startDate > now) {
-                return false;
-            }
-        }
-
-        // Check end date
-        if (product.promo_price_end_date) {
-            const endDate = new Date(product.promo_price_end_date);
-            if (endDate < now) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    // Get the current effective price for a product
-    getCurrentPrice(product) {
-        // If the backend provides current_price, use it (it already factors in promo status)
-        if (product.current_price !== undefined) {
-            return Number(product.current_price);
-        }
-
-        // Fallback to manual calculation
-        if (this.isPromoActive(product)) {
-            return Number(product.promo_price || product.price || 0);
-        }
-        return Number(product.base_price || product.price || 0);
-    }
-
-    // Format product price with promo display
-    formatProductPrice(product, isPromoActive) {
-        const basePrice = Number(product.base_price || product.price || 0);
-        const promoPrice = Number(product.current_price || product.promo_price || 0);
-
-        if (isPromoActive && promoPrice < basePrice) {
-            const discountPercentage = Math.round(((basePrice - promoPrice) / basePrice) * 100);
-
-            return `
-                <div class="catalog-product-card__price-container">
-                    <p class="catalog-product-card__price-original">${this.formatRupiah(basePrice)}</p>
-                    <p class="catalog-product-card__price-promo">${this.formatRupiah(promoPrice)}</p>
-                    <span class="catalog-product-card__discount">${discountPercentage}% OFF</span>
-                </div>
-            `;
-        } else {
-            return `<p class="catalog-product-card__price">${this.formatRupiah(basePrice)}</p>`;
-        }
+        
+        // Clean up any remaining timeouts or intervals
+        this.isInitialized = false;
     }
 }
 
