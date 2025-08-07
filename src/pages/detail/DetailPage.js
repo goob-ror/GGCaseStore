@@ -192,11 +192,7 @@ class DetailPage {
           <div class="product-header">
             <div class="title-rating">
               <h1 class="product-title">${this.product.name}</h1>
-              <div class="product-rating">
-                <div class="stars filled">★ </div>
-                <span class="rating-text">${this.product.avg_rating ? this.product.avg_rating.toFixed(1) : '0.0'}</span>
-                <span class="rating-count">Terjual ${this.product.total_sold || 0}+</span>
-              </div>
+              
             </div>
           </div>
 
@@ -222,6 +218,12 @@ class DetailPage {
     `;
   }
 
+  // <div class="product-rating">
+  //   <div class="stars filled">★ </div>
+  //   <span class="rating-text">${this.product.avg_rating ? this.product.avg_rating.toFixed(1) : '0.0'}</span>
+  //   <span class="rating-count">Terjual ${this.product.total_sold || 0}+</span>
+  // </div>
+
   renderRelatedProducts(container) {
     container.innerHTML = this.relatedProducts.map(product => `
       <div class="related-card" data-product-id="${product.id}">
@@ -233,14 +235,16 @@ class DetailPage {
         <div class="related-info">
           <h4 class="related-name">${product.name}</h4>
           <div class="related-price">${this.formatPrice(product.price)}</div>
-          <div class="related-rating">
-            <span class="related-stars">${this.renderStars(product.avg_rating || 0)}</span>
-            <span class="related-sold">Terjual ${product.total_sold || 0}+</span>
-          </div>
+          
         </div>
       </div>
     `).join('');
   }
+
+  // <div class="related-rating">
+  //   <span class="related-stars">${this.renderStars(product.avg_rating || 0)}</span>
+  //   <span class="related-sold">Terjual ${product.total_sold || 0}+</span>
+  // </div>
 
   renderThumbnails() {
     if (!this.product.photos || this.product.photos.length === 0) {

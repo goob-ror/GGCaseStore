@@ -482,8 +482,8 @@
 
 @media (min-width: 1024px) {
   .detail-main {
-    max-width: 1200px;
-    margin: 0 auto;
+    /* max-width: 1200px; */
+    /* margin: 0 auto; */
     padding: 24px;
   }
 
@@ -506,10 +506,6 @@
 }
 
 @media (min-width: 1440px) {
-  .detail-main {
-    max-width: 1400px;
-  }
-
   .related-grid {
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 32px;

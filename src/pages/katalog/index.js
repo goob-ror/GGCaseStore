@@ -180,24 +180,7 @@ class KatalogPage {
                                     <input type="number" class="catalog-filter__input" placeholder="500000" id="max-price-input">
                                 </div>
                             </div>
-                            <div class="catalog-filter__group">
-                                <label class="catalog-filter__label">Rating & Urutan</label>
-                                <select id="rating-filter" class="catalog-filter__select">
-                                    <option value="">Semua Rating</option>
-                                    <option value="4">4+ Bintang</option>
-                                    <option value="3">3+ Bintang</option>
-                                    <option value="2">2+ Bintang</option>
-                                    <option value="1">1+ Bintang</option>
-                                </select>
-                                <select id="sort-filter" class="catalog-filter__select">
-                                    <option value="newest">Terbaru</option>
-                                    <option value="price-low">Harga Terendah</option>
-                                    <option value="price-high">Harga Tertinggi</option>
-                                    <option value="rating">Rating Tertinggi</option>
-                                    <option value="popular">Terpopuler</option>
-                                    <option value="best">Terbaik</option>
-                                </select>
-                            </div>
+                            
                         </div>
 
                         <!-- Main Content -->
@@ -220,6 +203,25 @@ class KatalogPage {
             <div id="bottom-bar"></div>
         `;
     }
+
+    // <div class="catalog-filter__group">
+    //     <label class="catalog-filter__label">Rating & Urutan</label>
+    //     <select id="rating-filter" class="catalog-filter__select">
+    //         <option value="">Semua Rating</option>
+    //         <option value="4">4+ Bintang</option>
+    //         <option value="3">3+ Bintang</option>
+    //         <option value="2">2+ Bintang</option>
+    //         <option value="1">1+ Bintang</option>
+    //     </select>
+    //     <select id="sort-filter" class="catalog-filter__select">
+    //         <option value="newest">Terbaru</option>
+    //         <option value="price-low">Harga Terendah</option>
+    //         <option value="price-high">Harga Tertinggi</option>
+    //         <option value="rating">Rating Tertinggi</option>
+    //         <option value="popular">Terpopuler</option>
+    //         <option value="best">Terbaik</option>
+    //     </select>
+    // </div>
 
     bindEvents() {
         const navLinks = document.querySelectorAll('.nav-links a');
@@ -449,11 +451,12 @@ class KatalogPage {
                 return false;
             }
 
-            // Price filter (if not already applied by API)
-            if (this.filters.minPrice && product.price < parseFloat(this.filters.minPrice)) {
+            // Price filter (if not already applied by API) - use current price for promo products
+            const currentPrice = this.getCurrentPrice(product);
+            if (this.filters.minPrice && currentPrice < parseFloat(this.filters.minPrice)) {
                 return false;
             }
-            if (this.filters.maxPrice && product.price > parseFloat(this.filters.maxPrice)) {
+            if (this.filters.maxPrice && currentPrice > parseFloat(this.filters.maxPrice)) {
                 return false;
             }
 
@@ -466,9 +469,9 @@ class KatalogPage {
 
         switch (this.filters.sortBy) {
             case 'price-low':
-                return sortedProducts.sort((a, b) => a.price - b.price);
+                return sortedProducts.sort((a, b) => this.getCurrentPrice(a) - this.getCurrentPrice(b));
             case 'price-high':
-                return sortedProducts.sort((a, b) => b.price - a.price);
+                return sortedProducts.sort((a, b) => this.getCurrentPrice(b) - this.getCurrentPrice(a));
             case 'rating':
                 return sortedProducts.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
             case 'popular':
@@ -500,19 +503,29 @@ class KatalogPage {
             productElement.className = 'catalog-product-card';
             productElement.setAttribute('data-product-id', product.id);
             productElement.addEventListener('click', () => this.navigateToDetail(product.id));
+
+            // Check if promo is active
+            const isPromoActive = this.isPromoActive(product);
+            const priceHTML = this.formatProductPrice(product, isPromoActive);
+
             productElement.innerHTML = `
                 <img src="${this.getProductImage(product)}" alt="${product.name}" class="catalog-product-card__image"/>
                 <div class="catalog-product-card__content">
-                    <h3 class="catalog-product-card__name ellipsis-3">${product.name}</h3>
-                    <p class="catalog-product-card__price">${this.formatRupiah(product.price)}</p>
-                    <div class="catalog-product-card__rating">
-                        <span><i class="fas fa-star"></i>${product.avg_rating ? product.avg_rating.toFixed(1) : 'Belum ada rating'}</span>
-                        <span>${product.total_sold ?? 0}+ Terjual</span>
-                    </div>
+                    <h3 class="catalog-product-card__name ellipsis-3">
+                        ${product.name}
+                        ${isPromoActive ? '<span class="promo-badge">PROMO</span>' : ''}
+                    </h3>
+                    ${priceHTML}
+                    
                 </div>
             `;
             container.appendChild(productElement);
         });
+
+        // <div class="catalog-product-card__rating">
+        //     <span><i class="fas fa-star"></i>${product.avg_rating ? product.avg_rating.toFixed(1) : 'Belum ada rating'}</span>
+        //     <span>${product.total_sold ?? 0}+ Terjual</span>
+        // </div>
 
         this.updateProductCount();
     }
@@ -575,6 +588,81 @@ class KatalogPage {
         }
         // Return a placeholder image if no photos available
         return '/public/uploads/products/product_1_1753842813929_6xc3sp2s8un.webp';
+    }
+
+    // Check if promo is currently active for a product
+    isPromoActive(product) {
+        // First check if the backend has already calculated this for us
+        if (product.is_promo_active !== undefined) {
+            return Boolean(product.is_promo_active);
+        }
+
+        // Fallback to manual calculation if is_promo_active is not provided
+        if (!product.is_promo && !product.isPromo) {
+            return false;
+        }
+
+        const now = new Date();
+
+        // Check if promo has valid pricing
+        const hasValidPromoPrice = (product.current_price || product.promo_price) &&
+                                   (product.current_price || product.promo_price) < (product.base_price || product.price);
+
+        if (!hasValidPromoPrice) {
+            return false;
+        }
+
+        // Check start date
+        if (product.promo_price_start_date) {
+            const startDate = new Date(product.promo_price_start_date);
+            if (startDate > now) {
+                return false;
+            }
+        }
+
+        // Check end date
+        if (product.promo_price_end_date) {
+            const endDate = new Date(product.promo_price_end_date);
+            if (endDate < now) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // Get the current effective price for a product
+    getCurrentPrice(product) {
+        // If the backend provides current_price, use it (it already factors in promo status)
+        if (product.current_price !== undefined) {
+            return Number(product.current_price);
+        }
+
+        // Fallback to manual calculation
+        if (this.isPromoActive(product)) {
+            return Number(product.promo_price || product.price || 0);
+        }
+        return Number(product.base_price || product.price || 0);
+    }
+
+    // Format product price with promo display
+    formatProductPrice(product, isPromoActive) {
+        const basePrice = Number(product.base_price || product.price || 0);
+        const promoPrice = Number(product.current_price || product.promo_price || 0);
+
+        if (isPromoActive && promoPrice < basePrice) {
+            const discountPercentage = Math.round(((basePrice - promoPrice) / basePrice) * 100);
+
+            return `
+                <div class="catalog-product-card__price-container">
+                    <p class="catalog-product-card__price-original">${this.formatRupiah(basePrice)}</p>
+                    <p class="catalog-product-card__price-promo">${this.formatRupiah(promoPrice)}</p>
+                    <span class="catalog-product-card__discount">${discountPercentage}% OFF</span>
+                </div>
+            `;
+        } else {
+            return `<p class="catalog-product-card__price">${this.formatRupiah(basePrice)}</p>`;
+        }
     }
 }
 

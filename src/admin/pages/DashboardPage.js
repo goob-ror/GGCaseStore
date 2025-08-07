@@ -10,7 +10,7 @@ class DashboardPage {
       brands: 0,
       categories: 0,
       banners: 0,
-      totalSales: 0,
+      totalPromoSales: 0,
       avgRating: 0,
       recentProducts: [],
       topRatedProducts: []
@@ -72,22 +72,12 @@ class DashboardPage {
           </div>
 
           <div class="stat-card">
-            <div class="stat-icon sales">
-              <i class="fas fa-chart-line"></i>
+            <div class="stat-icon promos">
+              <i class="fas fa-percentage"></i>
             </div>
             <div class="stat-content">
-              <h3 id="totalSales">-</h3>
-              <p>Total Sales</p>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon rating">
-              <i class="fas fa-star"></i>
-            </div>
-            <div class="stat-content">
-              <h3 id="avgRating">-</h3>
-              <p>Average Rating</p>
+              <h3 id="totalPromoSales">-</h3>
+              <p>Active Promos</p>
             </div>
           </div>
         </div>
@@ -168,50 +158,6 @@ class DashboardPage {
                 </div>
               </div>
             </div>
-
-            <div class="dashboard-col">
-              <div class="card">
-                <div class="card-header">
-                  <h3>Top Rated Products</h3>
-                  <a href="/admin/products" class="view-all-link">View All</a>
-                </div>
-                <div class="card-body">
-                  <div id="topRatedProductsList" class="top-rated-products-list">
-                    <div class="loading-placeholder">Loading top rated products...</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="dashboard-row">
-            <div class="dashboard-col full-width">
-              <div class="card">
-                <div class="card-header">
-                  <h3>Sales Overview</h3>
-                </div>
-                <div class="card-body">
-                  <div class="sales-overview">
-                    <div class="sales-metric">
-                      <div class="metric-value" id="totalRevenue">Rp 0</div>
-                      <div class="metric-label">Total Revenue</div>
-                    </div>
-                    <div class="sales-metric">
-                      <div class="metric-value" id="totalOrders">0</div>
-                      <div class="metric-label">Total Orders</div>
-                    </div>
-                    <div class="sales-metric">
-                      <div class="metric-value" id="avgOrderValue">Rp 0</div>
-                      <div class="metric-label">Avg Order Value</div>
-                    </div>
-                    <div class="sales-metric">
-                      <div class="metric-value" id="topSellingCategory">-</div>
-                      <div class="metric-label">Top Category</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -277,6 +223,7 @@ class DashboardPage {
         .stat-icon.brands { background: linear-gradient(135deg, #000000 0%, #333333 100%); }
         .stat-icon.categories { background: linear-gradient(135deg, #FFCD29 0%, #E6B120 100%); }
         .stat-icon.banners { background: linear-gradient(135deg, #000000 0%, #E6B120 100%); }
+        .stat-icon.promos { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); }
         .stat-icon.sales { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
         .stat-icon.rating { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
         
@@ -523,6 +470,60 @@ class DashboardPage {
     `;
   }
 
+  // <div class="stat-card">
+  //   <div class="stat-icon rating">
+  //     <i class="fas fa-star"></i>
+  //   </div>
+  //   <div class="stat-content">
+  //     <h3 id="avgRating">-</h3>
+  //     <p>Average Rating</p>
+  //   </div>
+  // </div>
+
+  // <div class="dashboard-col">
+  //   <div class="card">
+  //     <div class="card-header">
+  //       <h3>Top Rated Products</h3>
+  //       <a href="/admin/products" class="view-all-link">View All</a>
+  //     </div>
+  //     <div class="card-body">
+  //       <div id="topRatedProductsList" class="top-rated-products-list">
+  //         <div class="loading-placeholder">Loading top rated products...</div>
+  //       </div>
+  //     </div>
+  //   </div>
+  // </div>
+
+  // <div class="dashboard-row">
+  //   <div class="dashboard-col full-width">
+  //     <div class="card">
+  //       <div class="card-header">
+  //         <h3>Sales Overview</h3>
+  //       </div>
+  //       <div class="card-body">
+  //         <div class="sales-overview">
+  //           <div class="sales-metric">
+  //             <div class="metric-value" id="totalRevenue">Rp 0</div>
+  //             <div class="metric-label">Total Revenue</div>
+  //           </div>
+  //           <div class="sales-metric">
+  //             <div class="metric-value" id="totalOrders">0</div>
+  //             <div class="metric-label">Total Orders</div>
+  //           </div>
+  //           <div class="sales-metric">
+  //             <div class="metric-value" id="avgOrderValue">Rp 0</div>
+  //             <div class="metric-label">Avg Order Value</div>
+  //           </div>
+  //           <div class="sales-metric">
+  //             <div class="metric-value" id="topSellingCategory">-</div>
+  //             <div class="metric-label">Top Category</div>
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   </div>
+  // </div>
+
   async loadStats() {
     try {
       // Load all stats in parallel
@@ -541,7 +542,38 @@ class DashboardPage {
 
       // Calculate additional stats from products
       const productData = products.data || [];
-      this.stats.totalSales = productData.reduce((sum, product) => sum + (product.total_sold || 0), 0);
+
+      // Count only currently active promos (not just products with isPromo flag)
+      const now = new Date();
+      this.stats.totalPromoSales = productData.filter(product => {
+        // First check if the backend has already calculated this for us
+        if (product.is_promo_active !== undefined) {
+          return Boolean(product.is_promo_active);
+        }
+
+        // Fallback to manual calculation if is_promo_active is not provided
+        // Check if product has promo enabled
+        if (!product.isPromo && !product.is_promo) return false;
+
+        // Check if promo has valid pricing
+        const hasValidPromoPrice = (product.current_price || product.promo_price) &&
+                                   (product.current_price || product.promo_price) < (product.base_price || product.price);
+        if (!hasValidPromoPrice) return false;
+
+        // Check start date
+        if (product.promo_price_start_date) {
+          const startDate = new Date(product.promo_price_start_date);
+          if (startDate > now) return false;
+        }
+
+        // Check end date
+        if (product.promo_price_end_date) {
+          const endDate = new Date(product.promo_price_end_date);
+          if (endDate < now) return false;
+        }
+
+        return true;
+      }).length;
 
       const ratedProducts = productData.filter(p => p.avg_rating > 0);
       this.stats.avgRating = ratedProducts.length > 0
@@ -580,7 +612,7 @@ class DashboardPage {
       brandsCount: document.getElementById('brandsCount'),
       categoriesCount: document.getElementById('categoriesCount'),
       bannersCount: document.getElementById('bannersCount'),
-      totalSales: document.getElementById('totalSales'),
+      totalPromoSales: document.getElementById('totalPromoSales'),
       avgRating: document.getElementById('avgRating')
     };
 
@@ -588,7 +620,7 @@ class DashboardPage {
     if (elements.brandsCount) elements.brandsCount.textContent = this.stats.brands.toLocaleString();
     if (elements.categoriesCount) elements.categoriesCount.textContent = this.stats.categories.toLocaleString();
     if (elements.bannersCount) elements.bannersCount.textContent = this.stats.banners.toLocaleString();
-    if (elements.totalSales) elements.totalSales.textContent = this.stats.totalSales.toLocaleString();
+    if (elements.totalPromoSales) elements.totalPromoSales.textContent = this.stats.totalPromoSales.toLocaleString();
     if (elements.avgRating) elements.avgRating.textContent = this.stats.avgRating + ' ★';
   }
 
@@ -629,14 +661,15 @@ class DashboardPage {
             ${product.brand_name || 'No Brand'} • ${product.category_name || 'No Category'}
           </div>
         </div>
-        <div class="product-rating">
-          ${product.avg_rating > 0 ? `★ ${product.avg_rating.toFixed(1)}` : 'No rating'}
-        </div>
       </div>
     `).join('');
 
     container.innerHTML = productsHTML;
   }
+
+  // <div class="product-rating">
+  //   ${product.avg_rating > 0 ? `★ ${product.avg_rating.toFixed(1)}` : 'No rating'}
+  // </div>
 
   renderTopRatedProducts() {
     const container = document.getElementById('topRatedProductsList');
@@ -671,7 +704,7 @@ class DashboardPage {
     const totalRevenue = this.stats.recentProducts.reduce((sum, product) =>
       sum + ((product.base_price || 0) * (product.total_sold || 0)), 0);
 
-    const totalOrders = this.stats.totalSales;
+    const totalOrders = this.stats.recentProducts.reduce((sum, product) => sum + (product.total_sold || 0), 0);
     const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
     // Find top selling category

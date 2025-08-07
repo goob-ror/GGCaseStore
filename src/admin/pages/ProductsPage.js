@@ -181,35 +181,6 @@ class ProductsPage {
                       </div>
 
                       <div class="form-group">
-                        <label class="form-label">Total Sold</label>
-                        <input type="number" class="form-control" id="totalSold" name="total_sold" min="0" placeholder="0">
-                        <small class="form-text text-muted">Number of units sold</small>
-                      </div>
-
-                      <div class="form-group">
-                        <label class="form-label">Customer Rating</label>
-                        <div class="rating-controls">
-                          <div class="rating-inputs">
-                            <div class="rating-input-group">
-                              <label for="avgRating" class="form-label-small">Average Rating</label>
-                              <input type="number" class="form-control" id="avgRating" name="avg_rating" min="0" max="5" step="0.1" placeholder="0.0">
-                            </div>
-                            <div class="rating-input-group">
-                              <label for="totalRaters" class="form-label-small">Total Reviews</label>
-                              <input type="number" class="form-control" id="totalRaters" name="total_raters" min="0" placeholder="0">
-                            </div>
-                          </div>
-                          <div class="rating-preview">
-                            <div class="star-rating" id="starRating">
-                              <span class="stars" id="starsDisplay">☆☆☆☆☆</span>
-                              <span class="rating-text" id="ratingText">0.0 (0 reviews)</span>
-                            </div>
-                          </div>
-                          <small class="form-text text-muted">Manually set rating or let it be calculated from customer reviews</small>
-                        </div>
-                      </div>
-
-                      <div class="form-group">
                         <div id="productVariants"></div>
                       </div>
                     </div>
@@ -1020,6 +991,35 @@ class ProductsPage {
     `;
   }
 
+  // <div class="form-group">
+  //   <label class="form-label">Customer Rating</label>
+  //   <div class="rating-controls">
+  //     <div class="rating-inputs">
+  //       <div class="rating-input-group">
+  //         <label for="avgRating" class="form-label-small">Average Rating</label>
+  //         <input type="number" class="form-control" id="avgRating" name="avg_rating" min="0" max="5" step="0.1" placeholder="0.0">
+  //       </div>
+  //       <div class="rating-input-group">
+  //         <label for="totalRaters" class="form-label-small">Total Reviews</label>
+  //         <input type="number" class="form-control" id="totalRaters" name="total_raters" min="0" placeholder="0">
+  //       </div>
+  //     </div>
+  //     <div class="rating-preview">
+  //       <div class="star-rating" id="starRating">
+  //         <span class="stars" id="starsDisplay">☆☆☆☆☆</span>
+  //         <span class="rating-text" id="ratingText">0.0 (0 reviews)</span>
+  //       </div>
+  //     </div>
+  //     <small class="form-text text-muted">Manually set rating or let it be calculated from customer reviews</small>
+  //   </div>
+  // </div>
+
+  // <div class="form-group">
+  //   <label class="form-label">Total Sold</label>
+  //   <input type="number" class="form-control" id="totalSold" name="total_sold" min="0" placeholder="0">
+  //   <small class="form-text text-muted">Number of units sold</small>
+  // </div>
+
   bindEvents() {
     const addProductBtn = document.getElementById('addProductBtn');
     const closeFormBtn = document.getElementById('closeFormBtn');
@@ -1342,8 +1342,6 @@ class ProductsPage {
             <th>Brand</th>
             <th>Category</th>
             <th>Price</th>
-            <th>Rating</th>
-            <th>Sold</th>
             <th>Created</th>
             <th>Actions</th>
           </tr>
@@ -1373,13 +1371,6 @@ class ProductsPage {
               <td>
                 ${this.formatPriceCell(product, isPromoActive)}
               </td>
-              <td>
-                <div class="rating-cell">
-                  <span class="stars-small">${this.generateStarsDisplay(product.avg_rating || 0)}</span>
-                  <span class="rating-small">${(product.avg_rating || 0).toFixed(1)} (${product.total_raters || 0})</span>
-                </div>
-              </td>
-              <td>${(product.total_sold || 0).toLocaleString()}</td>
               <td>${new Date(product.created_at).toLocaleDateString()}</td>
               <td>
                 <div class="product-actions">
@@ -1397,6 +1388,17 @@ class ProductsPage {
         </tbody>
       </table>
     `;
+
+    // <th>Rating</th>
+    // <th>Sold</th>
+
+    // <td>
+    //   <div class="rating-cell">
+    //     <span class="stars-small">${this.generateStarsDisplay(product.avg_rating || 0)}</span>
+    //     <span class="rating-small">${(product.avg_rating || 0).toFixed(1)} (${product.total_raters || 0})</span>
+    //   </div>
+    // </td>
+    // <td>${(product.total_sold || 0).toLocaleString()}</td>
 
     container.innerHTML = tableHTML;
     
@@ -1856,15 +1858,17 @@ class ProductsPage {
       }
 
       if (promoStartDate && product.promo_price_start_date) {
-        // Convert to datetime-local format
-        const startDate = new Date(product.promo_price_start_date);
-        promoStartDate.value = startDate.toISOString().slice(0, 16);
+        // Convert to datetime-local format (local timezone)
+        const formattedStartDate = this.formatDateTimeLocal(product.promo_price_start_date);
+        promoStartDate.value = formattedStartDate;
+        console.log('Setting promo start date:', product.promo_price_start_date, '→', formattedStartDate);
       }
 
       if (promoEndDate && product.promo_price_end_date) {
-        // Convert to datetime-local format  
-        const endDate = new Date(product.promo_price_end_date);
-        promoEndDate.value = endDate.toISOString().slice(0, 16);
+        // Convert to datetime-local format (local timezone)
+        const formattedEndDate = this.formatDateTimeLocal(product.promo_price_end_date);
+        promoEndDate.value = formattedEndDate;
+        console.log('Setting promo end date:', product.promo_price_end_date, '→', formattedEndDate);
       }
 
       // Update promo preview after populating
@@ -2139,6 +2143,34 @@ class ProductsPage {
     const product = this.products.find(p => p.id === id);
     if (product) {
       this.showProductForm(product);
+    }
+  }
+
+  // Helper method to format date for datetime-local input
+  formatDateTimeLocal(date) {
+    if (!date) return '';
+
+    try {
+      // Create a new date object to avoid modifying the original
+      const localDate = new Date(date);
+
+      // Check if the date is valid
+      if (isNaN(localDate.getTime())) {
+        console.warn('Invalid date provided to formatDateTimeLocal:', date);
+        return '';
+      }
+
+      // Get the timezone offset in minutes and convert to milliseconds
+      const timezoneOffset = localDate.getTimezoneOffset() * 60000;
+
+      // Adjust for local timezone
+      const localTime = new Date(localDate.getTime() - timezoneOffset);
+
+      // Format as YYYY-MM-DDTHH:MM (required format for datetime-local)
+      return localTime.toISOString().slice(0, 16);
+    } catch (error) {
+      console.error('Error formatting date for datetime-local input:', error);
+      return '';
     }
   }
 
