@@ -7,38 +7,152 @@ const { emitProductCreated, emitProductUpdated, emitProductDeleted } = require('
  */
 
 const getAllProducts = async (req, res) => {
-
   try {
-    // Parse pagination parameters
+    // Parse pagination and filter parameters
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const allowedLimits = [10, 20, 50, 100];
     const validLimit = allowedLimits.includes(limit) ? limit : 20;
     const offset = (page - 1) * validLimit;
 
-    // Get total count for pagination info
-    const countQuery = 'SELECT COUNT(*) as total FROM products';
-    const [countResult] = await db.execute(countQuery);
+    // Extract filter parameters
+    const {
+      category_id,
+      brand_id,
+      min_price,
+      max_price,
+      min_rating,
+      sort_by = 'newest'
+    } = req.query;
+
+    // Build WHERE clause based on filters
+    let whereConditions = [];
+    let queryParams = [];
+
+    if (category_id) {
+      whereConditions.push('p.category_id = ?');
+      queryParams.push(category_id);
+    }
+
+    if (brand_id) {
+      whereConditions.push('p.brand_id = ?');
+      queryParams.push(brand_id);
+    }
+
+    if (min_rating) {
+      whereConditions.push('p.avg_rating >= ?');
+      queryParams.push(parseFloat(min_rating));
+    }
+
+    // For price filtering, we need to consider both regular and promo prices
+    if (min_price || max_price) {
+      let priceCondition = '';
+      if (min_price && max_price) {
+        priceCondition = `(
+          (p.isPromo = 1
+            AND (p.promo_price_start_date IS NULL OR p.promo_price_start_date <= NOW())
+            AND (p.promo_price_end_date IS NULL OR p.promo_price_end_date >= NOW())
+            AND p.promo_price BETWEEN ? AND ?)
+          OR
+          (NOT (p.isPromo = 1
+            AND (p.promo_price_start_date IS NULL OR p.promo_price_start_date <= NOW())
+            AND (p.promo_price_end_date IS NULL OR p.promo_price_end_date >= NOW()))
+            AND p.price BETWEEN ? AND ?)
+        )`;
+        queryParams.push(parseFloat(min_price), parseFloat(max_price), parseFloat(min_price), parseFloat(max_price));
+      } else if (min_price) {
+        priceCondition = `(
+          (p.isPromo = 1
+            AND (p.promo_price_start_date IS NULL OR p.promo_price_start_date <= NOW())
+            AND (p.promo_price_end_date IS NULL OR p.promo_price_end_date >= NOW())
+            AND p.promo_price >= ?)
+          OR
+          (NOT (p.isPromo = 1
+            AND (p.promo_price_start_date IS NULL OR p.promo_price_start_date <= NOW())
+            AND (p.promo_price_end_date IS NULL OR p.promo_price_end_date >= NOW()))
+            AND p.price >= ?)
+        )`;
+        queryParams.push(parseFloat(min_price), parseFloat(min_price));
+      } else if (max_price) {
+        priceCondition = `(
+          (p.isPromo = 1
+            AND (p.promo_price_start_date IS NULL OR p.promo_price_start_date <= NOW())
+            AND (p.promo_price_end_date IS NULL OR p.promo_price_end_date >= NOW())
+            AND p.promo_price <= ?)
+          OR
+          (NOT (p.isPromo = 1
+            AND (p.promo_price_start_date IS NULL OR p.promo_price_start_date <= NOW())
+            AND (p.promo_price_end_date IS NULL OR p.promo_price_end_date >= NOW()))
+            AND p.price <= ?)
+        )`;
+        queryParams.push(parseFloat(max_price), parseFloat(max_price));
+      }
+      whereConditions.push(priceCondition);
+    }
+
+    const whereClause = whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
+
+    // Get total count first
+    const countQuery = `SELECT COUNT(*) as total FROM products p ${whereClause}`;
+    const [countResult] = await db.execute(countQuery, queryParams);
     const totalProducts = countResult[0].total;
     const totalPages = Math.ceil(totalProducts / validLimit);
+
+    // Build ORDER BY clause based on sort_by parameter
+    let orderByClause = '';
+    switch (sort_by) {
+      case 'price-low':
+        orderByClause = `ORDER BY
+          CASE
+            WHEN p.isPromo = 1
+              AND (p.promo_price_start_date IS NULL OR p.promo_price_start_date <= NOW())
+              AND (p.promo_price_end_date IS NULL OR p.promo_price_end_date >= NOW())
+            THEN p.promo_price
+            ELSE p.price
+          END ASC`;
+        break;
+      case 'price-high':
+        orderByClause = `ORDER BY
+          CASE
+            WHEN p.isPromo = 1
+              AND (p.promo_price_start_date IS NULL OR p.promo_price_start_date <= NOW())
+              AND (p.promo_price_end_date IS NULL OR p.promo_price_end_date >= NOW())
+            THEN p.promo_price
+            ELSE p.price
+          END DESC`;
+        break;
+      case 'rating':
+        orderByClause = 'ORDER BY p.avg_rating DESC, p.total_raters DESC';
+        break;
+      case 'popular':
+        orderByClause = 'ORDER BY p.total_sold DESC';
+        break;
+      case 'best':
+        orderByClause = 'ORDER BY p.avg_rating DESC, p.total_sold DESC';
+        break;
+      case 'newest':
+      default:
+        orderByClause = 'ORDER BY p.created_at DESC';
+        break;
+    }
 
     const query = `
       SELECT
         p.*,
         p.price AS base_price,
-        CASE 
-          WHEN p.isPromo = 1 
+        CASE
+          WHEN p.isPromo = 1
           AND (p.promo_price_start_date IS NULL OR p.promo_price_start_date <= NOW())
           AND (p.promo_price_end_date IS NULL OR p.promo_price_end_date >= NOW())
-          THEN p.promo_price 
-          ELSE p.price 
+          THEN p.promo_price
+          ELSE p.price
         END AS current_price,
-        CASE 
-          WHEN p.isPromo = 1 
+        CASE
+          WHEN p.isPromo = 1
           AND (p.promo_price_start_date IS NULL OR p.promo_price_start_date <= NOW())
           AND (p.promo_price_end_date IS NULL OR p.promo_price_end_date >= NOW())
-          THEN 1 
-          ELSE 0 
+          THEN 1
+          ELSE 0
         END AS is_promo_active,
         p.promo_price,
         p.promo_price_start_date,
@@ -51,13 +165,15 @@ const getAllProducts = async (req, res) => {
       FROM products p
       LEFT JOIN brands b ON p.brand_id = b.id
       LEFT JOIN categories c ON p.category_id = c.id
-      ORDER BY p.created_at DESC
+      ${whereClause}
+      ${orderByClause}
       LIMIT ${validLimit} OFFSET ${offset}
     `;
 
     console.log('🛠 Executing SQL:', query);
+    console.log('🛠 Query params:', queryParams);
 
-    const [rows] = await db.query(query);
+    const [rows] = await db.execute(query, queryParams);
 
     // Get photos for each product
     for (let product of rows) {
@@ -519,7 +635,8 @@ const getProductsByCategory = async (req, res) => {
       LEFT JOIN brands b ON p.brand_id = b.id
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.category_id = ?
-      ORDER BY p.created_at DESC
+      ORDER BY p.isPromo DESC,
+        CASE WHEN p.isPromo = 1 THEN p.promo_price ELSE p.price END ASC
       LIMIT ${validLimit} OFFSET ${offset}
     `;
 
@@ -585,7 +702,7 @@ const getProductsByBrand = async (req, res) => {
       LEFT JOIN brands b ON p.brand_id = b.id
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.brand_id = ?
-      ORDER BY p.created_at DESC
+      ORDER BY p.isPromo DESC
       LIMIT ${validLimit} OFFSET ${offset}
     `;
 
