@@ -50,49 +50,42 @@ class HomePage {
 
                 <!-- Categories Section -->
                 <div class="home-section-wrapper">
-                    <h2 class="home-section-title">Kategori</h2>
+                    <h2 class="text-header mb-7">KATEGORI</h2>
                     <div class="home-categories-container">
                         <div class="home-categories-swiper swiper">
                             <div class="swiper-wrapper kategori"></div>
                             <div class="swiper-pagination home-categories-pagination"></div>
                         </div>
                     </div>
+                    
                 </div>
 
-                <!-- Best Products Section -->
+                <!-- Promo Products Section -->
                 <div class="home-section-wrapper">
                     <div class="home-section-header">
-                        <h2 class="home-section-title">Produk Terbaik</h2>
+                        <h2 class="text-header">PRODUK PROMO</h2>
+                        <div class="home-view-all">
+                            <a href="/katalog" class="home-view-all-text">Lihat Semua</a>
+                            <span class="home-view-all-arrow">&rsaquo;</span>
+                        </div>
+                        
+                    </div>
+                    <div id="promo-product" class="no-data"></div>
+                    <div class="home-products-grid produk-promo"></div>
+                   
+                </div>
+
+                <!-- Newest Products Section -->
+                <div class="home-section-wrapper">
+                    <div class="home-section-header">
+                        <h2 class="text-header">PRODUK TERBARU</h2>
                         <div class="home-view-all">
                             <a href="/katalog" class="home-view-all-text">Lihat Semua</a>
                             <span class="home-view-all-arrow">&rsaquo;</span>
                         </div>
                     </div>
-                    <div class="home-products-grid produk-terbaik"></div>
-                </div>
-
-                <!-- Highest Rated Products Section -->
-                <div class="home-section-wrapper">
-                    <div class="home-section-header">
-                        <h2 class="home-section-title">Produk dengan Rating Tertinggi</h2>
-                        <div class="home-view-all">
-                            <a href="/katalog" class="home-view-all-text">Lihat Semua</a>
-                            <span class="home-view-all-arrow">&rsaquo;</span>
-                        </div>
-                    </div>
-                    <div class="home-products-grid produk-rating"></div>
-                </div>
-
-                <!-- Best Selling Products Section -->
-                <div class="home-section-wrapper">
-                    <div class="home-section-header">
-                        <h2 class="home-section-title">Produk Terlaris</h2>
-                        <div class="home-view-all">
-                            <a href="/katalog" class="home-view-all-text">lihat semua</a>
-                            <span class="home-view-all-arrow">&rsaquo;</span>
-                        </div>
-                    </div>
-                    <div class="home-products-grid produk-terlaris"></div>
+                    <div id="newest-product" class="no-data"></div>
+                    <div class="home-products-grid newest-product"></div>
                 </div>
             </div>
 
@@ -139,40 +132,76 @@ class HomePage {
     updateProductDisplays() {
         const config = this.getResponsiveConfig();
 
-        // Update high rating products
-        if (this.highRatingProducts) {
-            this.renderProductSection('.produk-rating', this.highRatingProducts, config.displayLimit);
+        // Update newest products
+        if (this.newestProduct) {
+            this.renderNewestProductSection('.newest-product', this.newestProduct, config.displayLimit);
         }
-
-        // Update best selling products
-        if (this.bestSellingProducts) {
-            this.renderProductSection('.produk-terlaris', this.bestSellingProducts, config.displayLimit);
-        }
-
-        // Update best products
+        // Update promo products
         if (this.bestProducts) {
-            this.renderProductSection('.produk-terbaik', this.bestProducts, config.displayLimit);
+            this.renderPromoSection('.produk-promo', this.bestProducts, config.displayLimit);
         }
     }
 
     // Helper method to render product section with given limit
-    renderProductSection(containerSelector, allProducts, displayLimit) {
+    renderNewestProductSection(containerSelector, allProducts, displayLimit) {
         const container = document.querySelector(containerSelector);
         if (!container || !allProducts) return;
 
         const displayProducts = allProducts.slice(0, displayLimit);
-        
-        container.innerHTML = displayProducts.map(product => `
-            <div class="home-product-card loading-fade-in" data-product-id="${product.id}">
-                <div class="home-product-img-wrapper">
-                    <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
-                </div>
-                <div class="home-product-content">
-                    <h3 class="home-product-name ellipsis-3">${product.name}</h3>
-                    <p class="home-product-price">${this.formatRupiah(product.price)}</p>
 
-                </div>
-            </div>
+        container.innerHTML = displayProducts.map(product => `
+            <a href="detail?id=${product.id}" class="card loading-fade-in" data-product-id="${product.id}">
+                        <div class="card__img-wrapper">
+                            <img src="${this.getProductImage(product)}" alt="${product.name}" />
+                        </div>
+                        
+
+                ${this.compareDates(product.promo_price_start_date, product.promo_price_end_date) ?
+                `<span class="card__promo-badge">PROMO</span>
+                    <div class="card__content">
+                            <h3 class="card__content__name ellipsis-3">${product.name}</h3>
+                            <p class="card__content__original-price">${this.formatRupiah(product.price)}</p>
+                            <p class="card__content__promo-price">${this.formatRupiah(product.promo_price)}</p>
+                            <p class="card__content__discount">${this.calculateDiscount(product.price, product.promo_price)}% OFF</p>        
+                    </div>
+                    ` :
+                `<div class="card__content">
+                            <h3 class="card__content__name ellipsis-3">${product.name}</h3>
+                            <p class="card__content__price">${this.formatRupiah(product.price)}</p>       
+                    </div>`}
+                        
+                    </a>
+        `).join('');
+
+        // <div class="home-product-rating">
+        //     <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
+        //     <span class="home-rating-divider">|</span>
+        //     <span class="home-sales-count">${product.total_sold ?? 0}+ Terjual</span>
+        // </div>
+        // Re-bind click events
+        this.bindProductCardEvents(container);
+    }
+
+    renderPromoSection(containerSelector, allProducts, displayLimit) {
+        const container = document.querySelector(containerSelector);
+        if (!container || !allProducts) return;
+
+        const displayProducts = allProducts.slice(0, displayLimit);
+
+        container.innerHTML = displayProducts.map(product => `
+            <a href="detail?id=${product.id}" class="card loading-fade-in" data-product-id="${product.id}">
+                        <div class="card__img-wrapper">
+                            <img src="${this.getProductImage(product)}" alt="${product.name}" />
+                        </div>
+                        <span class="card__promo-badge">PROMO</span>
+                        <div class="card__content">
+                            <h3 class="card__content__name ellipsis-3">${product.name}</h3>
+                            <p class="card__content__original-price">${this.formatRupiah(product.price)}</p>
+                            <p class="card__content__promo-price">${this.formatRupiah(product.promo_price)}</p>
+                            <p class="card__content__discount">${this.calculateDiscount(product.price, product.promo_price)}% OFF</p>
+                            
+                        </div>
+                    </a>
         `).join('');
 
         // <div class="home-product-rating">
@@ -197,7 +226,7 @@ class HomePage {
     // Get responsive configuration based on breakpoint
     getResponsiveConfig() {
         const breakpoint = this.getCurrentBreakpoint();
-        
+
         const configs = {
             'mobile': {
                 columns: 2,
@@ -238,20 +267,20 @@ class HomePage {
     updateGridClasses() {
         const config = this.getResponsiveConfig();
         const productGrids = document.querySelectorAll('.home-products-grid');
-        
+
         productGrids.forEach(grid => {
             // Remove all existing grid classes
             grid.classList.remove(
                 'home-products-grid-mobile',
-                'home-products-grid-tablet-sm', 
+                'home-products-grid-tablet-sm',
                 'home-products-grid-tablet',
                 'home-products-grid-desktop',
                 'home-products-grid-desktop-lg'
             );
-            
+
             // Add current breakpoint class
             grid.classList.add(config.gridClass);
-            
+
             // Set CSS custom properties for dynamic grid
             grid.style.setProperty('--grid-columns', config.columns);
             grid.style.setProperty('--grid-rows', config.rows);
@@ -262,12 +291,11 @@ class HomePage {
     async loadResponsiveProducts() {
         this.currentBreakpoint = this.getCurrentBreakpoint();
         this.updateGridClasses();
-        
+
         // Fetch all products once, then filter by display limits
         await Promise.all([
-            this.loadHighRatingProducts(),
-            this.loadBestSellingProducts(), 
-            this.loadBestProducts()
+            this.loadNewestProducts(),
+            this.loadPromoProducts()
         ]);
     }
 
@@ -395,11 +423,11 @@ class HomePage {
                 },
             },
             on: {
-                init: function() {
+                init: function () {
                     // Update pagination after initialization
                     this.pagination.update();
                 },
-                slideChange: function() {
+                slideChange: function () {
                     // Prevent reset when at boundaries
                     if (this.isBeginning && this.previousIndex > this.activeIndex) {
                         // User tried to swipe left at the beginning, stay at first slide
@@ -410,11 +438,11 @@ class HomePage {
                         this.slideTo(this.slides.length - 1, 300);
                     }
                 },
-                touchStart: function() {
+                touchStart: function () {
                     // Store initial position to prevent unwanted resets
                     this.initialSlide = this.activeIndex;
                 },
-                touchEnd: function() {
+                touchEnd: function () {
                     // Ensure we don't go beyond boundaries
                     if (this.activeIndex < 0) {
                         this.slideTo(0, 300);
@@ -473,40 +501,56 @@ class HomePage {
             }
         }, 100);
     }
+    calculateDiscount(price, promo_price) {
+        const discount = ((price - promo_price) / price) * 100;
+        return Math.round(discount);
+    }
 
-    async loadHighRatingProducts() {
-        const container = document.querySelector(".produk-rating");
-        
+    async loadNewestProducts() {
+        const container = document.querySelector(".newest-product");
+
         container.innerHTML = '<p class="home-loading-text loading-fade-in">Loading high rating products...</p>';
 
         try {
             // Always fetch a reasonable amount of products (e.g., 12-16)
-            const response = await this.UserApiService.get('/products/high-rating', {
-                sort: 'rating',
+            const response = await this.UserApiService.get('/products', {
+                sort: 'newest',
                 order: 'desc',
                 limit: 16
             });
             const allProducts = response.data || [];
 
             // Store all products for potential resize handling
-            this.highRatingProducts = allProducts;
+            this.newestProduct = allProducts;
 
             // Get current display limit and slice array
             const config = this.getResponsiveConfig();
             const displayProducts = allProducts.slice(0, config.displayLimit);
 
             if (displayProducts.length > 0) {
+
                 container.innerHTML = displayProducts.map(product => `
-                    <div class="home-product-card loading-fade-in" data-product-id="${product.id}">
-                        <div class="home-product-img-wrapper">
-                            <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
+                     <a href="detail?id=${product.id}" class="card loading-fade-in" data-product-id="${product.id}">
+                        <div class="card__img-wrapper">
+                            <img src="${this.getProductImage(product)}" alt="${product.name}" />
                         </div>
-                        <div class="home-product-content">
-                            <h3 class="home-product-name ellipsis-3">${product.name}</h3>
-                            <p class="home-product-price">${this.formatRupiah(product.price)}</p>
-                            
-                        </div>
+                        
+
+                ${this.compareDates(product.promo_price_start_date, product.promo_price_end_date) ? 
+                    `<span class="card__promo-badge">PROMO</span>
+                    <div class="card__content">
+                            <h3 class="card__content__name ellipsis-3">${product.name}</h3>
+                            <p class="card__content__original-price">${this.formatRupiah(product.price)}</p>
+                            <p class="card__content__promo-price">${this.formatRupiah(product.promo_price)}</p>
+                            <p class="card__content__discount">${this.calculateDiscount(product.price, product.promo_price)}% OFF</p>        
                     </div>
+                    ` : 
+                    `<div class="card__content">
+                            <h3 class="card__content__name ellipsis-3">${product.name}</h3>
+                            <p class="card__content__price">${this.formatRupiah(product.price)}</p>       
+                    </div>`}
+                        
+                    </a>
                 `).join('');
                 // <div class="home-product-rating">
                 //     <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
@@ -517,73 +561,24 @@ class HomePage {
                 // Add click event listeners after rendering
                 this.bindProductCardEvents(container);
             } else {
-                container.innerHTML = '<p class="home-no-data">No high rating products available.</p>';
+                container.innerHTML = '';
+                document.getElementById('newest-product').innerHTML = '<p class="home-no-data" style="height:225px;">No newest products available.</p>';
             }
         } catch (err) {
-            console.error("Failed to load high rating products:", err);
-            container.innerHTML = '<p class="home-error-text">Failed to load high rating products.</p>';
+            console.error("Failed to load newest products:", err);
+            container.innerHTML = '';
+            document.getElementById('newest-product').innerHTML = '<p class="home-error-text"  style="height:225px;">Failed to load newest products.</p>';
         }
     }
 
-    async loadBestSellingProducts() {
-        const container = document.querySelector(".produk-terlaris");
-        
-        container.innerHTML = '<p class="home-loading-text loading-fade-in">Loading best selling products...</p>';
+    async loadPromoProducts() {
+        const container = document.querySelector(".produk-promo");
+
+        container.innerHTML = '<p class="home-loading-text loading-fade-in">Loading promo products...</p>';
 
         try {
             // Always fetch a reasonable amount of products (e.g., 12-16)
-            const response = await this.UserApiService.get('/products/high-sales', {
-                sort: 'total_sold',
-                order: 'desc',
-                limit: 16
-            });
-            const allProducts = response.data || [];
-
-            // Store all products for potential resize handling
-            this.bestSellingProducts = allProducts;
-
-            // Get current display limit and slice array
-            const config = this.getResponsiveConfig();
-            const displayProducts = allProducts.slice(0, config.displayLimit);
-
-            if (displayProducts.length > 0) {
-                container.innerHTML = displayProducts.map(product => `
-                    <div class="home-product-card loading-fade-in" data-product-id="${product.id}">
-                        <div class="home-product-img-wrapper">
-                            <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
-                        </div>
-                        <div class="home-product-content">
-                            <h3 class="home-product-name ellipsis-3">${product.name}</h3>
-                            <p class="home-product-price">${this.formatRupiah(product.price)}</p>
-                            
-                        </div>
-                    </div>
-                `).join('');
-
-                // <div class="home-product-rating">
-                //     <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
-                //     <span class="home-rating-divider">|</span>
-                //     <span class="home-sales-count">${product.total_sold ?? 0}+ Terjual</span>
-                // </div>
-                // Add click event listeners after rendering
-                this.bindProductCardEvents(container);
-            } else {
-                container.innerHTML = '<p class="home-no-data">No best selling products available.</p>';
-            }
-        } catch (err) {
-            console.error("Failed to load best selling products:", err);
-            container.innerHTML = '<p class="home-error-text">Failed to load best selling products.</p>';
-        }
-    }
-
-    async loadBestProducts() {
-        const container = document.querySelector(".produk-terbaik");
-        
-        container.innerHTML = '<p class="home-loading-text loading-fade-in">Loading best products...</p>';
-
-        try {
-            // Always fetch a reasonable amount of products (e.g., 12-16)
-            const response = await this.UserApiService.get('/products/best', {
+            const response = await this.UserApiService.get('/products/promo', {
                 sort: 'best',
                 order: 'desc',
                 limit: 16
@@ -599,16 +594,19 @@ class HomePage {
 
             if (displayProducts.length > 0) {
                 container.innerHTML = displayProducts.map(product => `
-                    <div class="home-product-card loading-fade-in" data-product-id="${product.id}">
-                        <div class="home-product-img-wrapper">
-                            <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
+                    <a href="detail?id=${product.id}" class="card loading-fade-in" data-product-id="${product.id}">
+                        <div class="card__img-wrapper">
+                            <img src="${this.getProductImage(product)}" alt="${product.name}" />
                         </div>
-                        <div class="home-product-content">
-                            <h3 class="home-product-name ellipsis-3">${product.name}</h3>
-                            <p class="home-product-price">${this.formatRupiah(product.price)}</p>
+                        <span class="card__promo-badge">PROMO</span>
+                        <div class="card__content">
+                            <h3 class="card__content__name ellipsis-3">${product.name}</h3>
+                            <p class="card__content__original-price">${this.formatRupiah(product.price)}</p>
+                            <p class="card__content__promo-price">${this.formatRupiah(product.promo_price)}</p>
+                            <p class="card__content__discount">${this.calculateDiscount(product.price, product.promo_price)}% OFF</p>
                             
                         </div>
-                    </div>
+                    </a>
                 `).join('');
 
                 // <div class="home-product-rating">
@@ -619,12 +617,22 @@ class HomePage {
                 // Add click event listeners after rendering
                 this.bindProductCardEvents(container);
             } else {
-                container.innerHTML = '<p class="home-no-data">No best products available.</p>';
+                container.innerHTML = '';
+                document.getElementById('promo-product').innerHTML = '<p class="home-no-data" style="height:225px;">No promo products available.</p>';
             }
         } catch (err) {
             console.error("Failed to load best products:", err);
-            container.innerHTML = '<p class="home-error-text">Failed to load best products.</p>';
+            container.innerHTML = '';
+            document.getElementById('promo-product').innerHTML = '<p class="home-error-text"" style="height:225px;">Failed to load promo products.</p>';
         }
+    }
+
+    compareDates(startDate, endDate) {
+        const now = Date.now();
+        const start = new Date(startDate).getTime();
+        const end = new Date(endDate).getTime();
+
+        return now >= start && now <= end; // ✅ true kalau promo aktif
     }
 
     formatRupiah(angka) {
@@ -682,7 +690,7 @@ class HomePage {
             this.categoriesSwiper.destroy(true, true);
             this.categoriesSwiper = null;
         }
-        
+
         // Clean up resize event listener
         if (this.resizeTimeout) {
             clearTimeout(this.resizeTimeout);
