@@ -64,28 +64,38 @@ class DetailPage {
   // ===== DATA LOADING METHODS =====
 
   getProductId() {
-    // Handle hash-based routing from catalog page
-    const hash = window.location.hash;
-
-    if (hash.includes('/detail/')) {
-      const productId = hash.split('/detail/')[1];
-      if (productId && productId !== 'detail' && productId.trim() !== '') {
-        return productId.trim();
-      }
-    }
-
-    // Fallback to query params
+    // Primary: Get from URL query parameters
     const urlParams = new URLSearchParams(window.location.search);
     const queryId = urlParams.get('id');
     if (queryId) {
       return queryId;
     }
 
-    // Last fallback - check if there's a path parameter
+    // Fallback: Check if there's a path parameter (for URLs like /detail/123)
     const pathParts = window.location.pathname.split('/');
     const lastPart = pathParts[pathParts.length - 1];
     if (lastPart && lastPart !== 'detail' && !isNaN(lastPart)) {
       return lastPart;
+    }
+
+    // Legacy fallback: Handle any remaining hash-based routing (for backward compatibility)
+    const hash = window.location.hash;
+    if (hash.includes('/detail')) {
+      if (hash.includes('/detail/')) {
+        const productId = hash.split('/detail/')[1];
+        if (productId && productId !== 'detail' && productId.trim() !== '') {
+          return productId.trim();
+        }
+      } else if (hash.includes('/detail?')) {
+        const hashQuery = hash.split('?')[1];
+        if (hashQuery) {
+          const hashParams = new URLSearchParams(hashQuery);
+          const hashId = hashParams.get('id');
+          if (hashId) {
+            return hashId;
+          }
+        }
+      }
     }
 
     return null;
@@ -169,10 +179,61 @@ class DetailPage {
 
   compareDates(startDate, endDate) {
     const now = Date.now();
+
+    // If no dates are provided, consider it always active
+    if (!startDate && !endDate) {
+      return true;
+    }
+
+    // If only start date is provided, check if current time is after start
+    if (startDate && !endDate) {
+      const start = new Date(startDate).getTime();
+      return now >= start;
+    }
+
+    // If only end date is provided, check if current time is before end
+    if (!startDate && endDate) {
+      const end = new Date(endDate).getTime();
+      return now <= end;
+    }
+
+    // If both dates are provided, check if current time is within range
     const start = new Date(startDate).getTime();
     const end = new Date(endDate).getTime();
 
-    return now >= start && now <= end; // ✅ true kalau promo aktif
+    return now >= start && now <= end;
+  }
+
+  isPromoActive() {
+    if (!this.product) return false;
+
+    // Check if product has promo flag (can be 1, true, or "1")
+    const hasPromoFlag = this.product.isPromo === 1 ||
+                        this.product.isPromo === true ||
+                        this.product.isPromo === "1";
+
+    // Check if promo price exists and is different from regular price
+    const hasPromoPrice = this.product.promo_price &&
+                         this.product.promo_price !== this.product.price;
+
+    // Check if promo dates are valid (if they exist)
+    const isDateValid = this.compareDates(
+      this.product.promo_price_start_date,
+      this.product.promo_price_end_date
+    );
+
+    console.log('Promo Debug:', {
+      hasPromoFlag,
+      hasPromoPrice,
+      isDateValid,
+      isPromo: this.product.isPromo,
+      promo_price: this.product.promo_price,
+      price: this.product.price,
+      start_date: this.product.promo_price_start_date,
+      end_date: this.product.promo_price_end_date
+    });
+
+    return hasPromoFlag && hasPromoPrice && isDateValid;
   }
 
   // ===== RENDER METHODS =====
@@ -199,28 +260,24 @@ class DetailPage {
         <div class="product-info-section">
           <div class="product-header">
             <div class="title-rating">
-             ${this.compareDates(this.product.promo_price_start_date, this.product.promo_price_end_date) ? 
-              `<div class="header__promo-badge__container" >
-                  <span class="header__promo-badge">PROMO</span>
-              </div>`: ``}
-           
+
               <h1 class="product-title">${this.product.name}</h1>
-              
+
             </div>
           </div>
 
           <div class="price-section">
           <div class="price-container">
 
-           ${this.compareDates(this.product.promo_price_start_date, this.product.promo_price_end_date) ? 
+           ${this.isPromoActive() ?
             `<div class="content">
-              <div class="content__discount__container"> 
-                <span class="content__original-price">${this.formatPrice(this.product.promo_price)}</span>
+              <div class="content__discount__container">
+                <span class="content__original-price">${this.formatPrice(this.product.price)}</span>
               <div>
                 <span class="content__discount">${this.calculateDiscount(this.product.price, this.product.promo_price)}% OFF</span>
-              </div>  
               </div>
-              <span class="price">${this.formatPrice(this.product.price)}</span>
+              </div>
+              <span class="price">${this.formatPrice(this.product.promo_price)}</span>
             </div>
             ` : `<span class="price">${this.formatPrice(this.product.price)}</span>`}
 
@@ -249,20 +306,49 @@ class DetailPage {
 
 
   renderRelatedProducts(container) {
-    container.innerHTML = this.relatedProducts.map(product => `
-      <div class="related-card" data-product-id="${product.id}">
-        <div class="related-image">
-          <img src="${this.getProductImage(product)}"
-               alt="${product.name}"
-               loading="lazy" />
-        </div>
-        <div class="related-info">
-          <h4 class="related-name">${product.name}</h4>
-          <div class="related-price">${this.formatPrice(product.price)}</div>
-          
-        </div>
-      </div>
-    `).join('');
+    container.innerHTML = this.relatedProducts.map(product => {
+      const isPromoActive = this.isProductPromoActive(product);
+
+      return `
+        <a href="/detail?id=${product.id}" class="card loading-fade-in" data-product-id="${product.id}">
+          <div class="card__img-wrapper">
+            <img src="${this.getProductImage(product)}" alt="${product.name}" />
+          </div>
+
+          ${isPromoActive ?
+            `<span class="card__promo-badge">PROMO</span>
+            <div class="card__content">
+              <h3 class="card__content__name ellipsis-3">${product.name}</h3>
+              <p class="card__content__original-price">${this.formatPrice(product.price)}</p>
+              <p class="card__content__promo-price">${this.formatPrice(product.promo_price)}</p>
+              <p class="card__content__discount">${this.calculateDiscount(product.price, product.promo_price)}% OFF</p>
+            </div>` :
+            `<div class="card__content">
+              <h3 class="card__content__name ellipsis-3">${product.name}</h3>
+              <p class="card__content__price">${this.formatPrice(product.price)}</p>
+            </div>`}
+        </a>
+      `;
+    }).join('');
+  }
+
+  // Helper method to check if a related product has active promo
+  isProductPromoActive(product) {
+    if (!product) return false;
+
+    const hasPromoFlag = product.isPromo === 1 ||
+                        product.isPromo === true ||
+                        product.isPromo === "1";
+
+    const hasPromoPrice = product.promo_price &&
+                         product.promo_price !== product.price;
+
+    const isDateValid = this.compareDates(
+      product.promo_price_start_date,
+      product.promo_price_end_date
+    );
+
+    return hasPromoFlag && hasPromoPrice && isDateValid;
   }
 
   // <div class="related-rating">
@@ -400,8 +486,9 @@ class DetailPage {
 
 
   bindRelatedProductEvents() {
-    document.querySelectorAll('.related-card').forEach(card => {
+    document.querySelectorAll('.card[data-product-id]').forEach(card => {
       card.addEventListener('click', (e) => {
+        e.preventDefault();
         const productId = e.currentTarget.dataset.productId;
         this.handleRelatedProductClick(productId);
       });
@@ -480,7 +567,7 @@ class DetailPage {
   }
 
   handleRelatedProductClick(id) {
-    window.location.hash = `#/detail/${id}`;
+    window.location.href = `/detail?id=${id}`;
   }
 
   // ===== UTILITY METHODS =====
@@ -521,6 +608,16 @@ class DetailPage {
 
     // Convert \n to <br> tags for line breaks
     return description.replace(/\n/g, '<br>');
+  }
+
+  formatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   }
 
   renderStars(rating) {

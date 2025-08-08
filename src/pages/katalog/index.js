@@ -38,7 +38,8 @@ class KatalogPage {
             threshold: 200,
             debounceDelay: 150,
             onLoadMore: () => this.loadMoreProducts(),
-            loadingIndicatorId: 'loading-indicator'
+            loadingIndicatorId: 'loading-indicator',
+            useIntersectionObserver: true // Use modern Intersection Observer API
         });
 
         // Bind methods to preserve context
@@ -235,17 +236,16 @@ class KatalogPage {
             return;
         }
 
+        // Set loading state at the start
+        this.endlessScroll.setLoading(true);
+
         try {
             // Build API parameters
             const params = this.buildApiParams();
-            
-            console.log('🔄 Loading products - Page:', this.currentPage, 'Params:', params);
-            
+
             // Make API call
             const response = await this.UserApiService.get('/products', params);
             const newProducts = response.data || [];
-
-            console.log('✅ Received products:', newProducts.length);
 
             // Handle empty results
             if (newProducts.length === 0) {
@@ -255,21 +255,24 @@ class KatalogPage {
 
             // Determine if there are more products
             const hasMoreProducts = this.determineHasMore(newProducts, response);
-            
+
             // Update endless scroll state
             this.endlessScroll.setHasMore(hasMoreProducts);
 
             // Append new products
             this.appendProducts(newProducts);
-            
+
             // Increment page for next load
             this.currentPage++;
 
-            console.log('📊 Total products loaded:', this.products.length, 'Has more:', hasMoreProducts);
+
 
         } catch (error) {
-            console.error('❌ Error loading products:', error);
+            console.error('Error loading products:', error);
             this.handleLoadError(error);
+        } finally {
+            // Always clear loading state when done
+            this.endlessScroll.setLoading(false);
         }
     }
 
@@ -439,24 +442,7 @@ class KatalogPage {
                                     <input type="number" class="catalog-filter__input" placeholder="500000" id="max-price-input">
                                 </div>
                             </div>
-                            <div class="catalog-filter__group">
-                                <label class="catalog-filter__label">Rating & Urutan</label>
-                                <select id="rating-filter" class="catalog-filter__select">
-                                    <option value="">Semua Rating</option>
-                                    <option value="4">4+ Bintang</option>
-                                    <option value="3">3+ Bintang</option>
-                                    <option value="2">2+ Bintang</option>
-                                    <option value="1">1+ Bintang</option>
-                                </select>
-                                <select id="sort-filter" class="catalog-filter__select">
-                                    <option value="newest">Terbaru</option>
-                                    <option value="price-low">Harga Terendah</option>
-                                    <option value="price-high">Harga Tertinggi</option>
-                                    <option value="rating">Rating Tertinggi</option>
-                                    <option value="popular">Terpopuler</option>
-                                    <option value="best">Terbaik</option>
-                                </select>
-                            </div>
+                            
                         </div>
 
                         <!-- Main Content -->
@@ -479,6 +465,25 @@ class KatalogPage {
             <div id="bottom-bar"></div>
         `;
     }
+
+    // <div class="catalog-filter__group">
+    //     <label class="catalog-filter__label">Rating & Urutan</label>
+    //     <select id="rating-filter" class="catalog-filter__select">
+    //         <option value="">Semua Rating</option>
+    //         <option value="4">4+ Bintang</option>
+    //         <option value="3">3+ Bintang</option>
+    //         <option value="2">2+ Bintang</option>
+    //         <option value="1">1+ Bintang</option>
+    //     </select>
+    //     <select id="sort-filter" class="catalog-filter__select">
+    //         <option value="newest">Terbaru</option>
+    //         <option value="price-low">Harga Terendah</option>
+    //         <option value="price-high">Harga Tertinggi</option>
+    //         <option value="rating">Rating Tertinggi</option>
+    //         <option value="popular">Terpopuler</option>
+    //         <option value="best">Terbaik</option>
+    //     </select>
+    // </div>
 
     bindEvents() {
         const navLinks = document.querySelectorAll('.nav-links a');

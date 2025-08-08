@@ -47,8 +47,8 @@ export const initializeTopNavigationSearch = () => {
     productSearchInstance = new ProductSearch({
         placeholder: 'Cari Barang....',
         onSelect: (product) => {
-            // Navigate to product detail page
-            window.location.href = `/product/${product.id}`;
+            // Navigate to product detail page using regular URL routing
+            window.location.href = `/detail?id=${product.id}`;
         }
     });
 

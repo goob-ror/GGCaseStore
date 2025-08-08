@@ -72,8 +72,38 @@ class Router {
   }
 
   async handleHashRoute() {
-    // For now, just handle normal routing
-    // Hash routing can be added here if needed for other features
+    // Handle hash-based routing by converting to regular URLs
+    const hash = window.location.hash;
+
+    if (hash.startsWith('#/')) {
+      // Extract the path from hash
+      const hashPath = hash.substring(1); // Remove the #
+
+      // If it's a detail page with query params, convert to regular URL
+      if (hashPath.includes('/detail?')) {
+        const [path, query] = hashPath.split('?');
+        if (path === '/detail' && query) {
+          // Redirect to regular URL format
+          window.location.href = `/detail?${query}`;
+          return;
+        }
+      }
+
+      // For other hash routes, convert to regular URLs
+      if (hashPath.startsWith('/detail/')) {
+        const productId = hashPath.split('/detail/')[1];
+        if (productId) {
+          window.location.href = `/detail?id=${productId}`;
+          return;
+        }
+      }
+
+      // For any other hash routes, redirect to regular URL
+      window.location.href = hashPath;
+      return;
+    }
+
+    // If no hash routing needed, handle normal routing
     this.handleRoute();
   }
 

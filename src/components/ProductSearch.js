@@ -156,6 +156,29 @@ export class ProductSearch {
   }
 
   /**
+   * Check if product has active promo
+   */
+  isPromoActive(product) {
+    if (!product.isPromo || product.isPromo !== 1) return false;
+
+    const now = Date.now();
+    const start = product.promo_price_start_date ? new Date(product.promo_price_start_date).getTime() : 0;
+    const end = product.promo_price_end_date ? new Date(product.promo_price_end_date).getTime() : Infinity;
+
+    return now >= start && now <= end;
+  }
+
+  /**
+   * Get display price for product (promo price if active, otherwise regular price)
+   */
+  getDisplayPrice(product) {
+    if (this.isPromoActive(product) && product.promo_price) {
+      return product.promo_price;
+    }
+    return product.base_price || product.price;
+  }
+
+  /**
    * Render search results
    */
   renderResults() {
@@ -169,21 +192,32 @@ export class ProductSearch {
       return;
     }
 
-    const resultsHTML = this.products.map(product => `
-      <div class="search-result-item" data-id="${product.id}" data-name="${product.name}">
-        <div class="result-image">
-          <img src="${product.photos?.[0]?.photo_url}" 
-               alt="${this.escapeHtml(product.name)}">
-        </div>
-        <div class="result-content">
-          <div class="result-name">${this.escapeHtml(product.name)}</div>
-          <div class="result-meta">
-            <span class="result-brand">${this.escapeHtml(product.brand_name || '')}</span>
-            <span class="result-price">Rp ${this.formatPrice(product.base_price || product.price)}</span>
+    const resultsHTML = this.products.map(product => {
+      const isPromo = this.isPromoActive(product);
+      const displayPrice = this.getDisplayPrice(product);
+
+      return `
+        <div class="search-result-item" data-id="${product.id}" data-name="${product.name}">
+          <div class="result-image">
+            <img src="${product.photos?.[0]?.photo_url}"
+                 alt="${this.escapeHtml(product.name)}">
+          </div>
+          <div class="result-content">
+            <div class="result-name">${this.escapeHtml(product.name)}</div>
+            <div class="result-meta">
+              <span class="result-brand">${this.escapeHtml(product.brand_name || '')}</span>
+              <div class="result-price-container">
+                ${isPromo ?
+                  `<span class="result-price-original">Rp ${this.formatPrice(product.base_price || product.price)}</span>
+                   <span class="result-price">Rp ${this.formatPrice(displayPrice)}</span>` :
+                  `<span class="result-price">Rp ${this.formatPrice(displayPrice)}</span>`
+                }
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
     this.resultsContainer.innerHTML = resultsHTML;
 

@@ -142,11 +142,45 @@ class HomePage {
 
         // Update promo products
         if (this.promoProducts) {
-            this.renderProductSection('.produk-terbaik', this.promoProducts, config.displayLimit);
+            this.renderProductSection('.produk-promo', this.promoProducts, config.displayLimit);
         }
     }
 
     // Helper method to render product section with given limit
+    renderProductSection(containerSelector, allProducts, displayLimit) {
+        const container = document.querySelector(containerSelector);
+        if (!container || !allProducts) return;
+
+        const displayProducts = allProducts.slice(0, displayLimit);
+
+        // Check if this is a promo products container
+        const isPromoContainer = containerSelector.includes('promo');
+
+        container.innerHTML = displayProducts.map(product => `
+            <a href="detail?id=${product.id}" class="card loading-fade-in" data-product-id="${product.id}">
+                <div class="card__img-wrapper">
+                    <img src="${this.getProductImage(product)}" alt="${product.name}" />
+                </div>
+
+                ${isPromoContainer || this.compareDates(product.promo_price_start_date, product.promo_price_end_date) ?
+                    `<span class="card__promo-badge">PROMO</span>
+                    <div class="card__content">
+                        <h3 class="card__content__name ellipsis-3">${product.name}</h3>
+                        <p class="card__content__original-price">${this.formatRupiah(product.price)}</p>
+                        <p class="card__content__promo-price">${this.formatRupiah(product.promo_price)}</p>
+                        <p class="card__content__discount">${this.calculateDiscount(product.price, product.promo_price)}% OFF</p>
+                    </div>` :
+                    `<div class="card__content">
+                        <h3 class="card__content__name ellipsis-3">${product.name}</h3>
+                        <p class="card__content__price">${this.formatRupiah(product.price)}</p>
+                    </div>`}
+            </a>
+        `).join('');
+
+        // Re-bind click events
+        this.bindProductCardEvents(container);
+    }
+
     renderNewestProductSection(containerSelector, allProducts, displayLimit) {
         const container = document.querySelector(containerSelector);
         if (!container || !allProducts) return;
@@ -329,25 +363,41 @@ class HomePage {
 
     renderBanner() {
         const container = document.querySelector('#banner .swiper-wrapper');
-        if (container) {
-            container.innerHTML = this.banners.map(banner => `
-                <div class="swiper-slide">
-                    <div class="home-banner-item">
-                        <img src="${banner.banner_image_url}" alt="${banner.title}" class="home-banner-img" />
-                    </div>
+        if (!container) {
+            console.error('Banner container not found');
+            return;
+        }
+
+        container.innerHTML = this.banners.map(banner => `
+            <div class="swiper-slide">
+                <div class="home-banner-item">
+                    <img src="${banner.banner_image_url}" alt="${banner.title}" class="home-banner-img" />
                 </div>
-            `).join('');
+            </div>
+        `).join('');
+
+        // Check if banner element exists before initializing Swiper
+        const bannerElement = document.querySelector('#banner');
+        if (!bannerElement) {
+            console.error('Banner element not found');
+            return;
+        }
+
+        // Destroy existing banner swiper if it exists
+        if (this.bannerSwiper) {
+            this.bannerSwiper.destroy(true, true);
+            this.bannerSwiper = null;
         }
 
         Swiper.use([Navigation, Pagination, Autoplay]);
-        this.bannerSwiper = new Swiper('.swiper', {
+        this.bannerSwiper = new Swiper('#banner', {
             loop: true,
             pagination: {
-                el: '.swiper-pagination',
+                el: '#banner .swiper-pagination',
             },
             navigation: {
-                nextEl: '.swiper-button-next',
-                prevEl: '.swiper-button-prev',
+                nextEl: '#banner .swiper-button-next',
+                prevEl: '#banner .swiper-button-prev',
             },
             spaceBetween: 28,
             autoplay: {
@@ -398,13 +448,20 @@ class HomePage {
     }
 
     initializeCategoriesSwiper() {
+        // Check if categories swiper element exists
+        const categoriesSwiperElement = document.querySelector('.home-categories-swiper');
+        if (!categoriesSwiperElement) {
+            console.error('Categories swiper element not found');
+            return;
+        }
+
         // Initialize categories swiper with 6 columns and 2 rows (12 items per page)
         Swiper.use([Pagination, Grid]);
 
         // Destroy existing swiper instance if it exists
-        const existingSwiper = document.querySelector('.home-categories-swiper')?.swiper;
-        if (existingSwiper) {
-            existingSwiper.destroy(true, true);
+        if (this.categoriesSwiper) {
+            this.categoriesSwiper.destroy(true, true);
+            this.categoriesSwiper = null;
         }
 
         this.categoriesSwiper = new Swiper('.home-categories-swiper', {
@@ -574,7 +631,7 @@ class HomePage {
     }
 
     async loadPromoProducts() {
-        const container = document.querySelector(".produk-terbaik");
+        const container = document.querySelector(".produk-promo");
         
         container.innerHTML = '<p class="home-loading-text loading-fade-in">Loading promo products...</p>';
 
