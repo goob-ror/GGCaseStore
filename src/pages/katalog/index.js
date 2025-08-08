@@ -50,28 +50,28 @@ class KatalogPage {
         try {
             container.innerHTML = this.getHTML();
             this.setUpNavigation();
-            
+
             // Initialize dropdowns first and wait for completion
             await Promise.all([
                 this.initializeCategoryDropdown(),
                 this.initializeBrandDropdown()
             ]);
-            
+
             // Parse URL parameters after dropdowns are ready
             this.parseUrlParameters();
-            
+
             // Bind events
             this.bindEvents();
-            
+
             // Initialize endless scroll
             this.endlessScroll.initialize();
-            
+
             // Mark as initialized
             this.isInitialized = true;
-            
+
             // Load initial products
             await this.loadInitialProducts();
-            
+
         } catch (error) {
             console.error('Error rendering katalog page:', error);
             this.showErrorMessage('Gagal memuat halaman katalog');
@@ -192,10 +192,10 @@ class KatalogPage {
         // Reset pagination state
         this.currentPage = 1;
         this.products = [];
-        
+
         // Reset endless scroll state
         this.endlessScroll.reset();
-        
+
         // Clear product grid
         const container = document.getElementById('product-grid');
         if (container) {
@@ -214,16 +214,16 @@ class KatalogPage {
         this.currentPage = 1;
         this.products = [];
         this.endlessScroll.reset();
-        
+
         // Clear container
         const container = document.getElementById('product-grid');
         if (container) {
             container.innerHTML = '';
         }
-        
+
         // Update count display
         this.updateProductCount('Memuat produk...');
-        
+
         // Load first batch
         await this.loadMoreProducts();
     }
@@ -238,9 +238,9 @@ class KatalogPage {
         try {
             // Build API parameters
             const params = this.buildApiParams();
-            
+
             console.log('🔄 Loading products - Page:', this.currentPage, 'Params:', params);
-            
+
             // Make API call
             const response = await this.UserApiService.get('/products', params);
             const newProducts = response.data || [];
@@ -255,13 +255,13 @@ class KatalogPage {
 
             // Determine if there are more products
             const hasMoreProducts = this.determineHasMore(newProducts, response);
-            
+
             // Update endless scroll state
             this.endlessScroll.setHasMore(hasMoreProducts);
 
             // Append new products
             this.appendProducts(newProducts);
-            
+
             // Increment page for next load
             this.currentPage++;
 
@@ -312,14 +312,14 @@ class KatalogPage {
         if (response.pagination) {
             return this.currentPage < response.pagination.totalPages;
         }
-        
+
         // Fallback: assume more products if we got a full page
         return products.length === this.itemsPerPage;
     }
 
     handleEmptyResults() {
         this.endlessScroll.setHasMore(false);
-        
+
         if (this.products.length === 0) {
             // No products at all
             const container = document.getElementById('product-grid');
@@ -348,7 +348,7 @@ class KatalogPage {
             // Just log the error if we already have some products
             console.error('Failed to load more products, but keeping existing ones');
         }
-        
+
         // Don't disable endless scroll completely on error - allow retry
         // The user can try scrolling again later
     }
@@ -367,7 +367,7 @@ class KatalogPage {
                 </div>
             `;
         }
-        
+
         const countElement = document.getElementById('product-count');
         if (countElement) {
             countElement.textContent = 'Error memuat produk';
@@ -439,24 +439,6 @@ class KatalogPage {
                                     <input type="number" class="catalog-filter__input" placeholder="500000" id="max-price-input">
                                 </div>
                             </div>
-                            <div class="catalog-filter__group">
-                                <label class="catalog-filter__label">Rating & Urutan</label>
-                                <select id="rating-filter" class="catalog-filter__select">
-                                    <option value="">Semua Rating</option>
-                                    <option value="4">4+ Bintang</option>
-                                    <option value="3">3+ Bintang</option>
-                                    <option value="2">2+ Bintang</option>
-                                    <option value="1">1+ Bintang</option>
-                                </select>
-                                <select id="sort-filter" class="catalog-filter__select">
-                                    <option value="newest">Terbaru</option>
-                                    <option value="price-low">Harga Terendah</option>
-                                    <option value="price-high">Harga Tertinggi</option>
-                                    <option value="rating">Rating Tertinggi</option>
-                                    <option value="popular">Terpopuler</option>
-                                    <option value="best">Terbaik</option>
-                                </select>
-                            </div>
                         </div>
 
                         <!-- Main Content -->
@@ -478,6 +460,24 @@ class KatalogPage {
             </div>
             <div id="bottom-bar"></div>
         `;
+        // <div class="catalog-filter__group">
+        //     <label class="catalog-filter__label">Rating & Urutan</label>
+        //     <select id="rating-filter" class="catalog-filter__select">
+        //         <option value="">Semua Rating</option>
+        //         <option value="4">4+ Bintang</option>
+        //         <option value="3">3+ Bintang</option>
+        //         <option value="2">2+ Bintang</option>
+        //         <option value="1">1+ Bintang</option>
+        //     </select>
+        //     <select id="sort-filter" class="catalog-filter__select">
+        //         <option value="newest">Terbaru</option>
+        //         <option value="price-low">Harga Terendah</option>
+        //         <option value="price-high">Harga Tertinggi</option>
+        //         <option value="rating">Rating Tertinggi</option>
+        //         <option value="popular">Terpopuler</option>
+        //         <option value="best">Terbaik</option>
+        //     </select>
+        // </div>
     }
 
     bindEvents() {
@@ -504,8 +504,6 @@ class KatalogPage {
     bindFilterEvents() {
         const minPriceInput = document.getElementById('min-price-input');
         const maxPriceInput = document.getElementById('max-price-input');
-        const ratingSelect = document.getElementById('rating-filter');
-        const sortSelect = document.getElementById('sort-filter');
 
         if (minPriceInput) {
             minPriceInput.addEventListener('input', this.debounce(() => {
@@ -519,20 +517,6 @@ class KatalogPage {
                 this.filters.maxPrice = maxPriceInput.value || null;
                 this.resetAndReload();
             }, 500));
-        }
-
-        if (ratingSelect) {
-            ratingSelect.addEventListener('change', () => {
-                this.filters.minRating = ratingSelect.value || null;
-                this.resetAndReload();
-            });
-        }
-
-        if (sortSelect) {
-            sortSelect.addEventListener('change', () => {
-                this.filters.sortBy = sortSelect.value;
-                this.resetAndReload();
-            });
         }
     }
 
@@ -555,7 +539,7 @@ class KatalogPage {
         if (this.endlessScroll) {
             this.endlessScroll.destroy();
         }
-        
+
         // Clean up any remaining timeouts or intervals
         this.isInitialized = false;
     }

@@ -61,10 +61,9 @@ class HomePage {
                 </div>
 
                 <!-- Promo Products Section -->
-                <!-- Promo Products Section -->
                 <div class="home-section-wrapper">
                     <div class="home-section-header">
-                        <h2 class="home-section-title">Produk Yang Sedang Promo</h2>
+                        <h2 class="text-header">PRODUK PROMO</h2>
                         <div class="home-view-all">
                             <a href="/katalog" class="home-view-all-text">Lihat Semua</a>
                             <span class="home-view-all-arrow">&rsaquo;</span>
@@ -76,18 +75,18 @@ class HomePage {
                    
                 </div>
 
-                <!-- New Products Section -->
+                <!-- Newest Products Section -->
                 <div class="home-section-wrapper">
                     <div class="home-section-header">
-                        <h2 class="home-section-title">Produk Terbaru</h2>
+                        <h2 class="text-header">PRODUK TERBARU</h2>
                         <div class="home-view-all">
                             <a href="/katalog" class="home-view-all-text">Lihat Semua</a>
                             <span class="home-view-all-arrow">&rsaquo;</span>
                         </div>
                     </div>
-                    <div class="home-products-grid produk-rating"></div>
+                    <div id="newest-product" class="no-data"></div>
+                    <div class="home-products-grid newest-product"></div>
                 </div>
-                
             </div>
 
             <div id="footer"></div>
@@ -133,16 +132,13 @@ class HomePage {
     updateProductDisplays() {
         const config = this.getResponsiveConfig();
 
-        // Update new products
-        if (this.newProducts) {
-            this.renderProductSection('.produk-rating', this.newProducts, config.displayLimit);
+        // Update newest products
+        if (this.newestProduct) {
+            this.renderNewestProductSection('.newest-product', this.newestProduct, config.displayLimit);
         }
-
-
-
         // Update promo products
-        if (this.promoProducts) {
-            this.renderProductSection('.produk-terbaik', this.promoProducts, config.displayLimit);
+        if (this.bestProducts) {
+            this.renderPromoSection('.produk-promo', this.bestProducts, config.displayLimit);
         }
     }
 
@@ -298,7 +294,7 @@ class HomePage {
 
         // Fetch all products once, then filter by display limits
         await Promise.all([
-            this.loadNewProducts(),
+            this.loadNewestProducts(),
             this.loadPromoProducts()
         ]);
     }
@@ -340,7 +336,7 @@ class HomePage {
         }
 
         Swiper.use([Navigation, Pagination, Autoplay]);
-        this.bannerSwiper = new Swiper('.swiper', {
+        const banner = new Swiper('.swiper', {
             loop: true,
             pagination: {
                 el: '.swiper-pagination',
@@ -510,22 +506,22 @@ class HomePage {
         return Math.round(discount);
     }
 
-    async loadNewProducts() {
-        const container = document.querySelector(".produk-rating");
-        
-        container.innerHTML = '<p class="home-loading-text loading-fade-in">Loading new products...</p>';
+    async loadNewestProducts() {
+        const container = document.querySelector(".newest-product");
+
+        container.innerHTML = '<p class="home-loading-text loading-fade-in">Loading high rating products...</p>';
 
         try {
             // Always fetch a reasonable amount of products (e.g., 12-16)
             const response = await this.UserApiService.get('/products', {
-                sort: 'created_at',
+                sort: 'newest',
                 order: 'desc',
                 limit: 16
             });
             const allProducts = response.data || [];
 
             // Store all products for potential resize handling
-            this.newProducts = allProducts;
+            this.newestProduct = allProducts;
 
             // Get current display limit and slice array
             const config = this.getResponsiveConfig();
@@ -565,30 +561,32 @@ class HomePage {
                 // Add click event listeners after rendering
                 this.bindProductCardEvents(container);
             } else {
-                container.innerHTML = '<p class="home-no-data">No new products available.</p>';
+                container.innerHTML = '';
+                document.getElementById('newest-product').innerHTML = '<p class="home-no-data" style="height:225px;">No newest products available.</p>';
             }
         } catch (err) {
-            console.error("Failed to load new products:", err);
-            container.innerHTML = '<p class="home-error-text">Failed to load new products.</p>';
+            console.error("Failed to load newest products:", err);
+            container.innerHTML = '';
+            document.getElementById('newest-product').innerHTML = '<p class="home-error-text"  style="height:225px;">Failed to load newest products.</p>';
         }
     }
 
     async loadPromoProducts() {
-        const container = document.querySelector(".produk-terbaik");
-        
+        const container = document.querySelector(".produk-promo");
+
         container.innerHTML = '<p class="home-loading-text loading-fade-in">Loading promo products...</p>';
 
         try {
             // Always fetch a reasonable amount of products (e.g., 12-16)
             const response = await this.UserApiService.get('/products/promo', {
-                sort: 'price', // Sort by price ascending to get the lowest price products first
-                order: 'asc', // Sort by price ascending to get the lowest price products first, you can also use 'desc' for highest price products first. Default is 'asc'.
+                sort: 'price',
+                order: 'desc',
                 limit: 16
             });
             const allProducts = response.data || [];
 
             // Store all products for potential resize handling
-            this.promoProducts = allProducts;
+            this.bestProducts = allProducts;
 
             // Get current display limit and slice array
             const config = this.getResponsiveConfig();
@@ -619,11 +617,13 @@ class HomePage {
                 // Add click event listeners after rendering
                 this.bindProductCardEvents(container);
             } else {
-                container.innerHTML = '<p class="home-no-data">No promo products available.</p>';
+                container.innerHTML = '';
+                document.getElementById('promo-product').innerHTML = '<p class="home-no-data" style="height:225px;">No promo products available.</p>';
             }
         } catch (err) {
-            console.error("Failed to load promo products:", err);
-            container.innerHTML = '<p class="home-error-text">Failed to load promo products.</p>';
+            console.error("Failed to load best products:", err);
+            container.innerHTML = '';
+            document.getElementById('promo-product').innerHTML = '<p class="home-error-text"" style="height:225px;">Failed to load promo products.</p>';
         }
     }
 
@@ -686,16 +686,10 @@ class HomePage {
 
     // Cleanup method to destroy swipers and event listeners when page is destroyed
     destroy() {
-        if (this.bannerSwiper) {
-            this.bannerSwiper.destroy(true, true);
-            this.bannerSwiper = null;
-        }
-
         if (this.categoriesSwiper) {
             this.categoriesSwiper.destroy(true, true);
             this.categoriesSwiper = null;
         }
-
 
         // Clean up resize event listener
         if (this.resizeTimeout) {
