@@ -10,3 +10,5 @@ public/uploads/
 database_schema.sql
 
 api/test.js
+
+CPANEL_DEPLOYMENT_GUIDE.md
