@@ -14,6 +14,60 @@
   padding: 0;
   background-color: #ffffff;
 }
+.header__promo-badge__container {
+  margin-bottom: 12px !important;
+  height: auto;
+}
+.header__promo-badge {
+  background: #dc2626;
+  color: white;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  vertical-align: top;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.content {
+  display: flex;
+  flex-direction: column;
+}
+.content__price {
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0 0 8px 0;
+  color: #2c3e50;
+}
+.content__original-price {
+  color: #6b7280;
+  text-decoration: line-through;
+  margin: 0;
+  font-weight: 400;
+  font-size: 24px;
+}
+.content__promo-price {
+  font-weight: 600;
+  font-size: 16px;
+  margin: 0;
+  color: #dc2626;
+}
+.content__discount {
+  background: #dc2626;
+  color: white;
+  font-size: 10px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  align-self: flex-start;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.content__discount__container {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
 
 /* Detail Header - positioned below TopNavigationBar */
 .detail-header {
@@ -128,7 +182,7 @@
 }
 
 .thumbnail.active {
-  border-color: #E6B120;
+  border-color: #e6b120;
 }
 
 .thumbnail img {
@@ -179,11 +233,11 @@
 .stars {
   display: flex;
   gap: 2px;
-  color: #E6B120;
+  color: #e6b120;
 }
 
 .rating-text {
-  font-family: 'Istok Web', sans-serif;
+  font-family: "Istok Web", sans-serif;
   font-weight: 400;
   color: #838383;
   padding: 0 8px 0 0;
@@ -191,7 +245,7 @@
 }
 
 .rating-count {
-  font-family: 'Istok Web', sans-serif;
+  font-family: "Istok Web", sans-serif;
   color: #838383;
   font-size: 13px;
 }
@@ -223,8 +277,8 @@
 
 .wishlist-btn {
   background: none;
-  border: 2px solid #E6B120;
-  color: #E6B120;
+  border: 2px solid #e6b120;
+  color: #e6b120;
   cursor: pointer;
   border-radius: 50%;
   display: flex;
@@ -239,14 +293,14 @@
 }
 
 .wishlist-btn:hover {
-  background-color: #E6B120;
+  background-color: #e6b120;
   color: white;
   transform: scale(1.05);
 }
 
 .wishlist-btn.added {
-  background-color: #E6B120;
-  border-color: #E6B120;
+  background-color: #e6b120;
+  border-color: #e6b120;
   color: white;
   animation: heartBeat 0.6s ease-in-out;
 }
@@ -304,7 +358,6 @@
   font-size: 14px;
   color: #333;
 }
-
 
 /* Description */
 .description-section {
@@ -429,7 +482,7 @@
 .related-price {
   font-size: 16px;
   font-weight: 600;
-  color: #E6B120;
+  color: #e6b120;
   margin: 4px 0;
 }
 
@@ -443,7 +496,7 @@
 }
 
 .related-stars {
-  color: #FFD700;
+  color: #ffd700;
   font-size: 12px;
   letter-spacing: 1px;
 }
@@ -499,6 +552,13 @@
   .price {
     font-size: 32px;
   }
+  .content__original-price {
+    font-size: 20px;
+  }
+  .content__discount {
+    font-size: 12px;
+    padding: 4px 12px;
+  }
 
   .related-products-section {
     padding: 48px 32px 56px 32px;
@@ -544,6 +604,9 @@
 
   .price {
     font-size: 24px;
+  }
+  .content__original-price {
+    font-size: 16px;
   }
 
   .related-products-section {
@@ -639,17 +702,17 @@
 
 .add-to-cart-btn {
   background-color: #f8f9fa;
-  color: #E6B120;
-  border: 2px solid #E6B120;
+  color: #e6b120;
+  border: 2px solid #e6b120;
 }
 
 .add-to-cart-btn:hover:not(:disabled) {
-  background-color: #E6B120;
+  background-color: #e6b120;
   color: white;
 }
 
 .buy-now-btn {
-  background-color: #E6B120;
+  background-color: #e6b120;
   color: white;
 }
 
@@ -724,7 +787,7 @@
 }
 
 .toast-notification {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 /* ===== LOADING STATES ===== */
@@ -742,7 +805,7 @@
   width: 40px;
   height: 40px;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #E6B120;
+  border-top: 4px solid #e6b120;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
@@ -802,7 +865,7 @@
 .back-btn:hover,
 .retry-btn:hover {
   background-color: #f8f9fa;
-  border-color: #E6B120;
+  border-color: #e6b120;
 }
 
 /* ===== SKELETON LOADING ===== */

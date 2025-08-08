@@ -50,15 +50,17 @@ class HomePage {
 
                 <!-- Categories Section -->
                 <div class="home-section-wrapper">
-                    <h2 class="home-section-title">Kategori</h2>
+                    <h2 class="text-header mb-7">KATEGORI</h2>
                     <div class="home-categories-container">
                         <div class="home-categories-swiper swiper">
                             <div class="swiper-wrapper kategori"></div>
                             <div class="swiper-pagination home-categories-pagination"></div>
                         </div>
                     </div>
+                    
                 </div>
 
+                <!-- Promo Products Section -->
                 <!-- Promo Products Section -->
                 <div class="home-section-wrapper">
                     <div class="home-section-header">
@@ -67,8 +69,11 @@ class HomePage {
                             <a href="/katalog" class="home-view-all-text">Lihat Semua</a>
                             <span class="home-view-all-arrow">&rsaquo;</span>
                         </div>
+                        
                     </div>
-                    <div class="home-products-grid produk-terbaik"></div>
+                    <div id="promo-product" class="no-data"></div>
+                    <div class="home-products-grid produk-promo"></div>
+                   
                 </div>
 
                 <!-- New Products Section -->
@@ -142,23 +147,65 @@ class HomePage {
     }
 
     // Helper method to render product section with given limit
-    renderProductSection(containerSelector, allProducts, displayLimit) {
+    renderNewestProductSection(containerSelector, allProducts, displayLimit) {
         const container = document.querySelector(containerSelector);
         if (!container || !allProducts) return;
 
         const displayProducts = allProducts.slice(0, displayLimit);
-        
-        container.innerHTML = displayProducts.map(product => `
-            <div class="home-product-card loading-fade-in" data-product-id="${product.id}">
-                <div class="home-product-img-wrapper">
-                    <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
-                </div>
-                <div class="home-product-content">
-                    <h3 class="home-product-name ellipsis-3">${product.name}</h3>
-                    <p class="home-product-price">${this.formatRupiah(product.price)}</p>
 
-                </div>
-            </div>
+        container.innerHTML = displayProducts.map(product => `
+            <a href="detail?id=${product.id}" class="card loading-fade-in" data-product-id="${product.id}">
+                        <div class="card__img-wrapper">
+                            <img src="${this.getProductImage(product)}" alt="${product.name}" />
+                        </div>
+                        
+
+                ${this.compareDates(product.promo_price_start_date, product.promo_price_end_date) ?
+                `<span class="card__promo-badge">PROMO</span>
+                    <div class="card__content">
+                            <h3 class="card__content__name ellipsis-3">${product.name}</h3>
+                            <p class="card__content__original-price">${this.formatRupiah(product.price)}</p>
+                            <p class="card__content__promo-price">${this.formatRupiah(product.promo_price)}</p>
+                            <p class="card__content__discount">${this.calculateDiscount(product.price, product.promo_price)}% OFF</p>        
+                    </div>
+                    ` :
+                `<div class="card__content">
+                            <h3 class="card__content__name ellipsis-3">${product.name}</h3>
+                            <p class="card__content__price">${this.formatRupiah(product.price)}</p>       
+                    </div>`}
+                        
+                    </a>
+        `).join('');
+
+        // <div class="home-product-rating">
+        //     <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
+        //     <span class="home-rating-divider">|</span>
+        //     <span class="home-sales-count">${product.total_sold ?? 0}+ Terjual</span>
+        // </div>
+        // Re-bind click events
+        this.bindProductCardEvents(container);
+    }
+
+    renderPromoSection(containerSelector, allProducts, displayLimit) {
+        const container = document.querySelector(containerSelector);
+        if (!container || !allProducts) return;
+
+        const displayProducts = allProducts.slice(0, displayLimit);
+
+        container.innerHTML = displayProducts.map(product => `
+            <a href="detail?id=${product.id}" class="card loading-fade-in" data-product-id="${product.id}">
+                        <div class="card__img-wrapper">
+                            <img src="${this.getProductImage(product)}" alt="${product.name}" />
+                        </div>
+                        <span class="card__promo-badge">PROMO</span>
+                        <div class="card__content">
+                            <h3 class="card__content__name ellipsis-3">${product.name}</h3>
+                            <p class="card__content__original-price">${this.formatRupiah(product.price)}</p>
+                            <p class="card__content__promo-price">${this.formatRupiah(product.promo_price)}</p>
+                            <p class="card__content__discount">${this.calculateDiscount(product.price, product.promo_price)}% OFF</p>
+                            
+                        </div>
+                    </a>
         `).join('');
 
         // <div class="home-product-rating">
@@ -183,7 +230,7 @@ class HomePage {
     // Get responsive configuration based on breakpoint
     getResponsiveConfig() {
         const breakpoint = this.getCurrentBreakpoint();
-        
+
         const configs = {
             'mobile': {
                 columns: 2,
@@ -224,20 +271,20 @@ class HomePage {
     updateGridClasses() {
         const config = this.getResponsiveConfig();
         const productGrids = document.querySelectorAll('.home-products-grid');
-        
+
         productGrids.forEach(grid => {
             // Remove all existing grid classes
             grid.classList.remove(
                 'home-products-grid-mobile',
-                'home-products-grid-tablet-sm', 
+                'home-products-grid-tablet-sm',
                 'home-products-grid-tablet',
                 'home-products-grid-desktop',
                 'home-products-grid-desktop-lg'
             );
-            
+
             // Add current breakpoint class
             grid.classList.add(config.gridClass);
-            
+
             // Set CSS custom properties for dynamic grid
             grid.style.setProperty('--grid-columns', config.columns);
             grid.style.setProperty('--grid-rows', config.rows);
@@ -248,7 +295,7 @@ class HomePage {
     async loadResponsiveProducts() {
         this.currentBreakpoint = this.getCurrentBreakpoint();
         this.updateGridClasses();
-        
+
         // Fetch all products once, then filter by display limits
         await Promise.all([
             this.loadNewProducts(),
@@ -380,11 +427,11 @@ class HomePage {
                 },
             },
             on: {
-                init: function() {
+                init: function () {
                     // Update pagination after initialization
                     this.pagination.update();
                 },
-                slideChange: function() {
+                slideChange: function () {
                     // Prevent reset when at boundaries
                     if (this.isBeginning && this.previousIndex > this.activeIndex) {
                         // User tried to swipe left at the beginning, stay at first slide
@@ -395,11 +442,11 @@ class HomePage {
                         this.slideTo(this.slides.length - 1, 300);
                     }
                 },
-                touchStart: function() {
+                touchStart: function () {
                     // Store initial position to prevent unwanted resets
                     this.initialSlide = this.activeIndex;
                 },
-                touchEnd: function() {
+                touchEnd: function () {
                     // Ensure we don't go beyond boundaries
                     if (this.activeIndex < 0) {
                         this.slideTo(0, 300);
@@ -458,6 +505,10 @@ class HomePage {
             }
         }, 100);
     }
+    calculateDiscount(price, promo_price) {
+        const discount = ((price - promo_price) / price) * 100;
+        return Math.round(discount);
+    }
 
     async loadNewProducts() {
         const container = document.querySelector(".produk-rating");
@@ -481,17 +532,29 @@ class HomePage {
             const displayProducts = allProducts.slice(0, config.displayLimit);
 
             if (displayProducts.length > 0) {
+
                 container.innerHTML = displayProducts.map(product => `
-                    <div class="home-product-card loading-fade-in" data-product-id="${product.id}">
-                        <div class="home-product-img-wrapper">
-                            <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
+                     <a href="detail?id=${product.id}" class="card loading-fade-in" data-product-id="${product.id}">
+                        <div class="card__img-wrapper">
+                            <img src="${this.getProductImage(product)}" alt="${product.name}" />
                         </div>
-                        <div class="home-product-content">
-                            <h3 class="home-product-name ellipsis-3">${product.name}</h3>
-                            <p class="home-product-price">${this.formatRupiah(product.price)}</p>
-                            
-                        </div>
+                        
+
+                ${this.compareDates(product.promo_price_start_date, product.promo_price_end_date) ? 
+                    `<span class="card__promo-badge">PROMO</span>
+                    <div class="card__content">
+                            <h3 class="card__content__name ellipsis-3">${product.name}</h3>
+                            <p class="card__content__original-price">${this.formatRupiah(product.price)}</p>
+                            <p class="card__content__promo-price">${this.formatRupiah(product.promo_price)}</p>
+                            <p class="card__content__discount">${this.calculateDiscount(product.price, product.promo_price)}% OFF</p>        
                     </div>
+                    ` : 
+                    `<div class="card__content">
+                            <h3 class="card__content__name ellipsis-3">${product.name}</h3>
+                            <p class="card__content__price">${this.formatRupiah(product.price)}</p>       
+                    </div>`}
+                        
+                    </a>
                 `).join('');
                 // <div class="home-product-rating">
                 //     <span class="home-rating-stars"><i class="fas fa-star"></i> ${product.avg_rating ? product.avg_rating.toFixed(1) : 'N/A'}</span>
@@ -533,16 +596,19 @@ class HomePage {
 
             if (displayProducts.length > 0) {
                 container.innerHTML = displayProducts.map(product => `
-                    <div class="home-product-card loading-fade-in" data-product-id="${product.id}">
-                        <div class="home-product-img-wrapper">
-                            <img src="${this.getProductImage(product)}" alt="${product.name}" class="home-product-img" />
+                    <a href="detail?id=${product.id}" class="card loading-fade-in" data-product-id="${product.id}">
+                        <div class="card__img-wrapper">
+                            <img src="${this.getProductImage(product)}" alt="${product.name}" />
                         </div>
-                        <div class="home-product-content">
-                            <h3 class="home-product-name ellipsis-3">${product.name}</h3>
-                            <p class="home-product-price">${this.formatRupiah(product.price)}</p>
+                        <span class="card__promo-badge">PROMO</span>
+                        <div class="card__content">
+                            <h3 class="card__content__name ellipsis-3">${product.name}</h3>
+                            <p class="card__content__original-price">${this.formatRupiah(product.price)}</p>
+                            <p class="card__content__promo-price">${this.formatRupiah(product.promo_price)}</p>
+                            <p class="card__content__discount">${this.calculateDiscount(product.price, product.promo_price)}% OFF</p>
                             
                         </div>
-                    </div>
+                    </a>
                 `).join('');
 
                 // <div class="home-product-rating">
@@ -559,6 +625,14 @@ class HomePage {
             console.error("Failed to load promo products:", err);
             container.innerHTML = '<p class="home-error-text">Failed to load promo products.</p>';
         }
+    }
+
+    compareDates(startDate, endDate) {
+        const now = Date.now();
+        const start = new Date(startDate).getTime();
+        const end = new Date(endDate).getTime();
+
+        return now >= start && now <= end; // ✅ true kalau promo aktif
     }
 
     formatRupiah(angka) {
@@ -621,6 +695,7 @@ class HomePage {
             this.categoriesSwiper.destroy(true, true);
             this.categoriesSwiper = null;
         }
+
 
         // Clean up resize event listener
         if (this.resizeTimeout) {

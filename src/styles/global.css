@@ -292,6 +292,27 @@ a:hover {
 .text-gray-500 {
   color: #6b7280 !important;
 }
+.text-header {
+  color: #2c3e50;
+  font-size: 24px;
+  font-weight: 600;
+}
+.m-0{
+  margin: 0;
+}
+.mb-7 {
+  margin-bottom: 28px;
+}
+@media (max-width: 1023px) {
+  .text-header {
+    font-size: 20px;
+  }
+}
+@media (max-width: 576px) {
+  .text-header {
+    font-size: 18px;
+  }
+}
 .ellipsis-3 {
   line-clamp: 3;
   display: -webkit-box;
@@ -308,7 +329,6 @@ a:hover {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 
 .main-layout {
   position: relative;

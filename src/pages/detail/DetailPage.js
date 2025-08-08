@@ -62,7 +62,7 @@ class DetailPage {
   }
 
   // ===== DATA LOADING METHODS =====
-  
+
   getProductId() {
     // Handle hash-based routing from catalog page
     const hash = window.location.hash;
@@ -167,6 +167,14 @@ class DetailPage {
     `;
   }
 
+  compareDates(startDate, endDate) {
+    const now = Date.now();
+    const start = new Date(startDate).getTime();
+    const end = new Date(endDate).getTime();
+
+    return now >= start && now <= end; // ✅ true kalau promo aktif
+  }
+
   // ===== RENDER METHODS =====
   renderProductDetails(container) {
     if (!this.product) return;
@@ -191,6 +199,11 @@ class DetailPage {
         <div class="product-info-section">
           <div class="product-header">
             <div class="title-rating">
+             ${this.compareDates(this.product.promo_price_start_date, this.product.promo_price_end_date) ? 
+              `<div class="header__promo-badge__container" >
+                  <span class="header__promo-badge">PROMO</span>
+              </div>`: ``}
+           
               <h1 class="product-title">${this.product.name}</h1>
               
             </div>
@@ -198,7 +211,19 @@ class DetailPage {
 
           <div class="price-section">
           <div class="price-container">
-            <span class="price">${this.formatPrice(this.product.price)}</span>
+
+           ${this.compareDates(this.product.promo_price_start_date, this.product.promo_price_end_date) ? 
+            `<div class="content">
+              <div class="content__discount__container"> 
+                <span class="content__original-price">${this.formatPrice(this.product.promo_price)}</span>
+              <div>
+                <span class="content__discount">${this.calculateDiscount(this.product.price, this.product.promo_price)}% OFF</span>
+              </div>  
+              </div>
+              <span class="price">${this.formatPrice(this.product.price)}</span>
+            </div>
+            ` : `<span class="price">${this.formatPrice(this.product.price)}</span>`}
+
             <button class="wishlist-btn ${this.isInWishlist() ? 'added' : ''}" id="wishlist-btn">
               <i class="fas fa-heart"></i>
             </button>
@@ -217,12 +242,11 @@ class DetailPage {
       </div>
     `;
   }
+  calculateDiscount(price, promo_price) {
+    const discount = ((price - promo_price) / price) * 100;
+    return Math.round(discount);
+  }
 
-  // <div class="product-rating">
-  //   <div class="stars filled">★ </div>
-  //   <span class="rating-text">${this.product.avg_rating ? this.product.avg_rating.toFixed(1) : '0.0'}</span>
-  //   <span class="rating-count">Terjual ${this.product.total_sold || 0}+</span>
-  // </div>
 
   renderRelatedProducts(container) {
     container.innerHTML = this.relatedProducts.map(product => `
@@ -435,15 +459,15 @@ class DetailPage {
   async handleAddToCart() {
     try {
       const selectedVariantId = this.getSelectedVariantId();
-      
+
       await this.UserApiService.post('/cart', {
         product_id: this.product.id,
         variant_id: selectedVariantId,
         quantity: 1
       });
-      
+
       this.showSuccessMessage('Added to cart');
-      
+
     } catch (error) {
       console.error('Error adding to cart:', error);
       this.showErrorMessage('Failed to add to cart');
