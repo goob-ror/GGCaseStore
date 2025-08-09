@@ -46,8 +46,10 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Trust proxy for IP address detection (disabled for development)
-// app.set('trust proxy', true);
+// Trust proxy for IP address detection and secure cookies when behind a proxy
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 
 // Create HTTP server and Socket.IO
 const server = createServer(app);
@@ -82,8 +84,10 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   cookie: {
-    maxAge: 1000 * 60 * 60 * 24 // 24 hours
-    //secure: true; use if using https
+    maxAge: 1000 * 60 * 60 * 24, // 24 hours
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    // domain: '.ggcasegroup.id' // uncomment if you need cookie across subdomains
   }
 }));
 
@@ -111,6 +115,39 @@ const upload = multer({
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
+
+// ===== ROOT ENDPOINT - API STATUS PAGE =====
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>API Status</title>
+      <style>
+        body, html {
+          height: 100%;
+          margin: 0;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        h1 {
+          color: #000000;
+          font-size: 2em;
+          font-weight: 300;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>Service is Operational</h1>
+    </body>
+    </html>
+  `);
+});
+
 
 // Test database connection
 app.get('/api/test-db', testLimiter, async (req, res) => {
@@ -314,6 +351,7 @@ app.post('/api/banners/:id/upload-images', strictLimiter, requireAdmin, upload.a
 // Start server
 server.listen(PORT, () => {
   console.log(`🚀 GG Catalog API Server running on port ${PORT}`);
+  console.log(`💻 Root endpoint active at http://localhost:${PORT}/`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
   console.log(`🔍 Database test: http://localhost:${PORT}/api/test-db`);
   console.log(`🔌 WebSocket server ready for connections`);
