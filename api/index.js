@@ -44,7 +44,7 @@ const bannerCRUD = require('./database/bannerCRUD');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3050;
 
 // Trust proxy for IP address detection and secure cookies when behind a proxy
 if (process.env.NODE_ENV === 'production') {
@@ -55,7 +55,7 @@ if (process.env.NODE_ENV === 'production') {
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : 'https://ggcasegroup.id',
     credentials: true
   }
 });
@@ -74,10 +74,41 @@ app.set('io', io);
 
 // Security Middleware
 app.use(helmet()); // Set security headers
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+
+// --- NEW CORS CONFIGURATION ---
+const allowedOrigins = [
+  'https://ggcasegroup.id',
+  'https://www.ggcasegroup.id',
+  'http://ggcasegroup.id',
+  'http://www.ggcasegroup.id'
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
+
+app.use((req, res, next) => {
+  // You can replace '*' with your specific domain 'https://ggcasegroup.id' for better security
+  res.setHeader('Access-Control-Allow-Origin', 'https://ggcasegroup.id'); 
+
+  // This header is crucial for allowing cross-origin embedding of resources like images
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'); 
+
+  next();
+});
+
 app.use(generalLimiter); // Apply general rate limiting to all requests
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
@@ -114,7 +145,7 @@ const upload = multer({
 });
 
 // Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ===== ROOT ENDPOINT - API STATUS PAGE =====
 app.get('/', (req, res) => {

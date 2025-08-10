@@ -124,7 +124,7 @@ const uploadBrandImage = async (req, res) => {
     }
 
     // Ensure uploads directory exists
-    const uploadsDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'brands');
+    const uploadsDir = path.join(__dirname, '..', 'public', 'uploads', 'brands');
     try {
       await fs.access(uploadsDir);
     } catch {
