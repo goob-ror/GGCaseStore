@@ -44,7 +44,7 @@ const bannerCRUD = require('./database/bannerCRUD');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3050;
+const PORT = process.env.PORT || 3000;
 
 // Trust proxy for IP address detection and secure cookies when behind a proxy
 if (process.env.NODE_ENV === 'production') {
@@ -55,7 +55,7 @@ if (process.env.NODE_ENV === 'production') {
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : 'https://ggcasegroup.id',
+    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : 'https://localhost:8080',
     credentials: true
   }
 });
@@ -80,7 +80,9 @@ const allowedOrigins = [
   'https://ggcasegroup.id',
   'https://www.ggcasegroup.id',
   'http://ggcasegroup.id',
-  'http://www.ggcasegroup.id'
+  'http://www.ggcasegroup.id',
+  'http://localhost:8080',
+  'http://localhost:3000'
 ];
 
 const corsOptions = {
@@ -101,7 +103,7 @@ app.use(cors(corsOptions));
 
 app.use((req, res, next) => {
   // You can replace '*' with your specific domain 'https://ggcasegroup.id' for better security
-  res.setHeader('Access-Control-Allow-Origin', 'https://ggcasegroup.id'); 
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8080'); 
 
   // This header is crucial for allowing cross-origin embedding of resources like images
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'); 
