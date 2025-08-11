@@ -13,6 +13,7 @@
   },
   "author": "GGCatalogTeam",
   "license": "ISC",
+  "sideEffects": false,
   "devDependencies": {
     "@babel/core": "^7.28.0",
     "@babel/plugin-transform-runtime": "^7.28.0",
@@ -20,12 +21,15 @@
     "babel-loader": "^10.0.0",
     "concurrently": "^9.2.0",
     "css-loader": "^7.1.2",
+    "css-minimizer-webpack-plugin": "^7.0.2",
     "html-webpack-plugin": "^5.6.3",
+    "mini-css-extract-plugin": "^2.9.3",
     "nodemon": "^3.1.10",
     "rimraf": "^6.0.1",
     "style-loader": "^4.0.0",
     "terser-webpack-plugin": "^5.3.14",
     "webpack": "^5.101.0",
+    "webpack-bundle-analyzer": "^4.10.2",
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.2.2",
     "webpack-merge": "^6.0.1"
