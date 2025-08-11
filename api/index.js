@@ -44,16 +44,18 @@ const bannerCRUD = require('./database/bannerCRUD');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3050;
 
-// Trust proxy for IP address detection (disabled for development)
-// app.set('trust proxy', true);
+// Trust proxy for IP address detection and secure cookies when behind a proxy
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 
 // Create HTTP server and Socket.IO
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : 'https://ggcasegroup.id',
     credentials: true
   }
 });
@@ -72,18 +74,51 @@ app.set('io', io);
 
 // Security Middleware
 app.use(helmet()); // Set security headers
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+
+// --- NEW CORS CONFIGURATION ---
+const allowedOrigins = [
+  'https://ggcasegroup.id',
+  'https://www.ggcasegroup.id',
+  'http://ggcasegroup.id',
+  'http://www.ggcasegroup.id'
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
+
+app.use((req, res, next) => {
+  // You can replace '*' with your specific domain 'https://ggcasegroup.id' for better security
+  res.setHeader('Access-Control-Allow-Origin', 'https://ggcasegroup.id'); 
+
+  // This header is crucial for allowing cross-origin embedding of resources like images
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'); 
+
+  next();
+});
+
 app.use(generalLimiter); // Apply general rate limiting to all requests
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: true,
   cookie: {
-    maxAge: 1000 * 60 * 60 * 24 // 24 hours
-    //secure: true; use if using https
+    maxAge: 1000 * 60 * 60 * 24, // 24 hours
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    // domain: '.ggcasegroup.id' // uncomment if you need cookie across subdomains
   }
 }));
 
@@ -110,7 +145,40 @@ const upload = multer({
 });
 
 // Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ===== ROOT ENDPOINT - API STATUS PAGE =====
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>API Status</title>
+      <style>
+        body, html {
+          height: 100%;
+          margin: 0;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        h1 {
+          color: #000000;
+          font-size: 2em;
+          font-weight: 300;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>Service is Operational</h1>
+    </body>
+    </html>
+  `);
+});
+
 
 // Test database connection
 app.get('/api/test-db', testLimiter, async (req, res) => {
@@ -314,6 +382,7 @@ app.post('/api/banners/:id/upload-images', strictLimiter, requireAdmin, upload.a
 // Start server
 server.listen(PORT, () => {
   console.log(`🚀 GG Catalog API Server running on port ${PORT}`);
+  console.log(`💻 Root endpoint active at http://localhost:${PORT}/`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
   console.log(`🔍 Database test: http://localhost:${PORT}/api/test-db`);
   console.log(`🔌 WebSocket server ready for connections`);

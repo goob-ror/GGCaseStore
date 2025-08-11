@@ -193,14 +193,15 @@ class KatalogPage {
         // Reset pagination state
         this.currentPage = 1;
         this.products = [];
-        
+
         // Reset endless scroll state
         this.endlessScroll.reset();
-        
-        // Clear product grid
+
+        // Clear product grid and show skeleton
         const container = document.getElementById('product-grid');
         if (container) {
             container.innerHTML = '';
+            this.showSkeletonLoaders(container);
         }
 
         // Update count display
@@ -215,16 +216,17 @@ class KatalogPage {
         this.currentPage = 1;
         this.products = [];
         this.endlessScroll.reset();
-        
-        // Clear container
+
+        // Clear container and show skeleton
         const container = document.getElementById('product-grid');
         if (container) {
             container.innerHTML = '';
+            this.showSkeletonLoaders(container);
         }
-        
+
         // Update count display
         this.updateProductCount('Memuat produk...');
-        
+
         // Load first batch
         await this.loadMoreProducts();
     }
@@ -322,11 +324,12 @@ class KatalogPage {
 
     handleEmptyResults() {
         this.endlessScroll.setHasMore(false);
-        
+
         if (this.products.length === 0) {
-            // No products at all
+            // No products at all - remove skeleton and show message
             const container = document.getElementById('product-grid');
             if (container) {
+                this.hideSkeletonLoaders(container);
                 container.innerHTML = `
                     <div class="no-products-message">
                         <i class="fas fa-search fa-3x"></i>
@@ -345,13 +348,17 @@ class KatalogPage {
 
     handleLoadError(error) {
         if (this.products.length === 0) {
-            // Show error message if no products loaded yet
+            // Remove skeleton loaders and show error message
+            const container = document.getElementById('product-grid');
+            if (container) {
+                this.hideSkeletonLoaders(container);
+            }
             this.showErrorMessage('Gagal memuat produk. Silakan coba lagi.');
         } else {
             // Just log the error if we already have some products
-            console.error('Failed to load more products, but keeping existing ones');
+            console.error('Failed to load more products, but keeping existing ones:', error);
         }
-        
+
         // Don't disable endless scroll completely on error - allow retry
         // The user can try scrolling again later
     }
@@ -385,6 +392,11 @@ class KatalogPage {
             return;
         }
 
+        // Remove skeleton loaders if this is the first batch
+        if (this.currentPage === 1) {
+            this.hideSkeletonLoaders(container);
+        }
+
         newProducts.forEach(product => {
             this.products.push(product);
             const productElement = this.productFormatter.createProductCard(
@@ -411,6 +423,46 @@ class KatalogPage {
                 const hasMore = this.endlessScroll.getHasMore();
                 countElement.textContent = `Menampilkan ${count} produk${hasMore ? ' (scroll untuk lebih banyak)' : ''}`;
             }
+        }
+    }
+
+    // ===== SKELETON LOADER METHODS =====
+
+    showSkeletonLoaders(container, count = 20) {
+        // Create skeleton grid
+        const skeletonGrid = document.createElement('div');
+        skeletonGrid.className = 'catalog-skeleton-grid';
+        skeletonGrid.id = 'skeleton-grid';
+
+        // Generate skeleton cards
+        for (let i = 0; i < count; i++) {
+            const skeletonCard = this.createSkeletonCard();
+            skeletonGrid.appendChild(skeletonCard);
+        }
+
+        container.appendChild(skeletonGrid);
+    }
+
+    createSkeletonCard() {
+        const skeletonCard = document.createElement('div');
+        skeletonCard.className = 'catalog-skeleton-card';
+
+        skeletonCard.innerHTML = `
+            <div class="catalog-skeleton-image"></div>
+            <div class="catalog-skeleton-content">
+                <div class="catalog-skeleton-title"></div>
+                <div class="catalog-skeleton-title-second"></div>
+                <div class="catalog-skeleton-price"></div>
+            </div>
+        `;
+
+        return skeletonCard;
+    }
+
+    hideSkeletonLoaders(container) {
+        const skeletonGrid = container.querySelector('#skeleton-grid');
+        if (skeletonGrid) {
+            skeletonGrid.remove();
         }
     }
 

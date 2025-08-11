@@ -71,7 +71,7 @@ const uploadProductPhotos = async (req, res) => {
     }
 
     // Ensure uploads directory exists
-    const uploadsDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'products');
+    const uploadsDir = path.join(__dirname, '..', 'public', 'uploads', 'products');
     try {
       await fs.access(uploadsDir);
     } catch {

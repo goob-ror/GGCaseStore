@@ -371,7 +371,9 @@ class HomePage {
         container.innerHTML = this.banners.map(banner => `
             <div class="swiper-slide">
                 <div class="home-banner-item">
-                    <img src="${banner.banner_image_url}" alt="${banner.title}" class="home-banner-img" />
+                    <a href="${banner.redirect_url}" target="_blank">
+                        <img src="${banner.banner_image_url}" alt="${banner.title}" class="home-banner-img" />
+                    <a>
                 </div>
             </div>
         `).join('');
